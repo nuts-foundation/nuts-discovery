@@ -1,0 +1,5 @@
+# Intellij
+.idea
+
+# Sphinx build
+_build
