@@ -6,7 +6,5 @@
 Welcome to Nuts discovery's documentation!
 ==========================================
 
-.. toctree::
-   :maxdepth: 2
-   :caption: Contents:
+
 
