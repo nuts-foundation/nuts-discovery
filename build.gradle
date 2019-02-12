@@ -38,7 +38,6 @@ plugins {
 
 ext {
     corda = '4.0-SNAPSHOT'
-    springfox = '2.9.2'
 }
 
 repositories {
@@ -94,18 +93,11 @@ dependencies {
     testImplementation 'org.jetbrains.kotlin:kotlin-test-junit'
 
     testImplementation("net.corda:corda-test-utils:$corda")
-
-
-    testImplementation("junit:junit:4.12")
+    testImplementation("org.junit.jupiter:junit-jupiter-engine:5.4.0")
     testImplementation("org.assertj:assertj-core:3.11.1")
+    testImplementation("io.mockk:mockk:1.9.kotlin12")
 
     annotationProcessor "org.springframework.boot:spring-boot-configuration-processor"
-
-    // swagger docs
-    implementation "io.springfox:springfox-swagger2:$springfox"
-    implementation "io.springfox:springfox-data-rest:$springfox"
-    implementation "io.springfox:springfox-swagger-ui:$springfox"
-    implementation "io.springfox:springfox-bean-validators:$springfox"
 }
 
 sourceCompatibility = 1.8
