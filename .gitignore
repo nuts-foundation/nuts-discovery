@@ -10,3 +10,7 @@ setup/corda/*.crt
 setup/corda/*.csr
 setup/corda/*.key
 setup/corda/*.jks
+
+# gradle
+build
+.gradle
