@@ -48,6 +48,7 @@ rtd_version = os.environ.get("READTHEDOCS_VERSION", "latest")
 extensions = [
     'sphinx.ext.autodoc',
     'sphinx.ext.intersphinx',
+    'sphinxcontrib.httpdomain',
 ]
 
 # Add any paths that contain templates here, relative to this directory.
