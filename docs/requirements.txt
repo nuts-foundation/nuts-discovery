@@ -1,0 +1,2 @@
+nuts-discovery
+sphinxcontrib.httpdomain>=1.7.0
