@@ -4,6 +4,9 @@ nuts-discovery
 
 Discovery service by the Nuts foundation for bootstrapping the network
 
+.. image:: https://travis-ci.org/nuts-foundation/nuts-discovery.svg?branch=master
+    :target: https://travis-ci.org/nuts-foundation/nuts-discovery
+
 .. inclusion-marker-for-contribution
 
 Certificates
