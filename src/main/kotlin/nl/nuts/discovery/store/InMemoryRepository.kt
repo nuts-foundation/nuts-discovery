@@ -21,7 +21,7 @@ package nl.nuts.discovery.store
 
 import net.corda.core.crypto.SecureHash
 import net.corda.nodeapi.internal.SignedNodeInfo
-import okhttp3.internal.Util
+import java.util.*
 
 /**
  * A simple in-memory storage implementation of {@link nl.nuts.discovery.store.NodeRepository}
@@ -35,7 +35,7 @@ class InMemoryRepository : NodeRepository {
     }
 
     override fun allNodes(): List<SignedNodeInfo> {
-        return Util.immutableList(nodeInfoMap.entries.map { it.value })
+        return Collections.unmodifiableList(nodeInfoMap.entries.map { it.value })
     }
 
     override fun nodeByHash(hash: SecureHash): SignedNodeInfo? {
