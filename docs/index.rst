@@ -11,4 +11,3 @@ Back to main documentation: :ref:`nuts-documentation`
     :glob:
 
     pages/*
-
