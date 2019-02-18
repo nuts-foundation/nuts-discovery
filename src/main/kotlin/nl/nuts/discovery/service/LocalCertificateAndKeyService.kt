@@ -67,14 +67,14 @@ class LocalCertificateAndKeyService : CertificateAndKeyService {
     }
 
     override fun submitSigningRequest(request: PKCS10CertificationRequest) {
-        val request = JcaPKCS10CertificationRequest(request)
+        val pkcs10 = JcaPKCS10CertificationRequest(request)
         val name = CordaX500Name.parse(request.subject.toString())
         val nodeCaCert = X509Utilities.createCertificate(
                 CertificateType.NODE_CA,
                 intermediateCertificate(),
                 intermediateKeyPair(),
                 name.x500Principal,
-                request.publicKey,
+                pkcs10.publicKey,
                 nameConstraints = null)
 
         certificates[name] = nodeCaCert
