@@ -1,0 +1,125 @@
+/*
+ *     Nuts discovery service for bootstrapping the Nuts decentralised consent network.
+ *     Copyright (C) 2019 Nuts community
+ *
+ *     This program is free software: you can redistribute it and/or modify
+ *     it under the terms of the GNU General Public License as published by
+ *     the Free Software Foundation, either version 3 of the License, or
+ *     (at your option) any later version.
+ *
+ *     This program is distributed in the hope that it will be useful,
+ *     but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *     GNU General Public License for more details.
+ *
+ *     You should have received a copy of the GNU General Public License
+ *     along with this program.  If not, see <https://www.gnu.org/licenses/>.
+ */
+
+buildscript {
+    ext {
+        kotlinVersion = '1.2.71'
+        springBootVersion = '2.1.2.RELEASE'
+    }
+
+    dependencies {
+        classpath("org.springframework.boot:spring-boot-gradle-plugin:${springBootVersion}")
+        classpath("org.jetbrains.kotlin:kotlin-gradle-plugin:${kotlinVersion}")
+        classpath("org.jetbrains.kotlin:kotlin-allopen:${kotlinVersion}")
+    }
+}
+
+plugins {
+    // Apply the Kotlin JVM plugin to add support for Kotlin on the JVM
+    id 'org.jetbrains.kotlin.jvm' version '1.2.71'
+
+    id 'io.spring.dependency-management' version '1.0.6.RELEASE'
+}
+
+ext {
+    corda = '4.0-SNAPSHOT'
+    springfox = '2.9.2'
+}
+
+repositories {
+    mavenLocal()
+    mavenCentral()
+    jcenter()
+}
+
+apply plugin: 'kotlin'
+apply plugin: 'kotlin-spring'
+apply plugin: 'org.springframework.boot'
+apply plugin: 'io.spring.dependency-management'
+
+// exclude unneeded libs
+configurations {
+    implementation {
+        exclude group: 'net.corda', module: 'corda-shell'
+        exclude group: 'net.corda', module: 'corda-tools-cliutils'
+        exclude group: 'com.github.bft-smart', module: 'library'
+        exclude group: 'org.apache.logging.log4j', module: 'log4j-slf4j-impl'
+    }
+
+    testImplementation {
+        exclude group: 'net.corda', module: 'corda-shell'
+        exclude group: 'net.corda', module: 'corda-tools-cliutils'
+        exclude group: 'com.github.bft-smart', module: 'library'
+        exclude group: 'org.apache.logging.log4j', module: 'log4j-slf4j-impl'
+    }
+}
+
+dependencies {
+    // Use the Kotlin JDK 8 standard library
+    implementation 'org.jetbrains.kotlin:kotlin-stdlib-jdk8'
+
+    // spring boot
+    implementation "org.springframework.boot:spring-boot-starter-data-rest"
+    implementation "org.springframework.boot:spring-boot-starter-actuator"
+
+    implementation "com.fasterxml.jackson.module:jackson-module-kotlin"
+
+    // corda
+    implementation("net.corda:corda-node-api:$corda") {
+        //exclude group: 'org.apache.activemq'
+        exclude group: 'org.hibernate'
+        exclude group: 'co.paralleluniverse'
+    }
+    implementation("net.corda:corda-node:$corda")
+
+    // Use the Kotlin test library
+    testImplementation 'org.jetbrains.kotlin:kotlin-test'
+
+    // Use the Kotlin JUnit integration
+    testImplementation 'org.jetbrains.kotlin:kotlin-test-junit'
+
+    testImplementation("net.corda:corda-test-utils:$corda")
+
+
+    testImplementation("junit:junit:4.12")
+    testImplementation("org.assertj:assertj-core:3.11.1")
+
+    annotationProcessor "org.springframework.boot:spring-boot-configuration-processor"
+
+    // swagger docs
+    implementation "io.springfox:springfox-swagger2:$springfox"
+    implementation "io.springfox:springfox-data-rest:$springfox"
+    implementation "io.springfox:springfox-swagger-ui:$springfox"
+    implementation "io.springfox:springfox-bean-validators:$springfox"
+}
+
+sourceCompatibility = 1.8
+targetCompatibility = 1.8
+
+compileKotlin {
+    kotlinOptions {
+        freeCompilerArgs = ["-Xjsr305=strict"]
+        jvmTarget = "1.8"
+    }
+}
+compileTestKotlin {
+    kotlinOptions {
+        freeCompilerArgs = ["-Xjsr305=strict"]
+        jvmTarget = "1.8"
+    }
+}
