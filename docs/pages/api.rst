@@ -4,7 +4,7 @@
 Api
 ***
 
-The *Nuts Discovery Service* consists of 2 api's: the network map and certificare api's. The certificate api is in the initial setup phase of the Corda node. To publish the node details with an electronic signature and retrieve the signed certificate from the *Nuts Discovery Service*. The network map api is used to retrieve details about all the nodes that are connected to the network.
+The *Nuts Discovery Service* consists of 2 api's: the network map and certificate api's. The certificate api is only used in the initial setup phase of a Corda node. To publish the node details with an electronic signature and retrieve the signed certificate from the *Nuts Discovery Service*. The network map api is used to retrieve details about all the nodes that are connected to the network. These api's are called by the Corda node and should not be called by any other logic.
 
 Certificate API
 ===============
@@ -12,9 +12,9 @@ Certificate API
 The *Certificate API* is part of the Corda node but it's seems to be lacking documentation. After reverse engineering, 2 requests could be identified. The initation process for a Corda node can be started with:
 ::
 
-    java -jar corda.jar initial-registration -p changeit
+    java -jar corda.jar initial-registration -p <password>
 
-where the given password is the password of the root truststore. More info on how to start and configure a node can be found in :ref:`node setup <nuts-discovery-setup>`.
+where the given password is the password of the Corda root truststore (for Java, *changeit* is used a lot). More info on how to start and configure a node can be found in :ref:`node setup <nuts-discovery-setup>`.
 
 When started, the Corda node will create a couple of keystore as seen `here <https://docs.corda.net/permissioning.html#certificate-hierarchy>`_. The node will send a certificate request to the configured *Doorman* url followed by /certificate. The return value will be an identifier which the node will use to poll the service. When the service has signed the request, the certificate is then downloaded and put in the keystore. Below are the details of the two services.
 
