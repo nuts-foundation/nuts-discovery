@@ -20,6 +20,10 @@
 package nl.nuts.discovery.service
 
 import net.corda.core.identity.CordaX500Name
+import net.corda.core.node.NetworkParameters
+import net.corda.nodeapi.internal.network.NetworkMap
+import net.corda.nodeapi.internal.network.SignedNetworkMap
+import net.corda.nodeapi.internal.network.SignedNetworkParameters
 import org.bouncycastle.pkcs.PKCS10CertificationRequest
 import java.security.cert.X509Certificate
 
@@ -48,4 +52,15 @@ interface CertificateAndKeyService {
      * Get the Network Map Certificate as configured in the Spring properties
      */
     fun networkMapCertificate() : X509Certificate
+
+    /**
+     * Sign the networkMap with the network map key
+     */
+    fun signNetworkMap(networkMap: NetworkMap): SignedNetworkMap
+
+    /**
+     *
+     * Sign the network map params with the network map key
+     */
+    fun signNetworkParams(networkParams: NetworkParameters): SignedNetworkParameters
 }

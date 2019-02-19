@@ -19,12 +19,11 @@
 
 package nl.nuts.discovery
 
-import net.corda.core.serialization.internal.SerializationEnvironmentImpl
+import net.corda.core.serialization.internal.SerializationEnvironment
 import net.corda.core.serialization.internal.nodeSerializationEnv
-import net.corda.nodeapi.internal.serialization.AMQP_P2P_CONTEXT
-import net.corda.nodeapi.internal.serialization.SerializationFactoryImpl
-import net.corda.nodeapi.internal.serialization.amqp.AMQPClientSerializationScheme
-import net.corda.nodeapi.internal.serialization.amqp.AMQPServerSerializationScheme
+import net.corda.node.serialization.amqp.AMQPServerSerializationScheme
+import net.corda.serialization.internal.AMQP_P2P_CONTEXT
+import net.corda.serialization.internal.SerializationFactoryImpl
 import org.springframework.boot.autoconfigure.SpringBootApplication
 import org.springframework.boot.context.properties.EnableConfigurationProperties
 import org.springframework.boot.runApplication
@@ -41,7 +40,7 @@ class NutsDiscovery {
     @PostConstruct
     fun init() {
         if (nodeSerializationEnv == null) {
-            nodeSerializationEnv = SerializationEnvironmentImpl(
+            nodeSerializationEnv = SerializationEnvironment.with(
                     SerializationFactoryImpl().apply {
                         registerScheme(AMQPServerSerializationScheme(emptyList()))
                     },

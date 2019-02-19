@@ -19,16 +19,8 @@
 
 package nl.nuts.discovery.service
 
-import net.corda.core.CordaOID
-import net.corda.core.crypto.Crypto
 import net.corda.core.identity.CordaX500Name
-import net.corda.core.internal.CertRole
-import net.corda.nodeapi.internal.crypto.ContentSignerBuilder
-import org.bouncycastle.asn1.ASN1ObjectIdentifier
-import org.bouncycastle.asn1.DERUTF8String
-import org.bouncycastle.asn1.x500.style.BCStyle
-import org.bouncycastle.pkcs.PKCS10CertificationRequest
-import org.bouncycastle.pkcs.jcajce.JcaPKCS10CertificationRequestBuilder
+import nl.nuts.discovery.TestUtils
 import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -67,24 +59,12 @@ class LocalCertificateAndKeyServiceTest {
     @Test
     fun `a request for signature is automatically signed`() {
         val subject = CordaX500Name.parse("O=Org,L=Gr,C=NL")
-        val req = createCertificateRequest(subject)
+        val req = TestUtils.createCertificateRequest(subject)
 
         service.submitSigningRequest(req)
         val certificate = service.signedCertificate(subject)
 
         assertNotNull(certificate)
         assertNotNull(certificate!!.signature)
-    }
-
-    private fun createCertificateRequest(subject : CordaX500Name) : PKCS10CertificationRequest {
-        val signatureScheme = Crypto.RSA_SHA256
-        val keyPair = Crypto.generateKeyPair(Crypto.RSA_SHA256)
-        val email = "a@b.com"
-
-        val signer = ContentSignerBuilder.build(signatureScheme, keyPair.private, Crypto.findProvider(signatureScheme.providerName))
-        return JcaPKCS10CertificationRequestBuilder(subject.x500Principal, keyPair.public)
-                .addAttribute(BCStyle.E, DERUTF8String(email))
-                .addAttribute(ASN1ObjectIdentifier(CordaOID.X509_EXTENSION_CORDA_ROLE), CertRole.NODE_CA)
-                .build(signer)
     }
 }

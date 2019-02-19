@@ -41,4 +41,11 @@ interface NodeRepository {
      * @return the signedNodeInfo if found, null otherwise.
      */
     fun nodeByHash(hash:SecureHash) : SignedNodeInfo?
+
+    /**
+     * Find the first node with the name notary in the CN
+     *
+     * @return SignedNodeInfo of the first found Notary
+     */
+    fun notary() : SignedNodeInfo?
 }

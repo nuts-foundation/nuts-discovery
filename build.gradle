@@ -37,13 +37,16 @@ plugins {
 }
 
 ext {
-    corda = '3.3-corda'
+    corda = '4.0-RC04'
 }
 
 repositories {
     mavenLocal()
     mavenCentral()
     jcenter()
+    maven {
+        url "https://ci-artifactory.corda.r3cev.com/artifactory/corda-releases/"
+    }
 }
 
 apply plugin: 'kotlin'
@@ -54,11 +57,15 @@ apply plugin: 'io.spring.dependency-management'
 // exclude unneeded libs
 configurations {
     implementation {
+        exclude group: 'net.corda', module: 'corda-shell'
+        exclude group: 'net.corda', module: 'corda-tools-cliutils'
         exclude group: 'com.github.bft-smart', module: 'library'
         exclude group: 'org.apache.logging.log4j', module: 'log4j-slf4j-impl'
     }
 
     testImplementation {
+        exclude group: 'net.corda', module: 'corda-shell'
+        exclude group: 'net.corda', module: 'corda-tools-cliutils'
         exclude group: 'com.github.bft-smart', module: 'library'
         exclude group: 'org.apache.logging.log4j', module: 'log4j-slf4j-impl'
     }
@@ -75,7 +82,7 @@ dependencies {
     implementation "com.fasterxml.jackson.module:jackson-module-kotlin"
 
     // corda
-    implementation("net.corda:corda-node-api:$corda") {
+    implementation("net.corda:corda-node:$corda") {
         exclude group: 'org.hibernate'
         exclude group: 'co.paralleluniverse'
     }

@@ -19,29 +19,18 @@
 
 package nl.nuts.discovery.api
 
-import net.corda.core.CordaOID
-import net.corda.core.crypto.Crypto
 import net.corda.core.identity.CordaX500Name
-import net.corda.core.internal.CertRole
-import net.corda.core.serialization.serialize
-import net.corda.nodeapi.internal.crypto.ContentSignerBuilder
-import org.bouncycastle.asn1.ASN1ObjectIdentifier
-import org.bouncycastle.asn1.DERUTF8String
-import org.bouncycastle.asn1.x500.style.BCStyle
-import org.bouncycastle.pkcs.PKCS10CertificationRequest
-import org.bouncycastle.pkcs.jcajce.JcaPKCS10CertificationRequestBuilder
+import nl.nuts.discovery.TestUtils
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.context.SpringBootTest
-import org.springframework.boot.test.web.client.TestRestTemplate
-import org.springframework.test.context.junit4.SpringRunner
-
 import org.springframework.boot.test.context.SpringBootTest.WebEnvironment.RANDOM_PORT
+import org.springframework.boot.test.web.client.TestRestTemplate
 import org.springframework.http.HttpEntity
 import org.springframework.http.HttpHeaders
 import org.springframework.http.HttpMethod
-import org.springframework.http.HttpRequest
+import org.springframework.test.context.junit4.SpringRunner
 import kotlin.test.assertEquals
 import kotlin.test.assertNotNull
 
@@ -68,7 +57,7 @@ class CertificateApiIntegrationTest {
     @Test
     fun`valid request returns X500Name as result`() {
         val subject = CordaX500Name.parse("O=Org,L=Gr,C=NL")
-        val req = createCertificateRequest(subject)
+        val req = TestUtils.createCertificateRequest(subject)
 
         val entity = HttpEntity(req.encoded, headers())
 
@@ -82,7 +71,7 @@ class CertificateApiIntegrationTest {
     @Test
     fun`valid request will be signed and can be downloaded`() {
         val subject = CordaX500Name.parse("O=Org,L=Gr,C=NL")
-        val req = createCertificateRequest(subject)
+        val req = TestUtils.createCertificateRequest(subject)
 
         val entity = HttpEntity(req.encoded, headers())
 
@@ -99,17 +88,5 @@ class CertificateApiIntegrationTest {
         headers.add("Client-Version", "1")
 
         return headers
-    }
-
-    private fun createCertificateRequest(subject : CordaX500Name) : PKCS10CertificationRequest {
-        val signatureScheme = Crypto.RSA_SHA256
-        val keyPair = Crypto.generateKeyPair(Crypto.RSA_SHA256)
-        val email = "a@b.com"
-
-        val signer = ContentSignerBuilder.build(signatureScheme, keyPair.private, Crypto.findProvider(signatureScheme.providerName))
-        return JcaPKCS10CertificationRequestBuilder(subject.x500Principal, keyPair.public)
-                .addAttribute(BCStyle.E, DERUTF8String(email))
-                .addAttribute(ASN1ObjectIdentifier(CordaOID.X509_EXTENSION_CORDA_ROLE), CertRole.NODE_CA)
-                .build(signer)
     }
 }

@@ -20,8 +20,13 @@
 package nl.nuts.discovery.service
 
 import net.corda.core.identity.CordaX500Name
+import net.corda.core.internal.signWithCert
+import net.corda.core.node.NetworkParameters
 import net.corda.nodeapi.internal.crypto.CertificateType
 import net.corda.nodeapi.internal.crypto.X509Utilities
+import net.corda.nodeapi.internal.network.NetworkMap
+import net.corda.nodeapi.internal.network.SignedNetworkMap
+import net.corda.nodeapi.internal.network.SignedNetworkParameters
 import org.bouncycastle.pkcs.PKCS10CertificationRequest
 import org.bouncycastle.pkcs.jcajce.JcaPKCS10CertificationRequest
 import org.bouncycastle.util.io.pem.PemReader
@@ -94,6 +99,15 @@ class LocalCertificateAndKeyService : CertificateAndKeyService {
 
     override fun intermediateCertificate() : X509Certificate {
         return X509Utilities.loadCertificateFromPEMFile(Paths.get(this.javaClass.classLoader.getResource(nutsDiscoveryProperties.intermediateCertPath).toURI()))
+    }
+
+    override fun signNetworkMap(networkMap: NetworkMap): SignedNetworkMap {
+        return networkMap.signWithCert(networkMapKey(), networkMapCertificate())
+    }
+
+
+    override fun signNetworkParams(networkParams: NetworkParameters): SignedNetworkParameters {
+        return networkParams.signWithCert(networkMapKey(), networkMapCertificate())
     }
 
     private fun networkMapKey() : PrivateKey {
