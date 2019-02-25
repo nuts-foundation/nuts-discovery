@@ -57,15 +57,11 @@ apply plugin: 'io.spring.dependency-management'
 // exclude unneeded libs
 configurations {
     implementation {
-        exclude group: 'net.corda', module: 'corda-shell'
-        exclude group: 'net.corda', module: 'corda-tools-cliutils'
         exclude group: 'com.github.bft-smart', module: 'library'
         exclude group: 'org.apache.logging.log4j', module: 'log4j-slf4j-impl'
     }
 
     testImplementation {
-        exclude group: 'net.corda', module: 'corda-shell'
-        exclude group: 'net.corda', module: 'corda-tools-cliutils'
         exclude group: 'com.github.bft-smart', module: 'library'
         exclude group: 'org.apache.logging.log4j', module: 'log4j-slf4j-impl'
     }
