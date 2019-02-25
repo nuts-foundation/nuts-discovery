@@ -81,6 +81,7 @@ dependencies {
     implementation("net.corda:corda-node:$corda") {
         exclude group: 'org.hibernate'
         exclude group: 'co.paralleluniverse'
+        exclude group: 'com.github.corda.crash'
     }
     
     // Use the Kotlin test library

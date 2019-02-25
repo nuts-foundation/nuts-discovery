@@ -35,7 +35,10 @@ import org.springframework.boot.context.properties.ConfigurationProperties
 import org.springframework.context.annotation.Configuration
 import org.springframework.context.annotation.Profile
 import org.springframework.stereotype.Service
+import java.io.File
+import java.lang.IllegalArgumentException
 import java.nio.file.Files
+import java.nio.file.Path
 import java.nio.file.Paths
 import java.security.KeyFactory
 import java.security.KeyPair
@@ -43,6 +46,8 @@ import java.security.PrivateKey
 import java.security.cert.X509Certificate
 import java.security.spec.PKCS8EncodedKeySpec
 import javax.annotation.PostConstruct
+import kotlin.reflect.KVisibility
+import kotlin.reflect.full.extensionReceiverParameter
 
 @Configuration
 @ConfigurationProperties("nuts.discovery")
@@ -90,15 +95,15 @@ class LocalCertificateAndKeyService : CertificateAndKeyService {
     }
 
     override fun rootCertificate() : X509Certificate {
-        return X509Utilities.loadCertificateFromPEMFile(Paths.get(this.javaClass.classLoader.getResource(nutsDiscoveryProperties.rootCertPath).toURI()))
+        return X509Utilities.loadCertificateFromPEMFile(loadResourceWithNullCheck(nutsDiscoveryProperties.rootCertPath))
     }
 
     override fun networkMapCertificate() : X509Certificate {
-        return X509Utilities.loadCertificateFromPEMFile(Paths.get(this.javaClass.classLoader.getResource(nutsDiscoveryProperties.networkMapCertPath).toURI()))
+        return X509Utilities.loadCertificateFromPEMFile(loadResourceWithNullCheck(nutsDiscoveryProperties.networkMapCertPath))
     }
 
     override fun intermediateCertificate() : X509Certificate {
-        return X509Utilities.loadCertificateFromPEMFile(Paths.get(this.javaClass.classLoader.getResource(nutsDiscoveryProperties.intermediateCertPath).toURI()))
+        return X509Utilities.loadCertificateFromPEMFile(loadResourceWithNullCheck(nutsDiscoveryProperties.intermediateCertPath))
     }
 
     override fun signNetworkMap(networkMap: NetworkMap): SignedNetworkMap {
@@ -110,8 +115,45 @@ class LocalCertificateAndKeyService : CertificateAndKeyService {
         return networkParams.signWithCert(networkMapKey(), networkMapCertificate())
     }
 
+    override fun validate(): List<String> {
+        val configProblemSet = mutableMapOf(
+                Pair(::rootCertificate, "root certificate"),
+                Pair(::intermediateCertificate, "intermediate certificate"),
+                Pair(::networkMapCertificate, "network map certificate"),
+                Pair(::intermediateKeyPair, "intermediate key"),
+                Pair(::networkMapKey, "network map key")
+            )
+
+        val configProblems = mutableListOf<String>()
+
+        configProblemSet.forEach { f, m ->
+            try {
+                f.invoke()
+            } catch (e:Exception) {
+                configProblems.add("Failed to load $m, cause: ${e.message}")
+            }
+        }
+
+        return configProblems
+    }
+
+    /**
+     * Check both file path on disk and in resources (test)
+     */
+    private fun loadResourceWithNullCheck(location:String) : Path {
+
+        if (File(location).exists()) {
+            return Paths.get(File(location).toURI())
+        }
+
+        val resource = javaClass.classLoader.getResource("$location") ?: throw IllegalArgumentException("resource not found at ${location}")
+
+        val uri = resource.toURI()
+        return Paths.get(uri)
+    }
+
     private fun networkMapKey() : PrivateKey {
-        val reader = PemReader(Files.newBufferedReader(Paths.get(this.javaClass.classLoader.getResource(nutsDiscoveryProperties.networkMapKeyPath).toURI())))
+        val reader = PemReader(Files.newBufferedReader(loadResourceWithNullCheck(nutsDiscoveryProperties.networkMapKeyPath)))
         val key = reader.readPemObject()
 
         reader.close()
@@ -121,7 +163,7 @@ class LocalCertificateAndKeyService : CertificateAndKeyService {
     }
 
     private fun intermediateKeyPair() : KeyPair {
-        val keyReader = PemReader(Files.newBufferedReader(Paths.get(this.javaClass.classLoader.getResource(nutsDiscoveryProperties.intermediateKeyPath).toURI())))
+        val keyReader = PemReader(Files.newBufferedReader(loadResourceWithNullCheck(nutsDiscoveryProperties.intermediateKeyPath)))
         val key = keyReader.readPemObject()
 
         keyReader.close()

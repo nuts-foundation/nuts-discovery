@@ -24,6 +24,8 @@ import net.corda.core.serialization.internal.nodeSerializationEnv
 import net.corda.node.serialization.amqp.AMQPServerSerializationScheme
 import net.corda.serialization.internal.AMQP_P2P_CONTEXT
 import net.corda.serialization.internal.SerializationFactoryImpl
+import nl.nuts.discovery.service.LocalCertificateAndKeyService
+import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.autoconfigure.SpringBootApplication
 import org.springframework.boot.context.properties.EnableConfigurationProperties
 import org.springframework.boot.runApplication
@@ -33,12 +35,27 @@ import javax.annotation.PostConstruct
 @SpringBootApplication
 class NutsDiscovery {
 
+    @Autowired
+    lateinit var certificateAndKeyService: LocalCertificateAndKeyService
 
     /**
      * Contains Corda magic to enable Object serialization
      */
     @PostConstruct
     fun init() {
+        val problems = certificateAndKeyService.validate()
+
+        if (!problems.isEmpty()) {
+
+            println("Nuts Discovery failed to start, found ${problems.size} problems:")
+
+            problems.forEach{ p ->
+                println(p)
+            }
+
+            System.exit(1)
+        }
+
         if (nodeSerializationEnv == null) {
             nodeSerializationEnv = SerializationEnvironment.with(
                     SerializationFactoryImpl().apply {

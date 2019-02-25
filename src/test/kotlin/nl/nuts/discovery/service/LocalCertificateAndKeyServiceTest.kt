@@ -27,6 +27,7 @@ import org.junit.runner.RunWith
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.context.SpringBootTest
 import org.springframework.test.context.junit4.SpringRunner
+import kotlin.test.assertEquals
 import kotlin.test.assertNotNull
 
 
@@ -66,5 +67,10 @@ class LocalCertificateAndKeyServiceTest {
 
         assertNotNull(certificate)
         assertNotNull(certificate!!.signature)
+    }
+
+    @Test
+    fun `service validates with existing certificates and keys`() {
+        assertEquals(0, service.validate().size)
     }
 }

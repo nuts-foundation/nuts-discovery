@@ -63,4 +63,9 @@ interface CertificateAndKeyService {
      * Sign the network map params with the network map key
      */
     fun signNetworkParams(networkParams: NetworkParameters): SignedNetworkParameters
+
+    /**
+     * Validate the current setup, returns causes if configuration is incorrect
+     */
+    fun validate() : List<String>
 }
