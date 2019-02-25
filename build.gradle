@@ -37,13 +37,16 @@ plugins {
 }
 
 ext {
-    corda = '3.3-corda'
+    corda = '4.0-RC04'
 }
 
 repositories {
     mavenLocal()
     mavenCentral()
     jcenter()
+    maven {
+        url "https://ci-artifactory.corda.r3cev.com/artifactory/corda-releases/"
+    }
 }
 
 apply plugin: 'kotlin'
@@ -75,9 +78,10 @@ dependencies {
     implementation "com.fasterxml.jackson.module:jackson-module-kotlin"
 
     // corda
-    implementation("net.corda:corda-node-api:$corda") {
+    implementation("net.corda:corda-node:$corda") {
         exclude group: 'org.hibernate'
         exclude group: 'co.paralleluniverse'
+        exclude group: 'com.github.corda.crash'
     }
     
     // Use the Kotlin test library
@@ -86,10 +90,23 @@ dependencies {
     // Use the Kotlin JUnit integration
     testImplementation 'org.jetbrains.kotlin:kotlin-test-junit'
 
-    testImplementation("org.junit.jupiter:junit-jupiter-engine:5.4.0")
+    testImplementation("net.corda:corda-test-utils:$corda") {
+        exclude group: 'com.github.corda.crash'
+    }
+
     testImplementation("io.mockk:mockk:1.9.kotlin12")
+    testImplementation("com.google.guava:guava:27.0-jre")
+    testImplementation('org.springframework.boot:spring-boot-starter-test')
 
     annotationProcessor "org.springframework.boot:spring-boot-configuration-processor"
+}
+
+bootRun {
+    environment SPRING_PROFILES_ACTIVE: environment.SPRING_PROFILES_ACTIVE ?: "default"
+}
+
+test {
+    environment SPRING_PROFILES_ACTIVE: environment.SPRING_PROFILES_ACTIVE ?: "test"
 }
 
 sourceCompatibility = 1.8

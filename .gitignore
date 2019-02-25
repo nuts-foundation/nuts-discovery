@@ -1,6 +1,7 @@
 # Intellij
 .idea
 *.iml
+out
 
 # Sphinx build
 _build
@@ -15,3 +16,6 @@ setup/corda/*.jks
 # gradle
 build
 .gradle
+
+# Project specific
+keys

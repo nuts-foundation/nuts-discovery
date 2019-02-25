@@ -21,11 +21,15 @@ package nl.nuts.discovery.store
 
 import net.corda.core.crypto.SecureHash
 import net.corda.nodeapi.internal.SignedNodeInfo
+import org.springframework.context.annotation.Profile
+import org.springframework.stereotype.Service
 import java.util.*
 
 /**
  * A simple in-memory storage implementation of {@link nl.nuts.discovery.store.NodeRepository}
  */
+@Profile(value = arrayOf("dev", "test", "default"))
+@Service
 class InMemoryRepository : NodeRepository {
 
     val nodeInfoMap = HashMap<SecureHash, SignedNodeInfo>()
@@ -40,5 +44,9 @@ class InMemoryRepository : NodeRepository {
 
     override fun nodeByHash(hash: SecureHash): SignedNodeInfo? {
         return nodeInfoMap[hash]
+    }
+
+    override fun notary() : SignedNodeInfo? {
+        return allNodes().firstOrNull{ it.verified().legalIdentities.any { it.name.commonName?.contains("notary")?: false } }
     }
 }
