@@ -41,14 +41,14 @@ class CertificateApiIntegrationTest {
     lateinit var testRestTemplate : TestRestTemplate
 
     @Test
-    fun `submitting with missing returns 400`() {
+    fun `submitting with missing headers returns 400`() {
         val response = testRestTemplate.postForEntity("/certificate", "", ByteArray::class.java)
 
         assertEquals(400, response.statusCodeValue)
     }
 
     @Test
-    fun `submitting an invalid returns 400`() {
+    fun `submitting an invalid CSR returns 400`() {
         val response = testRestTemplate.exchange("/certificate", HttpMethod.POST, HttpEntity<Any>(headers()), ByteArray::class.java)
 
         assertEquals(400, response.statusCodeValue)
