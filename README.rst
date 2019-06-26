@@ -1,6 +1,5 @@
-**************
 nuts-discovery
-**************
+##############
 
 Discovery service by the Nuts foundation for bootstrapping the network
 
@@ -49,9 +48,19 @@ The server can be started by executing
 
 This requires some files to be present in the *keys* sub-directory. Check :ref:`nuts-discovery-configuration` on how to configure the keys.
 
+README
+******
+
+The readme is auto-generated from a template and uses the documentation to fill in the blanks.
+
+.. code-block:: shell
+
+    ./generate_readme.sh
+
 Documentation
 *************
 
+To generate the documentation, you'll need python3, sphinx and a bunch of other stuff. See :ref:`nuts-documentation-development-documentation`
 The documentation can be build by running
 
 .. code-block:: shell
@@ -60,8 +69,8 @@ The documentation can be build by running
 
 The resulting html will be available from ``docs/_build/html/index.html``
 
-Nuts discovery configuration
-****************************
+Configuration
+=============
 
 Before the *Nuts Discovery Service* can be started a few keys and certificates need to be generated. All OpenSSL commands use config files for the correct generation of certificates and keys. Windows scripts are currently lacking.
 

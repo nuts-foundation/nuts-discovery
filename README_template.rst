@@ -1,6 +1,5 @@
-**************
 nuts-discovery
-**************
+##############
 
 Discovery service by the Nuts foundation for bootstrapping the network
 
@@ -12,6 +11,9 @@ Discovery service by the Nuts foundation for bootstrapping the network
 
 .. include:: docs/pages/development/discovery.rst
     :start-after: .. marker-for-readme
+
+Configuration
+=============
 
 .. include:: docs/pages/configuration/discovery.rst
     :start-after: .. marker-for-readme
