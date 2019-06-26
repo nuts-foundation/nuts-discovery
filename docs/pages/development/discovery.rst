@@ -44,9 +44,19 @@ The server can be started by executing
 
 This requires some files to be present in the *keys* sub-directory. Check :ref:`nuts-discovery-configuration` on how to configure the keys.
 
+README
+******
+
+The readme is auto-generated from a template and uses the documentation to fill in the blanks.
+
+.. code-block:: shell
+
+    ./generate_readme.sh
+
 Documentation
 *************
 
+To generate the documentation, you'll need python3, sphinx and a bunch of other stuff. See :ref:`nuts-documentation-development-documentation`
 The documentation can be build by running
 
 .. code-block:: shell
