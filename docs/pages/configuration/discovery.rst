@@ -2,8 +2,8 @@
 
 .. marker-for-readme
 
-Configuration
-*************
+Nuts discovery configuration
+****************************
 
 Before the *Nuts Discovery Service* can be started a few keys and certificates need to be generated. All OpenSSL commands use config files for the correct generation of certificates and keys. Windows scripts are currently lacking.
 
