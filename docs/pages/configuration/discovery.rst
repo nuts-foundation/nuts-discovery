@@ -9,15 +9,15 @@ Before the *Nuts Discovery Service* can be started a few keys and certificates n
 
 By default it'll try to find the following keys at the given location. All files are in PEM format
 
-=====                                   =======                 ===========
+===================================     ====================    ================================================================================
 Key                                     Default                 Description
-=====                                   =======                 ===========
+===================================     ====================    ================================================================================
 nuts.discovery.rootCertPath             keys/root.crt           Corda root certificate path
 nuts.discovery.intermediateKeyPath      keys/doorman.key        Corda doorman key path, used to sign node csr's
 nuts.discovery.intermediateCertPath     keys/doorman.crt        Corda doorman certificate path
 nuts.discovery.networkMapCertPath       keys/network_map.crt    Corda network map certificate path
 nuts.discovery.networkMapKeyPath        keys/network_map.key    corda network map key path, used to sign network parameters and nodeinfo objects
-=====                                   =======                 ===========
+===================================     ====================    ================================================================================
 
 These locations can be overriden by providing an alternative properties file with the following contents
 
