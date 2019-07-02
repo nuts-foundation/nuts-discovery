@@ -44,6 +44,26 @@ The server can be started by executing
 
 This requires some files to be present in the *keys* sub-directory. Check :ref:`nuts-discovery-configuration` on how to configure the keys.
 
+Docker
+******
+
+Two docker files are available in ``docker/``, the ``Dockerfile-dev`` is targeted at running a Nuts node at your laptop/workstation. It uses the keys and certificates from ``docker/keys``. This is also the place where you can find the ``truststore.jks`` needed for the corda nodes. Both images are build automatically and are hosted on docker hub. The dev-image is tagged as ``latest-dev``.
+
+To build locally
+
+.. code-block:: shell
+
+    docker build . -f docker/Dockerfile
+    docker build . -f docker/Dockerfile-dev
+
+To run the latest dev image:
+
+.. code-block:: shell
+
+    docker run -it -p 8080:8080 nutsfoundation/nuts-discovery:latest-dev
+
+When running the latest non-dev image, make sure all paths from ``docker/application.properties`` are mounted from a volume.
+
 README
 ******
 
