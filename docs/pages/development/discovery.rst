@@ -60,7 +60,13 @@ To run the latest dev image:
 
 .. code-block:: shell
 
-    docker run -it -p 8080:8080 nutsfoundation/nuts-discovery:latest-dev
+    docker run -it -p 8080:8080 --network=nuts --name=discovery --rm nutsfoundation/nuts-discovery:latest-dev
+
+If you haven't created a docker network yet, create one to to able to connect the containers together:
+
+.. code-block:: shell
+
+    docker network create -d bridge nuts
 
 When running the latest non-dev image, make sure all paths from ``docker/application.properties`` are mounted from a volume.
 
