@@ -5,6 +5,7 @@
     <logger name="org.apache" level="WARN" additivity="false"/>
     <logger name="org.springframework" level="WARN" additivity="false"/>
     <logger name="net.corda" level="WARN" additivity="false"/>
+    <logger name="org.hibernate" level="WARN" additivity="false"/>
 
     <appender name="STDOUT" class="ch.qos.logback.core.ConsoleAppender">
         <encoder>
