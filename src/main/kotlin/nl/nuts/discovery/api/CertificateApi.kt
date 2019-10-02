@@ -74,7 +74,7 @@ class CertificateApi {
 
             val certificate = certificateAndKeyService.signedCertificate(name) ?: return ResponseEntity.notFound().build()
 
-            val certPath = X509Utilities.buildCertPath(certificate!!, certificateAndKeyService.intermediateCertificate(), certificateAndKeyService.rootCertificate())
+            val certPath = X509Utilities.buildCertPath(certificate, certificateAndKeyService.intermediateCertificate(), certificateAndKeyService.rootCertificate())
 
             val baos = ByteArrayOutputStream()
             ZipOutputStream(baos).use { zip ->

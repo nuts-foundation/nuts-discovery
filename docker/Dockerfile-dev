@@ -1,10 +1,10 @@
-FROM openjdk:8-jdk-slim as builder
+FROM openjdk:8-alpine as builder
 LABEL maintainer="wout.slakhorst@nuts.nl"
 RUN mkdir /opt/nuts
 COPY / /opt/nuts/
 RUN cd /opt/nuts && ./gradlew bootJar
 
-FROM openjdk:8-jre-slim
+FROM openjdk:8-alpine
 COPY --from=builder /opt/nuts/build/libs/nuts-discovery.jar /opt/nuts/discovery/nuts-discovery.jar
 COPY docker/application.properties /opt/nuts/discovery/
 COPY docker/keys/* /opt/nuts/discovery/keys/

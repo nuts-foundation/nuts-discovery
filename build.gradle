@@ -19,7 +19,7 @@
 buildscript {
     ext {
         kotlinVersion = '1.2.71'
-        springBootVersion = '2.1.2.RELEASE'
+        springBootVersion = '2.1.8.RELEASE'
     }
 
     dependencies {
@@ -37,7 +37,7 @@ plugins {
 }
 
 ext {
-    corda = '4.0-RC04'
+    corda = '4.1'
 }
 
 repositories {
