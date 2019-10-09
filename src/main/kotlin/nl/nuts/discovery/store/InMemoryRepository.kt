@@ -24,6 +24,7 @@ import net.corda.nodeapi.internal.SignedNodeInfo
 import org.springframework.context.annotation.Profile
 import org.springframework.stereotype.Service
 import java.util.*
+import javax.security.auth.x500.X500Principal
 
 /**
  * A simple in-memory storage implementation of {@link nl.nuts.discovery.store.NodeRepository}
@@ -32,10 +33,11 @@ import java.util.*
 @Service
 class InMemoryRepository : NodeRepository {
 
-    val nodeInfoMap = HashMap<SecureHash, SignedNodeInfo>()
+    val nodeInfoMap = HashMap<X500Principal, SignedNodeInfo>()
 
     override fun addNode(signedNodeInfo: SignedNodeInfo) {
-        nodeInfoMap[signedNodeInfo.raw.hash] = signedNodeInfo
+        val ni = signedNodeInfo.verified()
+        nodeInfoMap[ni.legalIdentitiesAndCerts[0].name.x500Principal] = signedNodeInfo
     }
 
     override fun allNodes(): List<SignedNodeInfo> {
@@ -43,10 +45,10 @@ class InMemoryRepository : NodeRepository {
     }
 
     override fun nodeByHash(hash: SecureHash): SignedNodeInfo? {
-        return nodeInfoMap[hash]
+        return nodeInfoMap.values.find { it.raw.hash == hash }
     }
 
     override fun notary() : SignedNodeInfo? {
-        return allNodes().firstOrNull{ it.verified().legalIdentities.any { it.name.commonName?.contains("notary")?: false } }
+        return allNodes().firstOrNull{ it.verified().legalIdentitiesAndCerts.any { it.name.commonName?.contains("notary")?: false } }
     }
 }

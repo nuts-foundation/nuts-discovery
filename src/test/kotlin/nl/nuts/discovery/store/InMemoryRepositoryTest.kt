@@ -26,6 +26,7 @@ import net.corda.core.crypto.SecureHash
 import net.corda.nodeapi.internal.SignedNodeInfo
 import org.junit.Before
 import org.junit.Test
+import javax.security.auth.x500.X500Principal
 import kotlin.test.assertEquals
 import kotlin.test.assertNotNull
 import kotlin.test.assertNull
@@ -37,6 +38,9 @@ class InMemoryRepositoryTest {
     @MockK
     lateinit var node: SignedNodeInfo
 
+    @MockK
+    lateinit var node2: SignedNodeInfo
+
     @Before
     fun setup() {
         repo = InMemoryRepository()
@@ -45,9 +49,8 @@ class InMemoryRepositoryTest {
 
     @Test
     fun `an added node can be retrieved by its hash`() {
-        every {
-            node.raw.hash
-        } returns SecureHash.allOnesHash
+        every { node.raw.hash } returns SecureHash.allOnesHash
+        every { node.verified().legalIdentitiesAndCerts[0].name.x500Principal } returns X500Principal("C=NL,O=Nuts,L=Eibergen,CN=1")
 
         repo.addNode(node)
 
@@ -55,10 +58,22 @@ class InMemoryRepositoryTest {
     }
 
     @Test
+    fun `adding a different node with same CN replaces earlier node`() {
+        every { node.raw.hash } returns SecureHash.allOnesHash
+        every { node2.raw.hash } returns SecureHash.zeroHash
+        every { node.verified().legalIdentitiesAndCerts[0].name.x500Principal } returns X500Principal("C=NL,O=Nuts,L=Eibergen,CN=1")
+        every { node2.verified().legalIdentitiesAndCerts[0].name.x500Principal } returns X500Principal("C=NL,O=Nuts,L=Eibergen,CN=1")
+
+        repo.addNode(node)
+        repo.addNode(node2)
+
+        assertNull(repo.nodeByHash(SecureHash.allOnesHash))
+    }
+
+    @Test
     fun `allNodes returns all nodes`() {
-        every {
-            node.raw.hash
-        } returns SecureHash.allOnesHash
+        every {node.raw.hash} returns SecureHash.allOnesHash
+        every { node.verified().legalIdentitiesAndCerts[0].name.x500Principal } returns X500Principal("C=NL,O=Nuts,L=Eibergen,CN=1")
 
         repo.addNode(node)
 
