@@ -22,7 +22,6 @@ package nl.nuts.discovery.api
 import net.corda.core.identity.CordaX500Name
 import net.corda.nodeapi.internal.crypto.X509Utilities
 import nl.nuts.discovery.service.CertificateAndKeyService
-import nl.nuts.discovery.service.LocalCertificateAndKeyService
 import org.bouncycastle.pkcs.PKCS10CertificationRequest
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
