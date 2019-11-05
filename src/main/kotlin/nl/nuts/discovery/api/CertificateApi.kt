@@ -30,6 +30,7 @@ import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.*
 import java.io.ByteArrayOutputStream
+import java.io.OutputStream
 import java.util.zip.ZipEntry
 import java.util.zip.ZipOutputStream
 
@@ -77,7 +78,7 @@ class CertificateApi {
             val certPath = X509Utilities.buildCertPath(certificate, certificateAndKeyService.intermediateCertificate(), certificateAndKeyService.rootCertificate())
 
             val baos = ByteArrayOutputStream()
-            ZipOutputStream(baos).use { zip ->
+            ZipOutputStream(baos as OutputStream?).use { zip ->
                 listOf(X509Utilities.CORDA_CLIENT_CA, X509Utilities.CORDA_INTERMEDIATE_CA, X509Utilities.CORDA_ROOT_CA).zip(certPath.certificates).forEach {
                     zip.putNextEntry(ZipEntry("${it.first}.cer"))
                     zip.write(it.second.encoded)
