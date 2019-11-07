@@ -36,7 +36,7 @@ import kotlin.test.assertNull
 @SpringBootTest
 class LocalCertificateAndKeyServiceTest {
     @Autowired
-    lateinit var service : CertificateAndKeyService
+    lateinit var service: CertificateAndKeyService
 
     @Before
     fun setup() {
@@ -71,6 +71,29 @@ class LocalCertificateAndKeyServiceTest {
         assertNotNull(pendingCertificate)
         // @Wout: signature is not null, how can this be?
         // assertNull(pendingCertificate!!.signature)
+    }
+
+    @Test
+    fun `a pending signature request can be retrieved as a Node`() {
+        val subject = CordaX500Name.parse("O=Org,L=Gr,C=NL")
+        val req = TestUtils.createCertificateRequest(subject)
+
+        service.submitSigningRequest(req)
+        val nodes = service.pendingNodes()
+        assertEquals(nodes.size, 1)
+        assertEquals(subject.toString(), nodes[0].name)
+    }
+
+    @Test
+    fun `a signed signature can be retrieved as a Node`() {
+        val subject = CordaX500Name.parse("O=Org,L=Gr,C=NL")
+        val req = TestUtils.createCertificateRequest(subject)
+        service.submitSigningRequest(req)
+        service.signCertificate(subject)
+
+        val nodes = service.signedNodes()
+        assertEquals(nodes.size, 1)
+        assertEquals(subject.toString(), nodes[0].name)
     }
 
     @Test

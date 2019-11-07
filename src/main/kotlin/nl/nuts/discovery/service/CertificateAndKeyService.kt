@@ -80,4 +80,8 @@ interface CertificateAndKeyService {
      * clear all signed nodes and pending requests. Needed for testing purposes
      */
     fun clearAll()
+
+    fun pendingNodes(): List<Node>
+    
+    fun signedNodes(): List<Node>
 }

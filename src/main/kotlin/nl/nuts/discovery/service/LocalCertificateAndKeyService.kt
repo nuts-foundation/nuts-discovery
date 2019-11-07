@@ -52,11 +52,11 @@ import kotlin.reflect.full.extensionReceiverParameter
 @Configuration
 @ConfigurationProperties("nuts.discovery")
 data class NutsDiscoveryProperties(
-        var rootCertPath: String = "",
-        var intermediateCertPath: String = "",
-        var intermediateKeyPath: String = "",
-        var networkMapCertPath: String = "",
-        var networkMapKeyPath: String = ""
+    var rootCertPath: String = "",
+    var intermediateCertPath: String = "",
+    var intermediateKeyPath: String = "",
+    var networkMapCertPath: String = "",
+    var networkMapKeyPath: String = ""
 )
 
 /**
@@ -106,7 +106,7 @@ class LocalCertificateAndKeyService : CertificateAndKeyService {
         return nodeCaCert
     }
 
-    override fun signedCertificate(serial: CordaX500Name) : X509Certificate? {
+    override fun signedCertificate(serial: CordaX500Name): X509Certificate? {
         return certificates[serial]
     }
 
@@ -114,15 +114,15 @@ class LocalCertificateAndKeyService : CertificateAndKeyService {
         return signRequests[serial]
     }
 
-    override fun rootCertificate() : X509Certificate {
+    override fun rootCertificate(): X509Certificate {
         return X509Utilities.loadCertificateFromPEMFile(loadResourceWithNullCheck(nutsDiscoveryProperties.rootCertPath))
     }
 
-    override fun networkMapCertificate() : X509Certificate {
+    override fun networkMapCertificate(): X509Certificate {
         return X509Utilities.loadCertificateFromPEMFile(loadResourceWithNullCheck(nutsDiscoveryProperties.networkMapCertPath))
     }
 
-    override fun intermediateCertificate() : X509Certificate {
+    override fun intermediateCertificate(): X509Certificate {
         return X509Utilities.loadCertificateFromPEMFile(loadResourceWithNullCheck(nutsDiscoveryProperties.intermediateCertPath))
     }
 
@@ -136,19 +136,19 @@ class LocalCertificateAndKeyService : CertificateAndKeyService {
 
     override fun validate(): List<String> {
         val configProblemSet = mutableMapOf(
-                Pair(::rootCertificate, "root certificate"),
-                Pair(::intermediateCertificate, "intermediate certificate"),
-                Pair(::networkMapCertificate, "network map certificate"),
-                Pair(::intermediateKeyPair, "intermediate key"),
-                Pair(::networkMapKey, "network map key")
-            )
+            Pair(::rootCertificate, "root certificate"),
+            Pair(::intermediateCertificate, "intermediate certificate"),
+            Pair(::networkMapCertificate, "network map certificate"),
+            Pair(::intermediateKeyPair, "intermediate key"),
+            Pair(::networkMapKey, "network map key")
+        )
 
         val configProblems = mutableListOf<String>()
 
         configProblemSet.forEach { f, m ->
             try {
                 f.invoke()
-            } catch (e:Exception) {
+            } catch (e: Exception) {
                 configProblems.add("Failed to load $m, cause: ${e.message}")
             }
         }
@@ -159,19 +159,20 @@ class LocalCertificateAndKeyService : CertificateAndKeyService {
     /**
      * Check both file path on disk and in resources (test)
      */
-    private fun loadResourceWithNullCheck(location:String) : Path {
+    private fun loadResourceWithNullCheck(location: String): Path {
 
         if (File(location).exists()) {
             return Paths.get(File(location).toURI())
         }
 
-        val resource = javaClass.classLoader.getResource("$location") ?: throw IllegalArgumentException("resource not found at ${location}")
+        val resource = javaClass.classLoader.getResource("$location")
+            ?: throw IllegalArgumentException("resource not found at ${location}")
 
         val uri = resource.toURI()
         return Paths.get(uri)
     }
 
-    private fun networkMapKey() : PrivateKey {
+    private fun networkMapKey(): PrivateKey {
         val reader = PemReader(Files.newBufferedReader(loadResourceWithNullCheck(nutsDiscoveryProperties.networkMapKeyPath)))
         val key = reader.readPemObject()
 
@@ -181,7 +182,7 @@ class LocalCertificateAndKeyService : CertificateAndKeyService {
         return kf.generatePrivate(PKCS8EncodedKeySpec(key.content))
     }
 
-    private fun intermediateKeyPair() : KeyPair {
+    private fun intermediateKeyPair(): KeyPair {
         val keyReader = PemReader(Files.newBufferedReader(loadResourceWithNullCheck(nutsDiscoveryProperties.intermediateKeyPath)))
         val key = keyReader.readPemObject()
 
@@ -196,5 +197,13 @@ class LocalCertificateAndKeyService : CertificateAndKeyService {
     override fun clearAll() {
         certificates.clear()
         signRequests.clear()
+    }
+
+    override fun pendingNodes(): List<Node> {
+        return signRequests.map { Node(it.key.toString(), false) }
+    }
+
+    override fun signedNodes(): List<Node> {
+        return certificates.map { Node(it.key.toString(), true) }
     }
 }
