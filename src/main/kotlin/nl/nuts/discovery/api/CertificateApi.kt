@@ -72,7 +72,16 @@ class CertificateApi {
             logger.info("Received certificate download request for: $requestId")
             val name = CordaX500Name.parse(requestId)
 
-            val certificate = certificateAndKeyService.signedCertificate(name) ?: return ResponseEntity.notFound().build()
+            // certificate signed?
+            val certificate = certificateAndKeyService.signedCertificate(name)
+                // certificate pending?
+                ?: return if (certificateAndKeyService.pendingCertificate(name) != null) {
+                    // try later
+                    ResponseEntity.noContent().build()
+                } else {
+                    // nope, don't try again.
+                    ResponseEntity.status(403).build()
+                }
 
             val certPath = X509Utilities.buildCertPath(certificate, certificateAndKeyService.intermediateCertificate(), certificateAndKeyService.rootCertificate())
 

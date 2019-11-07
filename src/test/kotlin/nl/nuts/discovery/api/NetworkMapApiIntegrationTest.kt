@@ -170,6 +170,7 @@ class NetworkMapApiIntegrationTest {
 
         val req = TestUtils.createCertificateRequest(subject, nodeKeyPair)
         certificateAndKeyService.submitSigningRequest(req)
+        certificateAndKeyService.signCertificate(subject)
         val nodeCertificate = certificateAndKeyService.signedCertificate(subject)!!
 
         val identityCertificate = X509Utilities.createCertificate(CertificateType.LEGAL_IDENTITY, nodeCertificate, nodeKeyPair, subject.x500Principal, identityKeyPair.public)

@@ -34,9 +34,16 @@ interface CertificateAndKeyService {
     fun submitSigningRequest(request: PKCS10CertificationRequest)
 
     /**
+     * Sign a certificate based on the name
+     */
+    fun signCertificate(serial: CordaX500Name) : X509Certificate?
+
+    /**
      * Retrieve a signed certificate based on the name or null if not found.
      */
     fun signedCertificate(serial: CordaX500Name) : X509Certificate?
+
+    fun pendingCertificate(serial: CordaX500Name) : PKCS10CertificationRequest?
 
     /**
      * Get the root certificate as configured in the Spring properties
@@ -68,4 +75,9 @@ interface CertificateAndKeyService {
      * Validate the current setup, returns causes if configuration is incorrect
      */
     fun validate() : List<String>
+
+    /**
+     * clear all signed nodes and pending requests. Needed for testing purposes
+     */
+    fun clearAll()
 }
