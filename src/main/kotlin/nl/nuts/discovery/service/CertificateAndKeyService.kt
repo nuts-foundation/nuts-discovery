@@ -81,7 +81,7 @@ interface CertificateAndKeyService {
      */
     fun clearAll()
 
-    fun pendingNodes(): List<Node>
-    
-    fun signedNodes(): List<Node>
+    fun pendingSignRequests(): List<SignRequest>
+
+    fun signedCertificates(): List<SignRequest>
 }

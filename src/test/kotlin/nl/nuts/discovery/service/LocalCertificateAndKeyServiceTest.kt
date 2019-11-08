@@ -74,26 +74,26 @@ class LocalCertificateAndKeyServiceTest {
     }
 
     @Test
-    fun `a pending signature request can be retrieved as a Node`() {
+    fun `a pending requests request can be retrieved`() {
         val subject = CordaX500Name.parse("O=Org,L=Gr,C=NL")
         val req = TestUtils.createCertificateRequest(subject)
 
         service.submitSigningRequest(req)
-        val nodes = service.pendingNodes()
-        assertEquals(nodes.size, 1)
-        assertEquals(subject.toString(), nodes[0].name)
+        val pendingRequests = service.pendingSignRequests()
+        assertEquals(pendingRequests.size, 1)
+        assertEquals(subject, CordaX500Name.parse(pendingRequests[0].name))
     }
 
     @Test
-    fun `a signed signature can be retrieved as a Node`() {
+    fun `a signed signature can be retrieved`() {
         val subject = CordaX500Name.parse("O=Org,L=Gr,C=NL")
         val req = TestUtils.createCertificateRequest(subject)
         service.submitSigningRequest(req)
         service.signCertificate(subject)
 
-        val nodes = service.signedNodes()
-        assertEquals(nodes.size, 1)
-        assertEquals(subject.toString(), nodes[0].name)
+        val certs = service.signedCertificates()
+        assertEquals(certs.size, 1)
+        assertEquals(subject, CordaX500Name.parse(certs[0].name))
     }
 
     @Test

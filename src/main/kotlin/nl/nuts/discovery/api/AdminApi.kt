@@ -1,10 +1,10 @@
 package nl.nuts.discovery.api
 
-import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import net.corda.core.identity.CordaX500Name
-import net.corda.core.serialization.serialize
+import net.corda.core.node.NodeInfo
 import nl.nuts.discovery.service.CertificateAndKeyService
-import nl.nuts.discovery.service.Node
+import nl.nuts.discovery.service.SignRequest
+import nl.nuts.discovery.store.NodeRepository
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Autowired
@@ -24,23 +24,26 @@ class AdminApi {
     @Autowired
     lateinit var certificateAndKeyService: CertificateAndKeyService
 
-    @RequestMapping("/nodes/pending", method = [RequestMethod.GET], produces = [MediaType.APPLICATION_JSON_VALUE])
-    fun handleListPendingRequests(): ResponseEntity<List<Node>> {
-        logger.debug("listing pending node requests")
-        val list = certificateAndKeyService.pendingNodes()
+    @Autowired
+    lateinit var nodeRepo: NodeRepository
+
+    @RequestMapping("/certificates/signrequests", method = [RequestMethod.GET], produces = [MediaType.APPLICATION_JSON_VALUE])
+    fun handleListSignRequests(): ResponseEntity<List<SignRequest>> {
+        logger.debug("listing pending sign requests")
+        val list = certificateAndKeyService.pendingSignRequests()
         return ResponseEntity(list, HttpStatus.OK)
     }
 
-    @RequestMapping("/nodes", method = [RequestMethod.GET], produces = [MediaType.APPLICATION_JSON_VALUE])
-    fun handleListNodes(): ResponseEntity<List<Node>>{
-        logger.debug("listing signed nodes")
-        val list = certificateAndKeyService.signedNodes()
+    @RequestMapping("/certificates", method = [RequestMethod.GET], produces = [MediaType.APPLICATION_JSON_VALUE])
+    fun handleListCertificates(): ResponseEntity<List<SignRequest>> {
+        logger.debug("listing signed certificates")
+        val list = certificateAndKeyService.signedCertificates()
         return ResponseEntity(list, HttpStatus.OK)
     }
 
-    @RequestMapping("/nodes/{nodeId}/approve")
-    fun handleApproveNodeRequest(@PathVariable("nodeId") nodeId: String): ResponseEntity<Any> {
-        logger.debug("received approve request for: $nodeId")
+    @RequestMapping("/certificates/signrequests/{nodeId}/approve")
+    fun handleApproveSignRequest(@PathVariable("nodeId") nodeId: String): ResponseEntity<Any> {
+        logger.debug("received sign request for: $nodeId")
         try {
             val subject = CordaX500Name.parse(nodeId)
             certificateAndKeyService.signCertificate(subject)
@@ -50,4 +53,5 @@ class AdminApi {
         }
         return ResponseEntity.ok().build()
     }
+
 }

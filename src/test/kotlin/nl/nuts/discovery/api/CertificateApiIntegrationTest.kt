@@ -102,7 +102,7 @@ class CertificateApiIntegrationTest {
         val entity = HttpEntity(req.encoded, headers())
 
         testRestTemplate.exchange("/certificate", HttpMethod.POST, entity, ByteArray::class.java)
-        testRestTemplate.put("/admin/nodes/O=Org,L=Gr,C=NL/approve", null)
+        testRestTemplate.put("/admin/certificates/signrequests/O=Org,L=Gr,C=NL/approve", null)
         val response = testRestTemplate.getForEntity("/certificate/O=Org,L=Gr,C=NL", ByteArray::class.java)
 
         assertEquals(200, response.statusCodeValue)

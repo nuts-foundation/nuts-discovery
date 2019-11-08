@@ -46,8 +46,6 @@ import java.security.PrivateKey
 import java.security.cert.X509Certificate
 import java.security.spec.PKCS8EncodedKeySpec
 import javax.annotation.PostConstruct
-import kotlin.reflect.KVisibility
-import kotlin.reflect.full.extensionReceiverParameter
 
 @Configuration
 @ConfigurationProperties("nuts.discovery")
@@ -70,9 +68,9 @@ class LocalCertificateAndKeyService : CertificateAndKeyService {
     lateinit var nutsDiscoveryProperties: NutsDiscoveryProperties
 
     // map of signed certificates
-    lateinit var certificates: MutableMap<CordaX500Name, X509Certificate>
+    lateinit var certificates: MutableMap<CordaX500Name, SignRequest>
     // map with pending signing requests
-    lateinit var signRequests: MutableMap<CordaX500Name, PKCS10CertificationRequest>
+    lateinit var signRequests: MutableMap<CordaX500Name, SignRequest>
 
     @PostConstruct
     fun init() {
@@ -82,14 +80,14 @@ class LocalCertificateAndKeyService : CertificateAndKeyService {
 
     override fun submitSigningRequest(request: PKCS10CertificationRequest) {
         val name = CordaX500Name.parse(request.subject.toString())
-        signRequests[name] = request
+        signRequests[name] = SignRequest(request)
     }
 
     override fun signCertificate(serial: CordaX500Name): X509Certificate? {
         val request = signRequests[serial] ?: return null
 
-        val pkcs10 = JcaPKCS10CertificationRequest(request)
-        val name = CordaX500Name.parse(request.subject.toString())
+        val pkcs10 = JcaPKCS10CertificationRequest(request.request)
+        val name = CordaX500Name.parse(request.request!!.subject.toString())
         val nodeCaCert = X509Utilities.createCertificate(
             CertificateType.NODE_CA,
             intermediateCertificate(),
@@ -98,8 +96,11 @@ class LocalCertificateAndKeyService : CertificateAndKeyService {
             pkcs10.publicKey,
             nameConstraints = null)
 
+        request.certificate = nodeCaCert
+        request.approved = true
+
         // Add cert to signed certificates
-        certificates[name] = nodeCaCert
+        certificates[name] = request
 
         // remove csr from pending requests
         signRequests.remove(serial)
@@ -107,11 +108,11 @@ class LocalCertificateAndKeyService : CertificateAndKeyService {
     }
 
     override fun signedCertificate(serial: CordaX500Name): X509Certificate? {
-        return certificates[serial]
+        return certificates[serial]?.certificate
     }
 
     override fun pendingCertificate(serial: CordaX500Name): PKCS10CertificationRequest? {
-        return signRequests[serial]
+        return signRequests[serial]?.request
     }
 
     override fun rootCertificate(): X509Certificate {
@@ -199,11 +200,11 @@ class LocalCertificateAndKeyService : CertificateAndKeyService {
         signRequests.clear()
     }
 
-    override fun pendingNodes(): List<Node> {
-        return signRequests.map { Node(it.key.toString(), false) }
+    override fun pendingSignRequests(): List<SignRequest> {
+        return signRequests.values.toList()
     }
 
-    override fun signedNodes(): List<Node> {
-        return certificates.map { Node(it.key.toString(), true) }
+    override fun signedCertificates(): List<SignRequest> {
+        return certificates.values.toList()
     }
 }

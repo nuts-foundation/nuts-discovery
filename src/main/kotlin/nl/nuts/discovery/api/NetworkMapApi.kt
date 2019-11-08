@@ -68,7 +68,8 @@ class NetworkMapApi {
             val signedNodeInfo = ByteArrayInputStream(input).readObject<SignedNodeInfo>()
 
             //verify
-            signedNodeInfo.verified()
+            val nodeInfo = signedNodeInfo.verified()
+            logger.info("received a publish request for legalIdentities: {}", nodeInfo.legalIdentities)
 
             nodeRepository.addNode(signedNodeInfo)
         } catch (e: Exception) {
