@@ -68,4 +68,11 @@ class AdminApiIntegrationTest {
         assertEquals(subject, CordaX500Name.parse(signRequests[0].name))
     }
 
+    @Test
+    fun `without nodes, GET network-map returns an empty json list`() {
+        val nodesRequest = testRestTemplate.getForEntity("/admin/network-map", String::class.java)
+        assertEquals(200, nodesRequest.statusCodeValue)
+        assertEquals("[]", nodesRequest.body)
+    }
+
 }

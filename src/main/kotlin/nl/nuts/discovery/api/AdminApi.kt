@@ -54,4 +54,11 @@ class AdminApi {
         return ResponseEntity.ok().build()
     }
 
+    @RequestMapping("/network-map", method = [RequestMethod.GET], produces = [MediaType.APPLICATION_JSON_VALUE])
+    fun handleListNodes(): ResponseEntity<List<nl.nuts.discovery.service.NodeInfo>> {
+        logger.debug("listing network map status")
+        val list = nodeRepo.allNodes().map { it.verified() }.map { nl.nuts.discovery.service.NodeInfo(it.legalIdentities.first().name, it.addresses) }
+        return ResponseEntity(list, HttpStatus.OK)
+    }
+
 }
