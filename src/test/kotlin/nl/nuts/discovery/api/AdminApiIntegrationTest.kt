@@ -1,9 +1,12 @@
 package nl.nuts.discovery.api
 
+import com.natpryce.hamkrest.containsSubstring
+import junit.framework.Assert.assertTrue
 import net.corda.core.identity.CordaX500Name
 import nl.nuts.discovery.TestUtils
 import nl.nuts.discovery.service.CertificateAndKeyService
 import nl.nuts.discovery.service.SignRequest
+import nl.nuts.discovery.store.NodeRepository
 import org.junit.After
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -24,9 +27,13 @@ class AdminApiIntegrationTest {
     @Autowired
     lateinit var service : CertificateAndKeyService
 
+    @Autowired
+    lateinit var nodeRepo : NodeRepository
+
     @After
     fun clearNodes(){
         service.clearAll()
+        nodeRepo.clearAll()
     }
 
     @Test
@@ -37,16 +44,15 @@ class AdminApiIntegrationTest {
     }
 
     @Test
-    fun `with an approved certificaet, GET certificates returns the certificate`() {
+    fun `with an approved certificate, GET certificates returns the certificate`() {
         val subject = CordaX500Name.parse("O=Org,L=Gr,C=NL")
         val req = TestUtils.createCertificateRequest(subject)
         service.submitSigningRequest(req)
         service.signCertificate(subject)
 
-        val signedCertificates = testRestTemplate.getForObject("/admin/certificates", Array<SignRequest>::class.java).toList()
-        assertNotNull(signedCertificates)
-        assertEquals(1, signedCertificates.size)
-        assertEquals(subject, CordaX500Name.parse(signedCertificates[0].name))
+        val signedCertificates = testRestTemplate.getForEntity("/admin/certificates", String::class.java)
+        assertEquals(200, signedCertificates.statusCodeValue)
+        assertTrue(signedCertificates.body!!.contains("O=Org"))
     }
 
     @Test
@@ -62,10 +68,10 @@ class AdminApiIntegrationTest {
         val req = TestUtils.createCertificateRequest(subject)
         service.submitSigningRequest(req)
 
-        val signRequests = testRestTemplate.getForObject("/admin/certificates/signrequests", Array<SignRequest>::class.java).toList()
-        assertNotNull(signRequests)
-        assertEquals(1, signRequests.size)
-        assertEquals(subject, CordaX500Name.parse(signRequests[0].name))
+        val signRequests = testRestTemplate.getForEntity("/admin/certificates/signrequests", String::class.java)
+        assertEquals(200, signRequests.statusCodeValue)
+        assertTrue(signRequests.body!!.contains("O=Org"))
+        assertTrue(signRequests.body!!.contains("L=Gr"))
     }
 
     @Test

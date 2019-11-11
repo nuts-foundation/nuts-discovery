@@ -98,7 +98,6 @@ class LocalCertificateAndKeyService : CertificateAndKeyService {
             nameConstraints = null)
 
         request.certificate = nodeCaCert
-        request.approved = true
 
         // Add cert to signed certificates
         certificates[name] = request

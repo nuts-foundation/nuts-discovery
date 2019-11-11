@@ -51,4 +51,8 @@ class InMemoryRepository : NodeRepository {
     override fun notary() : SignedNodeInfo? {
         return allNodes().firstOrNull{ it.verified().legalIdentitiesAndCerts.any { it.name.commonName?.contains("notary")?: false } }
     }
+
+    override fun clearAll() {
+        nodeInfoMap.clear()
+    }
 }

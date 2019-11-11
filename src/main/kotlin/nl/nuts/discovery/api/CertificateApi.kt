@@ -37,18 +37,18 @@ import java.util.zip.ZipOutputStream
  * Certificate API for handling Certificate Signing Requests and returning an answer when signed.
  */
 @RestController
-@RequestMapping("/certificate", produces = arrayOf("*/*") ,consumes = arrayOf("*/*"))
+@RequestMapping("/certificate", produces = arrayOf("*/*"), consumes = arrayOf("*/*"))
 class CertificateApi {
     val logger: Logger = LoggerFactory.getLogger(this.javaClass)
 
     @Autowired
     lateinit var certificateAndKeyService: CertificateAndKeyService
 
-    @RequestMapping("", method = arrayOf(RequestMethod.POST), produces = arrayOf("*/*") ,consumes = arrayOf("*/*"))
+    @RequestMapping("", method = arrayOf(RequestMethod.POST), produces = arrayOf("*/*"), consumes = arrayOf("*/*"))
     fun handleCertificateRequest(@RequestBody input: ByteArray,
                                  @RequestHeader("Platform-Version") platformVersion: String,
                                  @RequestHeader("Client-Version") clientVersion: String,
-                                 @RequestHeader("Private-Network-Map", required = false) pnm: String?) : ResponseEntity<String> {
+                                 @RequestHeader("Private-Network-Map", required = false) pnm: String?): ResponseEntity<String> {
         try {
             val pkcs10Request = PKCS10CertificationRequest(input)
 
@@ -60,21 +60,21 @@ class CertificateApi {
             certificateAndKeyService.submitSigningRequest(pkcs10Request)
 
             return ResponseEntity.ok(pkcs10Request.subject.toString())
-        } catch (e:Exception) {
+        } catch (e: Exception) {
             logger.error(e.message, e)
             return ResponseEntity.badRequest().build()
         }
     }
 
     @RequestMapping("/{var}", method = arrayOf(RequestMethod.GET))
-    fun downloadCertificate(@PathVariable("var") requestId: String) : ResponseEntity<ByteArray> {
+    fun downloadCertificate(@PathVariable("var") requestId: String): ResponseEntity<ByteArray> {
         try {
             logger.info("Received certificate download request for: $requestId")
             val name = CordaX500Name.parse(requestId)
 
             // certificate signed?
             val certificate = certificateAndKeyService.signedCertificate(name)
-                // certificate pending?
+            // certificate pending?
                 ?: return if (certificateAndKeyService.pendingCertificate(name) != null) {
                     // try later
                     ResponseEntity.noContent().build()
@@ -94,10 +94,10 @@ class CertificateApi {
                 }
             }
             return ResponseEntity
-                    .ok()
-                    //.contentType(MediaType.parseMediaType("application/zip"))
-                    .header("Content-Disposition", "attachment; filename=\"certificates.zip\"")
-                    .body(baos.toByteArray())
+                .ok()
+                //.contentType(MediaType.parseMediaType("application/zip"))
+                .header("Content-Disposition", "attachment; filename=\"certificates.zip\"")
+                .body(baos.toByteArray())
 
         } catch (e: Exception) {
             logger.error(e.message, e)
