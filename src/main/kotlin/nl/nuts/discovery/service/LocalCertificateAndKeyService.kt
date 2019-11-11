@@ -36,6 +36,7 @@ import org.springframework.context.annotation.Configuration
 import org.springframework.context.annotation.Profile
 import org.springframework.stereotype.Service
 import java.io.File
+import java.io.Reader
 import java.lang.IllegalArgumentException
 import java.nio.file.Files
 import java.nio.file.Path
@@ -174,7 +175,7 @@ class LocalCertificateAndKeyService : CertificateAndKeyService {
     }
 
     private fun networkMapKey(): PrivateKey {
-        val reader = PemReader(Files.newBufferedReader(loadResourceWithNullCheck(nutsDiscoveryProperties.networkMapKeyPath)))
+        val reader = PemReader(Files.newBufferedReader(loadResourceWithNullCheck(nutsDiscoveryProperties.networkMapKeyPath)) as Reader?)
         val key = reader.readPemObject()
 
         reader.close()
