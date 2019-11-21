@@ -1,8 +1,25 @@
 package nl.nuts.discovery.service
 
+import com.fasterxml.jackson.annotation.JsonProperty
 import net.corda.core.identity.CordaX500Name
 import net.corda.core.utilities.NetworkHostAndPort
 
+data class NodeInfo(val nodeInfo: net.corda.core.node.NodeInfo) {
 
-class NodeInfo(val legalEntity: CordaX500Name, val addresses: List<NetworkHostAndPort>){
+    @JsonProperty
+    fun legalName(): CordaX500Name {
+        return nodeInfo.legalIdentities[0].name
+    }
+
+    @JsonProperty
+    fun addresses(): List<NetworkHostAndPort> {
+        return nodeInfo.addresses
+    }
+
+    @JsonProperty
+    fun email(): String {
+        val cert = nodeInfo.legalIdentitiesAndCerts[0].certificate
+        return ""
+    }
+
 }

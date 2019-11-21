@@ -36,7 +36,12 @@ interface CertificateAndKeyService {
     /**
      * Sign a certificate based on the name
      */
-    fun signCertificate(serial: CordaX500Name) : X509Certificate?
+    fun signCertificate(request: PKCS10CertificationRequest): X509Certificate
+
+    /**
+     * Sign a certificate request by its name and add it to the store
+     */
+    fun signAndAddCertificate(serial: CordaX500Name): X509Certificate?
 
     /**
      * Retrieve a signed certificate based on the name or null if not found.

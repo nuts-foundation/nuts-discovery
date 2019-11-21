@@ -11,11 +11,9 @@ import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.http.HttpStatus
 import org.springframework.http.MediaType
 import org.springframework.http.ResponseEntity
-import org.springframework.web.bind.annotation.PathVariable
-import org.springframework.web.bind.annotation.RequestMapping
-import org.springframework.web.bind.annotation.RequestMethod
-import org.springframework.web.bind.annotation.RestController
+import org.springframework.web.bind.annotation.*
 
+@CrossOrigin
 @RestController
 @RequestMapping("/admin")
 class AdminApi {
@@ -41,12 +39,12 @@ class AdminApi {
         return ResponseEntity(list, HttpStatus.OK)
     }
 
-    @RequestMapping("/certificates/signrequests/{nodeId}/approve")
+    @RequestMapping("/certificates/signrequests/{nodeId}/approve", method = [RequestMethod.PUT])
     fun handleApproveSignRequest(@PathVariable("nodeId") nodeId: String): ResponseEntity<Any> {
         logger.debug("received sign request for: $nodeId")
         try {
             val subject = CordaX500Name.parse(nodeId)
-            certificateAndKeyService.signCertificate(subject)
+            certificateAndKeyService.signAndAddCertificate(subject)
         } catch (e: Exception) {
             logger.error(e.message, e)
             return ResponseEntity.badRequest().build()
@@ -57,7 +55,7 @@ class AdminApi {
     @RequestMapping("/network-map", method = [RequestMethod.GET], produces = [MediaType.APPLICATION_JSON_VALUE])
     fun handleListNodes(): ResponseEntity<List<nl.nuts.discovery.service.NodeInfo>> {
         logger.debug("listing network map status")
-        val list = nodeRepo.allNodes().map { it.verified() }.map { nl.nuts.discovery.service.NodeInfo(it.legalIdentities.first().name, it.addresses) }
+        val list = nodeRepo.allNodes().map { nl.nuts.discovery.service.NodeInfo(it.verified()) }
         return ResponseEntity(list, HttpStatus.OK)
     }
 

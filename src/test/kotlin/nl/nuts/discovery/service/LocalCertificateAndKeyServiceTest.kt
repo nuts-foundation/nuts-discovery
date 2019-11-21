@@ -81,7 +81,7 @@ class LocalCertificateAndKeyServiceTest {
         service.submitSigningRequest(req)
         val pendingRequests = service.pendingSignRequests()
         assertEquals(pendingRequests.size, 1)
-        assertEquals(subject, CordaX500Name.parse(pendingRequests[0].name()))
+        assertEquals(subject, pendingRequests[0].legalName())
     }
 
     @Test
@@ -89,11 +89,11 @@ class LocalCertificateAndKeyServiceTest {
         val subject = CordaX500Name.parse("O=Org,L=Gr,C=NL")
         val req = TestUtils.createCertificateRequest(subject)
         service.submitSigningRequest(req)
-        service.signCertificate(subject)
+        service.signAndAddCertificate(subject)
 
         val certs = service.signedCertificates()
         assertEquals(certs.size, 1)
-        assertEquals(subject, CordaX500Name.parse(certs[0].name()))
+        assertEquals(subject, certs[0].legalName())
     }
 
     @Test

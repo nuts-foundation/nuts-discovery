@@ -1,13 +1,11 @@
 package nl.nuts.discovery.api
 
-import com.natpryce.hamkrest.containsSubstring
-import junit.framework.Assert.assertTrue
 import net.corda.core.identity.CordaX500Name
 import nl.nuts.discovery.TestUtils
 import nl.nuts.discovery.service.CertificateAndKeyService
-import nl.nuts.discovery.service.SignRequest
 import nl.nuts.discovery.store.NodeRepository
-import org.junit.After
+import org.json.JSONArray
+import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.springframework.beans.factory.annotation.Autowired
@@ -16,6 +14,7 @@ import org.springframework.boot.test.web.client.TestRestTemplate
 import org.springframework.http.HttpStatus
 import org.springframework.test.context.junit4.SpringRunner
 import kotlin.test.assertEquals
+import kotlin.test.assertTrue
 import kotlin.test.assertNotNull
 
 @RunWith(SpringRunner::class)
@@ -30,7 +29,7 @@ class AdminApiIntegrationTest {
     @Autowired
     lateinit var nodeRepo : NodeRepository
 
-    @After
+    @Before
     fun clearNodes(){
         service.clearAll()
         nodeRepo.clearAll()
@@ -48,7 +47,7 @@ class AdminApiIntegrationTest {
         val subject = CordaX500Name.parse("O=Org,L=Gr,C=NL")
         val req = TestUtils.createCertificateRequest(subject)
         service.submitSigningRequest(req)
-        service.signCertificate(subject)
+        service.signAndAddCertificate(subject)
 
         val signedCertificates = testRestTemplate.getForEntity("/admin/certificates", String::class.java)
         assertEquals(200, signedCertificates.statusCodeValue)
@@ -69,9 +68,13 @@ class AdminApiIntegrationTest {
         service.submitSigningRequest(req)
 
         val signRequests = testRestTemplate.getForEntity("/admin/certificates/signrequests", String::class.java)
+        val body = signRequests.body
+        assertNotNull(body)
+        var arr = JSONArray(body)
+        val obj = arr.getJSONObject(0)
+        assertEquals(obj.getJSONObject("legalName").getString("locality"), "Gr")
+        assertEquals("a@b.com", obj.getString("email"))
         assertEquals(200, signRequests.statusCodeValue)
-        assertTrue(signRequests.body!!.contains("O=Org"))
-        assertTrue(signRequests.body!!.contains("L=Gr"))
     }
 
     @Test
