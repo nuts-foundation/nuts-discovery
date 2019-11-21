@@ -19,14 +19,21 @@
 
 package nl.nuts.discovery.service
 
+import net.corda.core.crypto.Crypto
 import net.corda.core.identity.CordaX500Name
 import net.corda.core.internal.signWithCert
 import net.corda.core.node.NetworkParameters
 import net.corda.nodeapi.internal.crypto.CertificateType
+import net.corda.nodeapi.internal.crypto.ContentSignerBuilder
 import net.corda.nodeapi.internal.crypto.X509Utilities
+import net.corda.nodeapi.internal.crypto.toJca
 import net.corda.nodeapi.internal.network.NetworkMap
 import net.corda.nodeapi.internal.network.SignedNetworkMap
 import net.corda.nodeapi.internal.network.SignedNetworkParameters
+import org.bouncycastle.asn1.ASN1String
+import org.bouncycastle.asn1.x500.style.BCStyle
+import org.bouncycastle.asn1.x509.*
+import org.bouncycastle.operator.jcajce.JcaContentVerifierProviderBuilder
 import org.bouncycastle.pkcs.PKCS10CertificationRequest
 import org.bouncycastle.pkcs.jcajce.JcaPKCS10CertificationRequest
 import org.bouncycastle.util.io.pem.PemReader
@@ -45,7 +52,10 @@ import java.security.KeyFactory
 import java.security.KeyPair
 import java.security.PrivateKey
 import java.security.cert.X509Certificate
+import java.security.cert.X509Extension
 import java.security.spec.PKCS8EncodedKeySpec
+import java.time.Duration
+import java.util.*
 import javax.annotation.PostConstruct
 
 @Configuration
@@ -84,20 +94,13 @@ class LocalCertificateAndKeyService : CertificateAndKeyService {
         signRequests[name] = SignRequest(request)
     }
 
-    override fun signCertificate(serial: CordaX500Name): X509Certificate? {
+    override fun signAndAddCertificate(serial: CordaX500Name): X509Certificate? {
         val request = signRequests[serial] ?: return null
 
-        val pkcs10 = JcaPKCS10CertificationRequest(request.request)
-        val name = CordaX500Name.parse(request.request!!.subject.toString())
-        val nodeCaCert = X509Utilities.createCertificate(
-            CertificateType.NODE_CA,
-            intermediateCertificate(),
-            intermediateKeyPair(),
-            name.x500Principal,
-            pkcs10.publicKey,
-            nameConstraints = null)
+        val nodeCaCert = signCertificate(request.request)
 
         request.certificate = nodeCaCert
+        val name = CordaX500Name.parse(request.request.subject.toString())
 
         // Add cert to signed certificates
         certificates[name] = request
@@ -105,6 +108,49 @@ class LocalCertificateAndKeyService : CertificateAndKeyService {
         // remove csr from pending requests
         signRequests.remove(serial)
         return nodeCaCert
+
+    }
+
+    override fun signCertificate(request: PKCS10CertificationRequest): X509Certificate {
+        val pkcs10 = JcaPKCS10CertificationRequest(request)
+        val name = CordaX500Name.parse(request.subject.toString())
+
+        val issuerCertificate = intermediateCertificate()
+        val certificateType = CertificateType.NODE_CA
+        val issuer = issuerCertificate.subjectX500Principal
+        val issuerKeyPair = intermediateKeyPair()
+        val subject = name.x500Principal
+        val subjectPublicKey = pkcs10.publicKey
+        val validityWindow = X509Utilities.DEFAULT_VALIDITY_WINDOW
+        val window = X509Utilities.getCertificateValidityWindow(validityWindow.first, validityWindow.second, issuerCertificate)
+
+        val signatureScheme = Crypto.findSignatureScheme(issuerKeyPair.private)
+        val provider = Crypto.findProvider(signatureScheme.providerName)
+        val signer = ContentSignerBuilder.build(signatureScheme, issuerKeyPair.private, provider)
+        val builder = X509Utilities.createPartialCertificate(
+            certificateType,
+            issuer,
+            issuerKeyPair.public,
+            subject,
+            subjectPublicKey,
+            window,
+            null,
+            null,
+            null)
+
+
+        val emailAttr = request.getAttributes(BCStyle.EmailAddress)!!.first()
+        val emailASN1String = emailAttr!!.attrValues.getObjectAt(0) as ASN1String
+        val email = emailASN1String.string
+
+        val subjectAltNames = GeneralNames(GeneralName(GeneralName.rfc822Name, email))
+        builder.addExtension(Extension.subjectAlternativeName, false, subjectAltNames)
+
+        return builder.build(signer).run {
+            require(isValidOn(Date())) { "Certificate is not valid at instant now" }
+            require(isSignatureValid(JcaContentVerifierProviderBuilder().build(issuerKeyPair.public))) { "Invalid signature" }
+            toJca()
+        }
     }
 
     override fun signedCertificate(serial: CordaX500Name): X509Certificate? {
