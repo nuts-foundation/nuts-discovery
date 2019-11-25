@@ -1,0 +1,15 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: "{{ include "nuts-discovery.fullname" . }}-test-connection"
+  labels:
+{{ include "nuts-discovery.labels" . | indent 4 }}
+  annotations:
+    "helm.sh/hook": test-success
+spec:
+  containers:
+    - name: wget
+      image: busybox
+      command: ['wget']
+      args:  ['{{ include "nuts-discovery.fullname" . }}:{{ .Values.service.port }}']
+  restartPolicy: Never

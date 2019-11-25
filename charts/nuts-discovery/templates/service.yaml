@@ -1,0 +1,17 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "nuts-discovery.fullname" . }}
+  labels:
+{{ include "nuts-discovery.labels" . | indent 4 }}
+spec:
+  type: {{ .Values.service.type }}
+  loadBalancerIP: {{ .Values.service.loadBalancerIP }}
+  ports:
+    - port: {{ .Values.service.port }}
+      targetPort: http
+      protocol: TCP
+      name: http
+  selector:
+    app.kubernetes.io/name: {{ include "nuts-discovery.name" . }}
+    app.kubernetes.io/instance: {{ .Release.Name }}

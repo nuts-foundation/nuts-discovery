@@ -142,3 +142,22 @@ Run the ``generate_keys.sh`` script to create a ``keys`` folder with all the nee
 
   ./generate_keys.sh
 
+Deployment with Helm
+====================
+
+Installation
+-----------
+
+In the following examples we use the `development` namespace. The values.yaml currently contains values for development.
+
+.. sourcecode:: shell
+
+  helm install --debug --name discovery --namespace development charts/nuts-discovery -f charts/nuts-discovery/values.yaml
+
+Upgrading
+---------
+
+.. sourcecode:: shell
+
+  helm upgrade discovery -f charts/nuts-discovery/values.yaml charts/nuts-discovery --namespace development --recreate-pods
+
