@@ -37,7 +37,7 @@ import java.util.zip.ZipOutputStream
  * Certificate API for handling Certificate Signing Requests and returning an answer when signed.
  */
 @RestController
-@RequestMapping("/certificate", produces = arrayOf("*/*"), consumes = arrayOf("*/*"))
+@RequestMapping("/doorman/certificate", produces = arrayOf("*/*"), consumes = arrayOf("*/*"))
 class CertificateApi {
     val logger: Logger = LoggerFactory.getLogger(this.javaClass)
 

@@ -54,14 +54,14 @@ class CertificateApiIntegrationTest {
 
     @Test
     fun `submitting with missing headers returns 400`() {
-        val response = testRestTemplate.postForEntity("/certificate", "", ByteArray::class.java)
+        val response = testRestTemplate.postForEntity("/doorman/certificate", "", ByteArray::class.java)
 
         assertEquals(400, response.statusCodeValue)
     }
 
     @Test
     fun `submitting an invalid CSR returns 400`() {
-        val response = testRestTemplate.exchange("/certificate", HttpMethod.POST, HttpEntity<Any>(headers()), ByteArray::class.java)
+        val response = testRestTemplate.exchange("/doorman/certificate", HttpMethod.POST, HttpEntity<Any>(headers()), ByteArray::class.java)
 
         assertEquals(400, response.statusCodeValue)
     }
@@ -73,7 +73,7 @@ class CertificateApiIntegrationTest {
 
         val entity = HttpEntity(req.encoded, headers())
 
-        val response = testRestTemplate.exchange("/certificate", HttpMethod.POST, entity, ByteArray::class.java)
+        val response = testRestTemplate.exchange("/doorman/certificate", HttpMethod.POST, entity, ByteArray::class.java)
 
         val bodyBytes = response.body
         assertNotNull(bodyBytes)
@@ -88,8 +88,8 @@ class CertificateApiIntegrationTest {
 
         val entity = HttpEntity(req.encoded, headers())
 
-        testRestTemplate.exchange("/certificate", HttpMethod.POST, entity, ByteArray::class.java)
-        val response = testRestTemplate.getForEntity("/certificate/$orgName", ByteArray::class.java)
+        testRestTemplate.exchange("/doorman/certificate", HttpMethod.POST, entity, ByteArray::class.java)
+        val response = testRestTemplate.getForEntity("/doorman/certificate/$orgName", ByteArray::class.java)
 
         assertEquals(204, response.statusCodeValue)
     }
@@ -101,9 +101,9 @@ class CertificateApiIntegrationTest {
 
         val entity = HttpEntity(req.encoded, headers())
 
-        testRestTemplate.exchange("/certificate", HttpMethod.POST, entity, ByteArray::class.java)
+        testRestTemplate.exchange("/doorman/certificate", HttpMethod.POST, entity, ByteArray::class.java)
         testRestTemplate.put("/admin/certificates/signrequests/O=Org,L=Gr,C=NL/approve", null)
-        val response = testRestTemplate.getForEntity("/certificate/O=Org,L=Gr,C=NL", ByteArray::class.java)
+        val response = testRestTemplate.getForEntity("/doorman/certificate/O=Org,L=Gr,C=NL", ByteArray::class.java)
 
         assertEquals(200, response.statusCodeValue)
         assertNotNull(response.body)
@@ -111,7 +111,7 @@ class CertificateApiIntegrationTest {
 
     @Test
     fun `an unknown certificate will return a 403`(){
-        val response = testRestTemplate.getForEntity("/certificate/O=Org,L=Gr,C=NL", ByteArray::class.java)
+        val response = testRestTemplate.getForEntity("/doorman/certificate/O=Org,L=Gr,C=NL", ByteArray::class.java)
         assertEquals(403, response.statusCodeValue)
         assertNull(response.body)
     }
