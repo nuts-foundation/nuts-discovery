@@ -6,7 +6,6 @@ metadata:
 {{ include "nuts-discovery.labels" . | indent 4 }}
 spec:
   type: {{ .Values.service.type }}
-  loadBalancerIP: {{ .Values.service.loadBalancerIP }}
   ports:
     - port: {{ .Values.service.port }}
       targetPort: http

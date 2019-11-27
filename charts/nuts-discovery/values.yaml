@@ -32,8 +32,7 @@ serviceAccount:
 #  # runAsUser: 1000
 
 service:
-  type: LoadBalancer
-  loadBalancerIP: 34.90.36.239
+  type: NodePort
   port: 80
 
 ingress:
