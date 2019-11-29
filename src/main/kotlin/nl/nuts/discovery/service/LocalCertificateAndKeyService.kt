@@ -111,6 +111,10 @@ class LocalCertificateAndKeyService : CertificateAndKeyService {
 
     }
 
+    /**
+     * Create a certificate, add the email extension with email from the request
+     * and sign it with the Nuts intermediate keyPair.
+     */
     override fun signCertificate(request: PKCS10CertificationRequest): X509Certificate {
         val pkcs10 = JcaPKCS10CertificationRequest(request)
         val name = CordaX500Name.parse(request.subject.toString())

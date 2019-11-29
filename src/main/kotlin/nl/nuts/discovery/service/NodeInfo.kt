@@ -16,11 +16,4 @@ data class NodeInfo(@JsonIgnore val nodeInfo: net.corda.core.node.NodeInfo) {
     fun addresses(): List<NetworkHostAndPort> {
         return nodeInfo.addresses
     }
-
-    @JsonProperty
-    fun email(): String {
-        val cert = nodeInfo.legalIdentitiesAndCerts[0].certificate
-        return ""
-    }
-
 }
