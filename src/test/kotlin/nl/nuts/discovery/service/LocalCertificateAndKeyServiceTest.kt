@@ -69,8 +69,6 @@ class LocalCertificateAndKeyServiceTest {
 
         assertNull(certificate)
         assertNotNull(pendingCertificate)
-        // @Wout: signature is not null, how can this be?
-        // assertNull(pendingCertificate!!.signature)
     }
 
     @Test
