@@ -152,7 +152,7 @@ class NetworkMapApiIntegrationTest {
     }
 
     private fun publishNode(subject : CordaX500Name) :ResponseEntity<ByteArray>  {
-        val signedNodeInfo = subjectToSignedNodeInfo(subject)
+        val signedNodeInfo = TestUtils.subjectToSignedNodeInfo(certificateAndKeyService, subject)
         val entity = HttpEntity(signedNodeInfo.serialize().bytes, headers())
         return  testRestTemplate.exchange("/network-map/publish", HttpMethod.POST, entity, ByteArray::class.java)
     }
@@ -163,20 +163,4 @@ class NetworkMapApiIntegrationTest {
         return headers
     }
 
-    private fun subjectToSignedNodeInfo(subject: CordaX500Name) : SignedNodeInfo {
-        val nodeKeyPair = Crypto.generateKeyPair(Crypto.RSA_SHA256)
-        val identityKeyPair = Crypto.generateKeyPair(Crypto.RSA_SHA256)
-        // needs to generate well known identity certificate
-
-        val req = TestUtils.createCertificateRequest(subject, nodeKeyPair)
-        certificateAndKeyService.submitSigningRequest(req)
-        val nodeCertificate = certificateAndKeyService.signedCertificate(subject)!!
-
-        val identityCertificate = X509Utilities.createCertificate(CertificateType.LEGAL_IDENTITY, nodeCertificate, nodeKeyPair, subject.x500Principal, identityKeyPair.public)
-
-        val certPath = X509Utilities.buildCertPath(identityCertificate, nodeCertificate, certificateAndKeyService.intermediateCertificate(), certificateAndKeyService.rootCertificate())
-        val nodeInfo = TestUtils.createNodeInfo(certPath)
-
-        return nodeInfo.signWith(listOf(identityKeyPair.private))
-    }
 }

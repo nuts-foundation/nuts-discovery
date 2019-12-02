@@ -48,4 +48,9 @@ interface NodeRepository {
      * @return SignedNodeInfo of the first found Notary
      */
     fun notary() : SignedNodeInfo?
+
+    /**
+     * Clear all nodes
+     */
+    fun clearAll()
 }

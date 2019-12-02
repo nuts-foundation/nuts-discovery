@@ -29,13 +29,14 @@ import org.springframework.boot.test.context.SpringBootTest
 import org.springframework.test.context.junit4.SpringRunner
 import kotlin.test.assertEquals
 import kotlin.test.assertNotNull
+import kotlin.test.assertNull
 
 
 @RunWith(SpringRunner::class)
 @SpringBootTest
 class LocalCertificateAndKeyServiceTest {
     @Autowired
-    lateinit var service : CertificateAndKeyService
+    lateinit var service: CertificateAndKeyService
 
     @Before
     fun setup() {
@@ -58,15 +59,39 @@ class LocalCertificateAndKeyServiceTest {
     }
 
     @Test
-    fun `a request for signature is automatically signed`() {
+    fun `a request for signature is not automatically signed`() {
         val subject = CordaX500Name.parse("O=Org,L=Gr,C=NL")
         val req = TestUtils.createCertificateRequest(subject)
 
         service.submitSigningRequest(req)
         val certificate = service.signedCertificate(subject)
+        val pendingCertificate = service.pendingCertificate(subject)
 
-        assertNotNull(certificate)
-        assertNotNull(certificate!!.signature)
+        assertNull(certificate)
+        assertNotNull(pendingCertificate)
+    }
+
+    @Test
+    fun `a pending requests request can be retrieved`() {
+        val subject = CordaX500Name.parse("O=Org,L=Gr,C=NL")
+        val req = TestUtils.createCertificateRequest(subject)
+
+        service.submitSigningRequest(req)
+        val pendingRequests = service.pendingSignRequests()
+        assertEquals(pendingRequests.size, 1)
+        assertEquals(subject, pendingRequests[0].legalName())
+    }
+
+    @Test
+    fun `a signed signature can be retrieved`() {
+        val subject = CordaX500Name.parse("O=Org,L=Gr,C=NL")
+        val req = TestUtils.createCertificateRequest(subject)
+        service.submitSigningRequest(req)
+        service.signAndAddCertificate(subject)
+
+        val certs = service.signedCertificates()
+        assertEquals(certs.size, 1)
+        assertEquals(subject, certs[0].legalName())
     }
 
     @Test

@@ -21,6 +21,9 @@ package nl.nuts.discovery.api
 
 import net.corda.core.identity.CordaX500Name
 import nl.nuts.discovery.TestUtils
+import nl.nuts.discovery.service.CertificateAndKeyService
+import org.junit.After
+import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.springframework.beans.factory.annotation.Autowired
@@ -33,12 +36,21 @@ import org.springframework.http.HttpMethod
 import org.springframework.test.context.junit4.SpringRunner
 import kotlin.test.assertEquals
 import kotlin.test.assertNotNull
+import kotlin.test.assertNull
 
 @RunWith(SpringRunner::class)
 @SpringBootTest(webEnvironment = RANDOM_PORT)
 class CertificateApiIntegrationTest {
     @Autowired
     lateinit var testRestTemplate : TestRestTemplate
+
+    @Autowired
+    lateinit var service : CertificateAndKeyService
+
+    @After
+    fun clearNodes(){
+        service.clearAll()
+    }
 
     @Test
     fun `submitting with missing headers returns 400`() {
@@ -69,17 +81,39 @@ class CertificateApiIntegrationTest {
     }
 
     @Test
-    fun`valid request will be signed and can be downloaded`() {
+    fun`valid request will be pending`() {
+        val orgName = "O=Org,L=Gr,C=NL"
+        val subject = CordaX500Name.parse(orgName)
+        val req = TestUtils.createCertificateRequest(subject)
+
+        val entity = HttpEntity(req.encoded, headers())
+
+        testRestTemplate.exchange("/certificate", HttpMethod.POST, entity, ByteArray::class.java)
+        val response = testRestTemplate.getForEntity("/certificate/$orgName", ByteArray::class.java)
+
+        assertEquals(204, response.statusCodeValue)
+    }
+
+    @Test
+    fun`valid request will be valid after admin approves`() {
         val subject = CordaX500Name.parse("O=Org,L=Gr,C=NL")
         val req = TestUtils.createCertificateRequest(subject)
 
         val entity = HttpEntity(req.encoded, headers())
 
         testRestTemplate.exchange("/certificate", HttpMethod.POST, entity, ByteArray::class.java)
+        testRestTemplate.put("/admin/certificates/signrequests/O=Org,L=Gr,C=NL/approve", null)
         val response = testRestTemplate.getForEntity("/certificate/O=Org,L=Gr,C=NL", ByteArray::class.java)
 
         assertEquals(200, response.statusCodeValue)
         assertNotNull(response.body)
+    }
+
+    @Test
+    fun `an unknown certificate will return a 403`(){
+        val response = testRestTemplate.getForEntity("/certificate/O=Org,L=Gr,C=NL", ByteArray::class.java)
+        assertEquals(403, response.statusCodeValue)
+        assertNull(response.body)
     }
 
     private fun headers() : HttpHeaders {

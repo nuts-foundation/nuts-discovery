@@ -26,7 +26,13 @@ import net.corda.core.identity.PartyAndCertificate
 import net.corda.core.internal.CertRole
 import net.corda.core.node.NodeInfo
 import net.corda.core.utilities.NetworkHostAndPort
+import net.corda.nodeapi.internal.SignedNodeInfo
+import net.corda.nodeapi.internal.crypto.CertificateType
 import net.corda.nodeapi.internal.crypto.ContentSignerBuilder
+import net.corda.nodeapi.internal.crypto.X509Utilities
+import net.corda.testing.internal.signWith
+import nl.nuts.discovery.service.CertificateAndKeyService
+import nl.nuts.discovery.service.LocalCertificateAndKeyService
 import org.bouncycastle.asn1.ASN1ObjectIdentifier
 import org.bouncycastle.asn1.DERUTF8String
 import org.bouncycastle.asn1.x500.style.BCStyle
@@ -60,6 +66,22 @@ interface TestUtils {
                     listOf(PartyAndCertificate(certPath)),
                     3,
                     1)
+        }
+
+        fun subjectToSignedNodeInfo(service: CertificateAndKeyService, subject: CordaX500Name) : SignedNodeInfo {
+            val nodeKeyPair = Crypto.generateKeyPair(Crypto.RSA_SHA256)
+            val identityKeyPair = Crypto.generateKeyPair(Crypto.RSA_SHA256)
+            // needs to generate well known identity certificate
+
+            val req = createCertificateRequest(subject, nodeKeyPair)
+            val nodeCertificate = service.signCertificate(req)
+
+            val identityCertificate = X509Utilities.createCertificate(CertificateType.LEGAL_IDENTITY, nodeCertificate, nodeKeyPair, subject.x500Principal, identityKeyPair.public)
+
+            val certPath = X509Utilities.buildCertPath(identityCertificate, nodeCertificate, service.intermediateCertificate(), service.rootCertificate())
+            val nodeInfo = TestUtils.createNodeInfo(certPath)
+
+            return nodeInfo.signWith(listOf(identityKeyPair.private))
         }
     }
 }

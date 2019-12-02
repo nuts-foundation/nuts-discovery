@@ -22,7 +22,6 @@ package nl.nuts.discovery.api
 import net.corda.core.identity.CordaX500Name
 import net.corda.nodeapi.internal.crypto.X509Utilities
 import nl.nuts.discovery.service.CertificateAndKeyService
-import nl.nuts.discovery.service.LocalCertificateAndKeyService
 import org.bouncycastle.pkcs.PKCS10CertificationRequest
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
@@ -30,6 +29,7 @@ import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.*
 import java.io.ByteArrayOutputStream
+import java.io.OutputStream
 import java.util.zip.ZipEntry
 import java.util.zip.ZipOutputStream
 
@@ -37,18 +37,18 @@ import java.util.zip.ZipOutputStream
  * Certificate API for handling Certificate Signing Requests and returning an answer when signed.
  */
 @RestController
-@RequestMapping("/certificate", produces = arrayOf("*/*") ,consumes = arrayOf("*/*"))
+@RequestMapping("/certificate", produces = arrayOf("*/*"), consumes = arrayOf("*/*"))
 class CertificateApi {
     val logger: Logger = LoggerFactory.getLogger(this.javaClass)
 
     @Autowired
     lateinit var certificateAndKeyService: CertificateAndKeyService
 
-    @RequestMapping("", method = arrayOf(RequestMethod.POST), produces = arrayOf("*/*") ,consumes = arrayOf("*/*"))
+    @RequestMapping("", method = arrayOf(RequestMethod.POST), produces = arrayOf("*/*"), consumes = arrayOf("*/*"))
     fun handleCertificateRequest(@RequestBody input: ByteArray,
                                  @RequestHeader("Platform-Version") platformVersion: String,
                                  @RequestHeader("Client-Version") clientVersion: String,
-                                 @RequestHeader("Private-Network-Map", required = false) pnm: String?) : ResponseEntity<String> {
+                                 @RequestHeader("Private-Network-Map", required = false) pnm: String?): ResponseEntity<String> {
         try {
             val pkcs10Request = PKCS10CertificationRequest(input)
 
@@ -60,24 +60,33 @@ class CertificateApi {
             certificateAndKeyService.submitSigningRequest(pkcs10Request)
 
             return ResponseEntity.ok(pkcs10Request.subject.toString())
-        } catch (e:Exception) {
+        } catch (e: Exception) {
             logger.error(e.message, e)
             return ResponseEntity.badRequest().build()
         }
     }
 
     @RequestMapping("/{var}", method = arrayOf(RequestMethod.GET))
-    fun downloadCertificate(@PathVariable("var") requestId: String) : ResponseEntity<ByteArray> {
+    fun downloadCertificate(@PathVariable("var") requestId: String): ResponseEntity<ByteArray> {
         try {
             logger.info("Received certificate download request for: $requestId")
             val name = CordaX500Name.parse(requestId)
 
-            val certificate = certificateAndKeyService.signedCertificate(name) ?: return ResponseEntity.notFound().build()
+            // certificate signed?
+            val certificate = certificateAndKeyService.signedCertificate(name)
+            // certificate pending?
+                ?: return if (certificateAndKeyService.pendingCertificate(name) != null) {
+                    // try later
+                    ResponseEntity.noContent().build()
+                } else {
+                    // nope, don't try again.
+                    ResponseEntity.status(403).build()
+                }
 
             val certPath = X509Utilities.buildCertPath(certificate, certificateAndKeyService.intermediateCertificate(), certificateAndKeyService.rootCertificate())
 
             val baos = ByteArrayOutputStream()
-            ZipOutputStream(baos).use { zip ->
+            ZipOutputStream(baos as OutputStream?).use { zip ->
                 listOf(X509Utilities.CORDA_CLIENT_CA, X509Utilities.CORDA_INTERMEDIATE_CA, X509Utilities.CORDA_ROOT_CA).zip(certPath.certificates).forEach {
                     zip.putNextEntry(ZipEntry("${it.first}.cer"))
                     zip.write(it.second.encoded)
@@ -85,10 +94,10 @@ class CertificateApi {
                 }
             }
             return ResponseEntity
-                    .ok()
-                    //.contentType(MediaType.parseMediaType("application/zip"))
-                    .header("Content-Disposition", "attachment; filename=\"certificates.zip\"")
-                    .body(baos.toByteArray())
+                .ok()
+                //.contentType(MediaType.parseMediaType("application/zip"))
+                .header("Content-Disposition", "attachment; filename=\"certificates.zip\"")
+                .body(baos.toByteArray())
 
         } catch (e: Exception) {
             logger.error(e.message, e)

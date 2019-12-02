@@ -24,6 +24,7 @@ import io.mockk.every
 import io.mockk.impl.annotations.MockK
 import net.corda.core.crypto.SecureHash
 import net.corda.nodeapi.internal.SignedNodeInfo
+import org.junit.After
 import org.junit.Before
 import org.junit.Test
 import javax.security.auth.x500.X500Principal
@@ -33,7 +34,7 @@ import kotlin.test.assertNull
 
 class InMemoryRepositoryTest {
 
-    lateinit var repo : InMemoryRepository
+    lateinit var repo: InMemoryRepository
 
     @MockK
     lateinit var node: SignedNodeInfo
@@ -45,6 +46,11 @@ class InMemoryRepositoryTest {
     fun setup() {
         repo = InMemoryRepository()
         MockKAnnotations.init(this)
+    }
+
+    @After
+    fun clearData() {
+       repo.clearAll()
     }
 
     @Test
@@ -72,7 +78,7 @@ class InMemoryRepositoryTest {
 
     @Test
     fun `allNodes returns all nodes`() {
-        every {node.raw.hash} returns SecureHash.allOnesHash
+        every { node.raw.hash } returns SecureHash.allOnesHash
         every { node.verified().legalIdentitiesAndCerts[0].name.x500Principal } returns X500Principal("C=NL,O=Nuts,L=Eibergen,CN=1")
 
         repo.addNode(node)
