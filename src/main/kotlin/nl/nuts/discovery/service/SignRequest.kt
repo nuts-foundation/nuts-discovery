@@ -52,6 +52,9 @@ data class SignRequest(@JsonIgnore val request: PKCS10CertificationRequest) {
         return emailASN1String.string
     }
 
+    /**
+     * The public key of the Certificate Request
+     */
     @JsonProperty
     fun publicKey(): String {
         this.request
@@ -64,6 +67,9 @@ data class SignRequest(@JsonIgnore val request: PKCS10CertificationRequest) {
         return str.toString()
     }
 
+    /**
+     * Whether or not this request is approved.
+     */
     @JsonProperty
     fun approved(): Boolean {
         return certificate != null
