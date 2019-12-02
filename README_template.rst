@@ -12,6 +12,9 @@ Discovery service by the Nuts foundation for bootstrapping the network
 .. image:: https://readthedocs.org/projects/nuts-discovery/badge/?version=latest
     :target: https://nuts-documentation.readthedocs.io/projects/nuts-discovery/en/latest/
 
+.. image:: https://codecov.io/gh/nuts-foundation/nuts-discovery/branch/master/graph/badge.svg
+    :target: https://codecov.io/gh/nuts-foundation/nuts-discovery
+
 .. include:: docs/pages/development/discovery.rst
     :start-after: .. marker-for-readme
 
