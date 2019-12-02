@@ -6,8 +6,14 @@ Discovery service by the Nuts foundation for bootstrapping the network
 .. image:: https://travis-ci.org/nuts-foundation/nuts-discovery.svg?branch=master
     :target: https://travis-ci.org/nuts-foundation/nuts-discovery
 
+.. image:: https://api.codacy.com/project/badge/Grade/cd7e8a20fd474ba1b5b5539dc68ffa3b
+    :target: https://www.codacy.com/manual/nuts-foundation/nuts-discovery?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=nuts-foundation/nuts-discovery&amp;utm_campaign=Badge_Grade
+
 .. image:: https://readthedocs.org/projects/nuts-discovery/badge/?version=latest
     :target: https://nuts-documentation.readthedocs.io/projects/nuts-discovery/en/latest/
+
+.. image:: https://codecov.io/gh/nuts-foundation/nuts-discovery/branch/master/graph/badge.svg
+    :target: https://codecov.io/gh/nuts-foundation/nuts-discovery
 
 The discovery service is written in Kotlin and can be build by Gradle.
 
@@ -141,4 +147,23 @@ Run the ``generate_keys.sh`` script to create a ``keys`` folder with all the nee
 .. sourcecode:: shell
 
   ./generate_keys.sh
+
+Deployment with Helm
+====================
+
+Installation
+-----------
+
+In the following examples we use the `development` namespace. The values.yaml currently contains values for development.
+
+.. sourcecode:: shell
+
+  helm install --debug --name discovery --namespace development charts/nuts-discovery -f charts/nuts-discovery/values.yaml
+
+Upgrading
+---------
+
+.. sourcecode:: shell
+
+  helm upgrade discovery -f charts/nuts-discovery/values.yaml charts/nuts-discovery --namespace development --recreate-pods
 

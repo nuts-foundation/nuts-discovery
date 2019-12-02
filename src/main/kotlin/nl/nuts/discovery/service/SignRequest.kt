@@ -16,23 +16,35 @@ import java.io.StringWriter
 import java.security.cert.X509Certificate
 import java.time.LocalDateTime
 
+/**
+ * SignReuest wraps a PKCS10CertificationRequest and provides extra properties to serialize it as json.
+ */
 data class SignRequest(@JsonIgnore val request: PKCS10CertificationRequest) {
     var submissionTime: LocalDateTime = LocalDateTime.now()
 
     @JsonIgnore
     var certificate: X509Certificate? = null
 
+    /**
+     * Returns the CordaX500Name from the subject
+     */
     @JsonProperty
     fun legalName(): CordaX500Name {
         return CordaX500Name.parse(this.request.subject.toString())
     }
 
+    /**
+     * Returns whether or not this node is a notary
+     */
     @JsonProperty
     fun notary(): Boolean {
         val cordaExtension = this.request.getAttributes(ASN1ObjectIdentifier(CordaOID.X509_EXTENSION_CORDA_ROLE))!!.first()
         return cordaExtension!!.attrValues.contains(ASN1Integer(3))
     }
 
+    /**
+     * returns the email from the certificate request
+     */
     @JsonProperty
     fun email(): String {
         val emailAttr = this.request.getAttributes(BCStyle.EmailAddress)!!.first()
@@ -40,6 +52,9 @@ data class SignRequest(@JsonIgnore val request: PKCS10CertificationRequest) {
         return emailASN1String.string
     }
 
+    /**
+     * The public key of the Certificate Request
+     */
     @JsonProperty
     fun publicKey(): String {
         this.request
@@ -52,6 +67,9 @@ data class SignRequest(@JsonIgnore val request: PKCS10CertificationRequest) {
         return str.toString()
     }
 
+    /**
+     * Whether or not this request is approved.
+     */
     @JsonProperty
     fun approved(): Boolean {
         return certificate != null

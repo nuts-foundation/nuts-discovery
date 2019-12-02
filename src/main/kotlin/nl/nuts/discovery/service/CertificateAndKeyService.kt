@@ -48,6 +48,9 @@ interface CertificateAndKeyService {
      */
     fun signedCertificate(serial: CordaX500Name) : X509Certificate?
 
+    /**
+     * Retrieve a pending certificateRequest based on the name. Returns null if not found.
+     */
     fun pendingCertificate(serial: CordaX500Name) : PKCS10CertificationRequest?
 
     /**
@@ -86,7 +89,13 @@ interface CertificateAndKeyService {
      */
     fun clearAll()
 
+    /**
+     * Get all pending signing requests
+     */
     fun pendingSignRequests(): List<SignRequest>
 
+    /**
+     * Get all signed certificates
+     */
     fun signedCertificates(): List<SignRequest>
 }
