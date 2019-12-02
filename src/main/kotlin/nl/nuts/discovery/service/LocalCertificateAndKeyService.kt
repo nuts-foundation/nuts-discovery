@@ -91,6 +91,7 @@ class LocalCertificateAndKeyService : CertificateAndKeyService {
 
     override fun submitSigningRequest(request: PKCS10CertificationRequest) {
         val name = CordaX500Name.parse(request.subject.toString())
+        // TODO: Check if the name is already in use and if it is OK to overwrite.
         signRequests[name] = SignRequest(request)
     }
 
