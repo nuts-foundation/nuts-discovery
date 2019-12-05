@@ -28,45 +28,33 @@ import org.bouncycastle.pkcs.PKCS10CertificationRequest
 import java.security.cert.X509Certificate
 
 interface CertificateAndKeyService {
-    /**
-     * Submit a new CSR for the signing process.
-     */
-    fun submitSigningRequest(request: PKCS10CertificationRequest)
+
+    companion object {
+        fun foo(): String {
+            return "bar"
+        }
+    }
 
     /**
      * Sign a certificate based on the name
      */
     fun signCertificate(request: PKCS10CertificationRequest): X509Certificate
 
-    /**
-     * Sign a certificate request by its name and add it to the store
-     */
-    fun signAndAddCertificate(serial: CordaX500Name): X509Certificate?
-
-    /**
-     * Retrieve a signed certificate based on the name or null if not found.
-     */
-    fun signedCertificate(serial: CordaX500Name) : X509Certificate?
-
-    /**
-     * Retrieve a pending certificateRequest based on the name. Returns null if not found.
-     */
-    fun pendingCertificate(serial: CordaX500Name) : PKCS10CertificationRequest?
 
     /**
      * Get the root certificate as configured in the Spring properties
      */
-    fun rootCertificate() : X509Certificate
+    fun rootCertificate(): X509Certificate
 
     /**
      * Get the Doorman certificate as configured in the Spring properties
      */
-    fun intermediateCertificate() : X509Certificate
+    fun intermediateCertificate(): X509Certificate
 
     /**
      * Get the Network Map Certificate as configured in the Spring properties
      */
-    fun networkMapCertificate() : X509Certificate
+    fun networkMapCertificate(): X509Certificate
 
     /**
      * Sign the networkMap with the network map key
@@ -82,20 +70,6 @@ interface CertificateAndKeyService {
     /**
      * Validate the current setup, returns causes if configuration is incorrect
      */
-    fun validate() : List<String>
+    fun validate(): List<String>
 
-    /**
-     * clear all signed nodes and pending requests. Needed for testing purposes
-     */
-    fun clearAll()
-
-    /**
-     * Get all pending signing requests
-     */
-    fun pendingSignRequests(): List<SignRequest>
-
-    /**
-     * Get all signed certificates
-     */
-    fun signedCertificates(): List<SignRequest>
 }

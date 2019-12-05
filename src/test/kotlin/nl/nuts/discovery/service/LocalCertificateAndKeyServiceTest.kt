@@ -21,6 +21,7 @@ package nl.nuts.discovery.service
 
 import net.corda.core.identity.CordaX500Name
 import nl.nuts.discovery.TestUtils
+import nl.nuts.discovery.store.SignRequestStore
 import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -38,6 +39,12 @@ class LocalCertificateAndKeyServiceTest {
     @Autowired
     lateinit var service: CertificateAndKeyService
 
+    @Autowired
+    lateinit var certService: CertificateAndKeyService
+
+    @Autowired
+    lateinit var signRequestStore: SignRequestStore
+
     @Before
     fun setup() {
 
@@ -45,17 +52,17 @@ class LocalCertificateAndKeyServiceTest {
 
     @Test
     fun `the intermediate certificate is loaded from test resources`() {
-        assertNotNull(service.intermediateCertificate())
+        assertNotNull(certService.intermediateCertificate())
     }
 
     @Test
     fun `the root certificate is loaded from test resources`() {
-        assertNotNull(service.rootCertificate())
+        assertNotNull(certService.rootCertificate())
     }
 
     @Test
     fun `the networkMap certificate is loaded from test resources`() {
-        assertNotNull(service.networkMapCertificate())
+        assertNotNull(certService.networkMapCertificate())
     }
 
     @Test
@@ -63,9 +70,9 @@ class LocalCertificateAndKeyServiceTest {
         val subject = CordaX500Name.parse("O=Org,L=Gr,C=NL")
         val req = TestUtils.createCertificateRequest(subject)
 
-        service.submitSigningRequest(req)
-        val certificate = service.signedCertificate(subject)
-        val pendingCertificate = service.pendingCertificate(subject)
+        signRequestStore.addSigningRequest(req)
+        val certificate = signRequestStore.signedCertificate(subject)
+        val pendingCertificate = signRequestStore.pendingSignRequest(subject)
 
         assertNull(certificate)
         assertNotNull(pendingCertificate)
@@ -76,8 +83,8 @@ class LocalCertificateAndKeyServiceTest {
         val subject = CordaX500Name.parse("O=Org,L=Gr,C=NL")
         val req = TestUtils.createCertificateRequest(subject)
 
-        service.submitSigningRequest(req)
-        val pendingRequests = service.pendingSignRequests()
+        signRequestStore.addSigningRequest(req)
+        val pendingRequests = signRequestStore.pendingSignRequests()
         assertEquals(pendingRequests.size, 1)
         assertEquals(subject, pendingRequests[0].legalName())
     }
@@ -86,10 +93,11 @@ class LocalCertificateAndKeyServiceTest {
     fun `a signed signature can be retrieved`() {
         val subject = CordaX500Name.parse("O=Org,L=Gr,C=NL")
         val req = TestUtils.createCertificateRequest(subject)
-        service.submitSigningRequest(req)
-        service.signAndAddCertificate(subject)
+        val signRequest = signRequestStore.addSigningRequest(req)
+        service.signCertificate(req)
+        signRequestStore.markAsSigned(signRequest)
 
-        val certs = service.signedCertificates()
+        val certs = signRequestStore.signedCertificates()
         assertEquals(certs.size, 1)
         assertEquals(subject, certs[0].legalName())
     }

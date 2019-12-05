@@ -1,9 +1,11 @@
 package nl.nuts.discovery.api
 
 import net.corda.core.identity.CordaX500Name
-import net.corda.core.node.NodeInfo
+import net.corda.core.node.NetworkParameters
 import nl.nuts.discovery.service.CertificateAndKeyService
+import nl.nuts.discovery.service.NetworkParametersService
 import nl.nuts.discovery.service.SignRequest
+import nl.nuts.discovery.store.InMemorySignRequestStore
 import nl.nuts.discovery.store.NodeRepository
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
@@ -12,6 +14,7 @@ import org.springframework.http.HttpStatus
 import org.springframework.http.MediaType
 import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.*
+import kotlin.math.sign
 
 /**
  * Admin API handles REST calls for an administrator UI.
@@ -26,7 +29,13 @@ class AdminApi {
     lateinit var certificateAndKeyService: CertificateAndKeyService
 
     @Autowired
+    lateinit var networkParameters: NetworkParametersService
+
+    @Autowired
     lateinit var nodeRepo: NodeRepository
+
+    @Autowired
+    lateinit var signRequestsStore: InMemorySignRequestStore
 
     /**
      * Handle the GET request for all sign-requests. Returns a json array of SignRequests
@@ -34,7 +43,7 @@ class AdminApi {
     @RequestMapping("/certificates/signrequests", method = [RequestMethod.GET], produces = [MediaType.APPLICATION_JSON_VALUE])
     fun handleListSignRequests(): ResponseEntity<List<SignRequest>> {
         logger.debug("listing pending sign requests")
-        val list = certificateAndKeyService.pendingSignRequests()
+        val list = signRequestsStore.pendingSignRequests()
         return ResponseEntity(list, HttpStatus.OK)
     }
 
@@ -44,7 +53,7 @@ class AdminApi {
     @RequestMapping("/certificates", method = [RequestMethod.GET], produces = [MediaType.APPLICATION_JSON_VALUE])
     fun handleListCertificates(): ResponseEntity<List<SignRequest>> {
         logger.debug("listing signed certificates")
-        val list = certificateAndKeyService.signedCertificates()
+        val list = signRequestsStore.signedCertificates()
         return ResponseEntity(list, HttpStatus.OK)
     }
 
@@ -55,8 +64,16 @@ class AdminApi {
     fun handleApproveSignRequest(@PathVariable("nodeId") nodeId: String): ResponseEntity<Any> {
         logger.debug("received sign request for: $nodeId")
         try {
+            // find pending sign request by name
             val subject = CordaX500Name.parse(nodeId)
-            certificateAndKeyService.signAndAddCertificate(subject)
+            val request = signRequestsStore.pendingSignRequest(subject) ?: return ResponseEntity.notFound().build()
+
+            // sign it
+            val nodeCaCert = certificateAndKeyService.signCertificate(request.request)
+            request.certificate = nodeCaCert
+
+            // move from pending to signed
+            signRequestsStore.markAsSigned(request)
         } catch (e: Exception) {
             logger.error(e.message, e)
             return ResponseEntity.badRequest().build()

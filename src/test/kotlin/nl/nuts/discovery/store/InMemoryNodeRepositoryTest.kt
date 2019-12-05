@@ -32,9 +32,9 @@ import kotlin.test.assertEquals
 import kotlin.test.assertNotNull
 import kotlin.test.assertNull
 
-class InMemoryRepositoryTest {
+class InMemoryNodeRepositoryTest {
 
-    lateinit var repo: InMemoryRepository
+    lateinit var repo: InMemoryNodeRepository
 
     @MockK
     lateinit var node: SignedNodeInfo
@@ -44,7 +44,7 @@ class InMemoryRepositoryTest {
 
     @Before
     fun setup() {
-        repo = InMemoryRepository()
+        repo = InMemoryNodeRepository()
         MockKAnnotations.init(this)
     }
 
