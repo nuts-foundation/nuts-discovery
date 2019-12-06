@@ -29,12 +29,6 @@ import java.security.cert.X509Certificate
 
 interface CertificateAndKeyService {
 
-    companion object {
-        fun foo(): String {
-            return "bar"
-        }
-    }
-
     /**
      * Sign a certificate based on the name
      */
