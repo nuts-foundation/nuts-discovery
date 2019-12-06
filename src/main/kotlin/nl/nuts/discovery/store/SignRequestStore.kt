@@ -6,6 +6,9 @@ import org.bouncycastle.pkcs.PKCS10CertificationRequest
 import org.springframework.stereotype.Service
 import java.security.cert.X509Certificate
 
+/**
+ * Interface which describes how a SignRequestStore should behave.
+ */
 interface SignRequestStore {
     /**
      * clear all signed nodes and pending requests. Needed for testing purposes
@@ -32,6 +35,9 @@ interface SignRequestStore {
      */
     fun pendingSignRequest(serial: CordaX500Name): SignRequest?
 
+    /**
+     * Mark a SignRequest as signed
+     */
     fun markAsSigned(request: SignRequest)
 
     /**

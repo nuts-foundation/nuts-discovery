@@ -6,6 +6,10 @@ import org.bouncycastle.pkcs.PKCS10CertificationRequest
 import org.springframework.stereotype.Service
 import java.security.cert.X509Certificate
 
+/**
+ * Simple in-memory implementation of the signRequestStore.
+ * Contains a map of pending and approved/signed certificates which can be retrieved by X500Name
+ */
 @Service
 class InMemorySignRequestStore : SignRequestStore {
 

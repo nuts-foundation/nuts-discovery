@@ -29,10 +29,6 @@ class SimpleNetworkParametersService : NetworkParametersService {
     val maxMessageSize = 10 * 1024 * 1024
     val maxTransactionSize = 10 * 1024 * 1024
 
-    @PostConstruct
-    private fun init() {
-    }
-
     override fun networkParameters(versionHash: String?): NetworkParameters {
         val notaries = mutableListOf<X509Certificate>()
         val notary = this.nodeRepository.notary()?.verified()?.legalIdentitiesAndCerts?.first()?.certificate

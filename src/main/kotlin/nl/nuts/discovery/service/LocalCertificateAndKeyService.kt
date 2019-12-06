@@ -123,6 +123,9 @@ class LocalCertificateAndKeyService : CertificateAndKeyService {
         return X509Utilities.loadCertificateFromPEMFile(loadResourceWithNullCheck(nutsDiscoveryProperties.intermediateCertPath))
     }
 
+    /**
+     * Reads the key from disk and returns a PrivateKey instance
+     */
     fun networkMapKey(): PrivateKey {
         val reader = PemReader(Files.newBufferedReader(loadResourceWithNullCheck(nutsDiscoveryProperties.networkMapKeyPath)) as Reader?)
         val key = reader.readPemObject()

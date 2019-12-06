@@ -2,6 +2,10 @@ package nl.nuts.discovery.service
 
 import net.corda.core.node.NetworkParameters
 
+/**
+ * Interface which describes a networkParametersService.
+ * Used for managing the networkParameters such as versions, params etc.
+ */
 interface NetworkParametersService {
 
     /**
