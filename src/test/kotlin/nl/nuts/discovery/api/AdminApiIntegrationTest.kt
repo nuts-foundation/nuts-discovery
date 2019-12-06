@@ -1,16 +1,20 @@
 package nl.nuts.discovery.api
 
 import net.corda.core.identity.CordaX500Name
+import net.corda.core.node.NetworkParameters
 import nl.nuts.discovery.TestUtils
 import nl.nuts.discovery.service.CertificateAndKeyService
 import nl.nuts.discovery.store.NodeRepository
 import nl.nuts.discovery.store.SignRequestStore
 import org.json.JSONArray
+import org.json.JSONObject
 import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
+import org.mockito.Mockito
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.context.SpringBootTest
+import org.springframework.boot.test.mock.mockito.MockBean
 import org.springframework.boot.test.web.client.TestRestTemplate
 import org.springframework.http.HttpStatus
 import org.springframework.test.context.junit4.SpringRunner
@@ -22,19 +26,19 @@ import kotlin.test.assertNotNull
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 class AdminApiIntegrationTest {
     @Autowired
-    lateinit var testRestTemplate : TestRestTemplate
+    lateinit var testRestTemplate: TestRestTemplate
 
     @Autowired
-    lateinit var service : CertificateAndKeyService
+    lateinit var service: CertificateAndKeyService
 
     @Autowired
     lateinit var signRequestStore: SignRequestStore
 
-    @Autowired
-    lateinit var nodeRepo : NodeRepository
+    @MockBean
+    lateinit var nodeRepo: NodeRepository
 
     @Before
-    fun clearNodes(){
+    fun clearNodes() {
         signRequestStore.clearAll()
         nodeRepo.clearAll()
     }
@@ -89,4 +93,22 @@ class AdminApiIntegrationTest {
         assertEquals("[]", nodesRequest.body)
     }
 
+    @Test
+    fun `it returns the network-parameters`() {
+        val networkMapRequest = testRestTemplate.getForEntity("/admin/network-parameters", String::class.java)
+        assertEquals(200, networkMapRequest.statusCodeValue)
+        val body = networkMapRequest.body
+    }
+
+    @Test
+    fun `network map returns the notary`() {
+        val subject = CordaX500Name.parse("O=Org,L=Gr,C=NL")
+        val signedNodeInfo = TestUtils.subjectToSignedNodeInfo(service, subject)
+        Mockito.`when`(nodeRepo.notary()).thenReturn(signedNodeInfo)
+
+        val networkMapRequest = testRestTemplate.getForEntity("/admin/network-parameters", String::class.java)
+        assertEquals(200, networkMapRequest.statusCodeValue)
+        val body = networkMapRequest.body
+        assertTrue(networkMapRequest.body!!.contains("\"notaries\":[{"))
+    }
 }

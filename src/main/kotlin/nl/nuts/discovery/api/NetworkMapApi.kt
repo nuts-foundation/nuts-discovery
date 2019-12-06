@@ -29,6 +29,7 @@ import net.corda.nodeapi.internal.SignedNodeInfo
 import net.corda.nodeapi.internal.network.NetworkMap
 import net.corda.nodeapi.internal.network.SignedNetworkParameters
 import nl.nuts.discovery.service.CertificateAndKeyService
+import nl.nuts.discovery.service.NetworkParametersService
 import nl.nuts.discovery.store.NodeRepository
 import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Autowired
@@ -58,6 +59,9 @@ class NetworkMapApi {
 
     @Autowired
     lateinit var certificateAndKeyService: CertificateAndKeyService
+
+    @Autowired
+    lateinit var networkParametersService: NetworkParametersService
 
     /**
      * Accept NodeInfo from connecting nodes.
@@ -146,24 +150,8 @@ class NetworkMapApi {
     }
 
     private fun signedNetworkParams(notary: X509Certificate?) : SignedNetworkParameters {
-
-        val notaries = mutableListOf<X509Certificate>()
-
-        if (notary != null) {
-            notaries.add(notary)
-        }
-
-        val networkParams = NetworkParameters(
-                3,
-                notaries.map {(NotaryInfo(Party(it), false))},
-                10 * 1024 * 1024,
-                10 * 1024 * 1024,
-                Instant.EPOCH,
-                1,
-                linkedMapOf()
-        )
-
-        return certificateAndKeyService.signNetworkParams(networkParams)
+        val networkParameters = networkParametersService.networkParameters(null)
+        return certificateAndKeyService.signNetworkParams(networkParameters)
     }
 
     private fun signedNetworkParams() : SignedNetworkParameters {

@@ -91,4 +91,13 @@ class AdminApi {
         return ResponseEntity(list, HttpStatus.OK)
     }
 
+    /**
+     * Handle GET request for the network-parameters
+     */
+    @RequestMapping("network-parameters", method=[RequestMethod.GET], produces = [MediaType.APPLICATION_JSON_VALUE])
+    fun handleNetworkParameters(): ResponseEntity<NetworkParameters> {
+        logger.debug("request for network-parameters")
+        return ResponseEntity(networkParameters.networkParameters(null), HttpStatus.OK)
+    }
+
 }
