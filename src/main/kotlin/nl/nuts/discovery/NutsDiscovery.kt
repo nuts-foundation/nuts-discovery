@@ -31,6 +31,9 @@ import org.springframework.boot.context.properties.EnableConfigurationProperties
 import org.springframework.boot.runApplication
 import javax.annotation.PostConstruct
 
+/**
+ * Mainclass for booting the app
+ */
 @EnableConfigurationProperties
 @SpringBootApplication
 class NutsDiscovery {

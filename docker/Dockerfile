@@ -2,7 +2,8 @@ FROM adoptopenjdk/openjdk11:alpine-slim as builder
 LABEL maintainer="wout.slakhorst@nuts.nl"
 RUN mkdir /opt/nuts
 COPY / /opt/nuts/
-RUN cd /opt/nuts && ./gradlew bootJar
+WORKDIR /opt/nuts
+RUN ./gradlew bootJar
 
 FROM adoptopenjdk/openjdk11:alpine-slim
 COPY --from=builder /opt/nuts/build/libs/nuts-discovery.jar /opt/nuts/discovery/bin/nuts-discovery.jar
