@@ -1,13 +1,11 @@
 package nl.nuts.discovery.api
 
 import net.corda.core.identity.CordaX500Name
-import net.corda.core.node.NetworkParameters
 import nl.nuts.discovery.TestUtils
 import nl.nuts.discovery.service.CertificateAndKeyService
 import nl.nuts.discovery.store.NodeRepository
 import nl.nuts.discovery.store.SignRequestStore
 import org.json.JSONArray
-import org.json.JSONObject
 import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -19,8 +17,8 @@ import org.springframework.boot.test.web.client.TestRestTemplate
 import org.springframework.http.HttpStatus
 import org.springframework.test.context.junit4.SpringRunner
 import kotlin.test.assertEquals
-import kotlin.test.assertTrue
 import kotlin.test.assertNotNull
+import kotlin.test.assertTrue
 
 @RunWith(SpringRunner::class)
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
@@ -79,7 +77,7 @@ class AdminApiIntegrationTest {
         val signRequests = testRestTemplate.getForEntity("/admin/certificates/signrequests", String::class.java)
         val body = signRequests.body
         assertNotNull(body)
-        var arr = JSONArray(body)
+        val arr = JSONArray(body)
         val obj = arr.getJSONObject(0)
         assertEquals(obj.getJSONObject("legalName").getString("locality"), "Gr")
         assertEquals("a@b.com", obj.getString("email"))
@@ -94,13 +92,6 @@ class AdminApiIntegrationTest {
     }
 
     @Test
-    fun `it returns the network-parameters`() {
-        val networkMapRequest = testRestTemplate.getForEntity("/admin/network-parameters", String::class.java)
-        assertEquals(200, networkMapRequest.statusCodeValue)
-        val body = networkMapRequest.body
-    }
-
-    @Test
     fun `network map returns the notary`() {
         val subject = CordaX500Name.parse("O=Org,L=Gr,C=NL")
         val signedNodeInfo = TestUtils.subjectToSignedNodeInfo(service, subject)
@@ -108,7 +99,6 @@ class AdminApiIntegrationTest {
 
         val networkMapRequest = testRestTemplate.getForEntity("/admin/network-parameters", String::class.java)
         assertEquals(200, networkMapRequest.statusCodeValue)
-        val body = networkMapRequest.body
         assertTrue(networkMapRequest.body!!.contains("\"notaries\":[{"))
     }
 }

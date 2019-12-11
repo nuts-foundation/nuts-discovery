@@ -77,7 +77,7 @@ interface TestUtils {
             val identityCertificate = X509Utilities.createCertificate(CertificateType.LEGAL_IDENTITY, nodeCertificate, nodeKeyPair, subject.x500Principal, identityKeyPair.public)
 
             val certPath = X509Utilities.buildCertPath(identityCertificate, nodeCertificate, service.intermediateCertificate(), service.rootCertificate())
-            val nodeInfo = TestUtils.createNodeInfo(certPath)
+            val nodeInfo = createNodeInfo(certPath)
 
             return nodeInfo.signWith(listOf(identityKeyPair.private))
         }

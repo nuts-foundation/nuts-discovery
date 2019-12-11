@@ -19,7 +19,6 @@
 
 package nl.nuts.discovery.service
 
-import net.corda.core.identity.CordaX500Name
 import net.corda.core.node.NetworkParameters
 import net.corda.nodeapi.internal.network.NetworkMap
 import net.corda.nodeapi.internal.network.SignedNetworkMap

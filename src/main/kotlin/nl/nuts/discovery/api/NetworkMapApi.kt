@@ -20,10 +20,7 @@
 package nl.nuts.discovery.api
 
 import net.corda.core.crypto.SecureHash
-import net.corda.core.identity.Party
 import net.corda.core.internal.readObject
-import net.corda.core.node.NetworkParameters
-import net.corda.core.node.NotaryInfo
 import net.corda.core.serialization.serialize
 import net.corda.nodeapi.internal.SignedNodeInfo
 import net.corda.nodeapi.internal.network.NetworkMap
@@ -41,7 +38,6 @@ import org.springframework.web.bind.annotation.*
 import java.io.ByteArrayInputStream
 import java.io.InputStream
 import java.security.cert.X509Certificate
-import java.time.Instant
 import java.util.concurrent.TimeUnit
 
 /**

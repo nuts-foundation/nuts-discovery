@@ -38,7 +38,7 @@ import java.util.zip.ZipOutputStream
  * Certificate API for handling Certificate Signing Requests and returning an answer when signed.
  */
 @RestController
-@RequestMapping("/doorman/certificate", produces = arrayOf("*/*"), consumes = arrayOf("*/*"))
+@RequestMapping("/doorman/certificate", produces = ["*/*"], consumes = arrayOf("*/*"))
 class CertificateApi {
     val logger: Logger = LoggerFactory.getLogger(this.javaClass)
 
@@ -54,7 +54,7 @@ class CertificateApi {
                                  @RequestHeader("Platform-Version") platformVersion: String,
                                  @RequestHeader("Client-Version") clientVersion: String,
                                  @RequestHeader("Private-Network-Map", required = false) pnm: String?): ResponseEntity<String> {
-        try {
+        return try {
             val pkcs10Request = PKCS10CertificationRequest(input)
 
             logger.info("Received request for: ${pkcs10Request.subject}")
@@ -64,10 +64,10 @@ class CertificateApi {
 
             signRequestStore.addSigningRequest(pkcs10Request)
 
-            return ResponseEntity.ok(pkcs10Request.subject.toString())
+            ResponseEntity.ok(pkcs10Request.subject.toString())
         } catch (e: Exception) {
             logger.error(e.message, e)
-            return ResponseEntity.badRequest().build()
+            ResponseEntity.badRequest().build()
         }
     }
 

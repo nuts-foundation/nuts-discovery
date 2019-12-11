@@ -3,7 +3,6 @@ package nl.nuts.discovery.store
 import net.corda.core.identity.CordaX500Name
 import nl.nuts.discovery.service.SignRequest
 import org.bouncycastle.pkcs.PKCS10CertificationRequest
-import org.springframework.stereotype.Service
 import java.security.cert.X509Certificate
 
 /**

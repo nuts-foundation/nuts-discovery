@@ -1,15 +1,10 @@
 package nl.nuts.discovery.service
 
 import net.corda.core.identity.CordaX500Name
-import net.corda.core.identity.PartyAndCertificate
-import net.corda.core.node.NodeInfo
-import net.corda.core.utilities.NetworkHostAndPort
-import net.corda.nodeapi.internal.SignedNodeInfo
 import nl.nuts.discovery.TestUtils
 import nl.nuts.discovery.store.NodeRepository
+import org.junit.Assert.assertEquals
 import org.junit.Test
-
-import org.junit.Assert.*
 import org.junit.runner.RunWith
 import org.mockito.Mockito
 import org.springframework.beans.factory.annotation.Autowired

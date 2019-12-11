@@ -32,7 +32,9 @@ import net.corda.nodeapi.internal.network.SignedNetworkMap
 import net.corda.nodeapi.internal.network.SignedNetworkParameters
 import org.bouncycastle.asn1.ASN1String
 import org.bouncycastle.asn1.x500.style.BCStyle
-import org.bouncycastle.asn1.x509.*
+import org.bouncycastle.asn1.x509.Extension
+import org.bouncycastle.asn1.x509.GeneralName
+import org.bouncycastle.asn1.x509.GeneralNames
 import org.bouncycastle.operator.jcajce.JcaContentVerifierProviderBuilder
 import org.bouncycastle.pkcs.PKCS10CertificationRequest
 import org.bouncycastle.pkcs.jcajce.JcaPKCS10CertificationRequest
@@ -42,7 +44,6 @@ import org.springframework.context.annotation.Profile
 import org.springframework.stereotype.Service
 import java.io.File
 import java.io.Reader
-import java.lang.IllegalArgumentException
 import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.Paths
@@ -52,7 +53,6 @@ import java.security.PrivateKey
 import java.security.cert.X509Certificate
 import java.security.spec.PKCS8EncodedKeySpec
 import java.util.*
-import javax.annotation.PostConstruct
 
 
 /**
@@ -145,8 +145,8 @@ class LocalCertificateAndKeyService : CertificateAndKeyService {
             return Paths.get(File(location).toURI())
         }
 
-        val resource = javaClass.classLoader.getResource("$location")
-            ?: throw IllegalArgumentException("resource not found at ${location}")
+        val resource = javaClass.classLoader.getResource(location)
+            ?: throw IllegalArgumentException("resource not found at $location")
 
         val uri = resource.toURI()
         return Paths.get(uri)
@@ -183,7 +183,7 @@ class LocalCertificateAndKeyService : CertificateAndKeyService {
 
         val configProblems = mutableListOf<String>()
 
-        configProblemSet.forEach { f, m ->
+        configProblemSet.forEach { (f, m) ->
             try {
                 f.invoke()
             } catch (e: Exception) {

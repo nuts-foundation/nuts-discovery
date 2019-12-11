@@ -9,7 +9,6 @@ import org.springframework.context.annotation.Profile
 import org.springframework.stereotype.Service
 import java.security.cert.X509Certificate
 import java.time.Instant
-import javax.annotation.PostConstruct
 
 /**
  * Simple stateless NetworkParameters Service.
