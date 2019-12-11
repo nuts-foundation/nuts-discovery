@@ -22,6 +22,7 @@ package nl.nuts.discovery.api
 import net.corda.core.identity.CordaX500Name
 import net.corda.nodeapi.internal.crypto.X509Utilities
 import nl.nuts.discovery.service.CertificateAndKeyService
+import nl.nuts.discovery.store.SignRequestStore
 import org.bouncycastle.pkcs.PKCS10CertificationRequest
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
@@ -44,6 +45,10 @@ class CertificateApi {
     @Autowired
     lateinit var certificateAndKeyService: CertificateAndKeyService
 
+    @Autowired
+    lateinit var signRequestStore: SignRequestStore
+
+
     @RequestMapping("", method = arrayOf(RequestMethod.POST), produces = arrayOf("*/*"), consumes = arrayOf("*/*"))
     fun handleCertificateRequest(@RequestBody input: ByteArray,
                                  @RequestHeader("Platform-Version") platformVersion: String,
@@ -57,7 +62,7 @@ class CertificateApi {
             logger.info("Client-Version: $clientVersion")
             logger.info("Private-Network-Map: $pnm")
 
-            certificateAndKeyService.submitSigningRequest(pkcs10Request)
+            signRequestStore.addSigningRequest(pkcs10Request)
 
             return ResponseEntity.ok(pkcs10Request.subject.toString())
         } catch (e: Exception) {
@@ -73,9 +78,9 @@ class CertificateApi {
             val name = CordaX500Name.parse(requestId)
 
             // certificate signed?
-            val certificate = certificateAndKeyService.signedCertificate(name)
+            val certificate = signRequestStore.signedCertificate(name)
             // certificate pending?
-                ?: return if (certificateAndKeyService.pendingCertificate(name) != null) {
+                ?: return if (signRequestStore.pendingSignRequest(name) != null) {
                     // try later
                     ResponseEntity.noContent().build()
                 } else {

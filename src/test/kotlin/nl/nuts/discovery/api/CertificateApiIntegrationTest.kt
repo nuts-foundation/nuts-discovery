@@ -21,9 +21,8 @@ package nl.nuts.discovery.api
 
 import net.corda.core.identity.CordaX500Name
 import nl.nuts.discovery.TestUtils
-import nl.nuts.discovery.service.CertificateAndKeyService
+import nl.nuts.discovery.store.SignRequestStore
 import org.junit.After
-import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.springframework.beans.factory.annotation.Autowired
@@ -45,11 +44,11 @@ class CertificateApiIntegrationTest {
     lateinit var testRestTemplate : TestRestTemplate
 
     @Autowired
-    lateinit var service : CertificateAndKeyService
+    lateinit var signRequestStore : SignRequestStore
 
     @After
     fun clearNodes(){
-        service.clearAll()
+        signRequestStore.clearAll()
     }
 
     @Test

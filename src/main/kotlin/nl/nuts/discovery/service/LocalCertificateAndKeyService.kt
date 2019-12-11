@@ -38,8 +38,6 @@ import org.bouncycastle.pkcs.PKCS10CertificationRequest
 import org.bouncycastle.pkcs.jcajce.JcaPKCS10CertificationRequest
 import org.bouncycastle.util.io.pem.PemReader
 import org.springframework.beans.factory.annotation.Autowired
-import org.springframework.boot.context.properties.ConfigurationProperties
-import org.springframework.context.annotation.Configuration
 import org.springframework.context.annotation.Profile
 import org.springframework.stereotype.Service
 import java.io.File
@@ -52,21 +50,10 @@ import java.security.KeyFactory
 import java.security.KeyPair
 import java.security.PrivateKey
 import java.security.cert.X509Certificate
-import java.security.cert.X509Extension
 import java.security.spec.PKCS8EncodedKeySpec
-import java.time.Duration
 import java.util.*
 import javax.annotation.PostConstruct
 
-@Configuration
-@ConfigurationProperties("nuts.discovery")
-data class NutsDiscoveryProperties(
-    var rootCertPath: String = "",
-    var intermediateCertPath: String = "",
-    var intermediateKeyPath: String = "",
-    var networkMapCertPath: String = "",
-    var networkMapKeyPath: String = ""
-)
 
 /**
  * A naive implementation for the {@link CertificateAndKeyService}
@@ -77,40 +64,6 @@ class LocalCertificateAndKeyService : CertificateAndKeyService {
 
     @Autowired
     lateinit var nutsDiscoveryProperties: NutsDiscoveryProperties
-
-    // map of signed certificates
-    lateinit var certificates: MutableMap<CordaX500Name, SignRequest>
-    // map with pending signing requests
-    lateinit var signRequests: MutableMap<CordaX500Name, SignRequest>
-
-    @PostConstruct
-    fun init() {
-        certificates = mutableMapOf()
-        signRequests = mutableMapOf()
-    }
-
-    override fun submitSigningRequest(request: PKCS10CertificationRequest) {
-        val name = CordaX500Name.parse(request.subject.toString())
-        // TODO: Check if the name is already in use and if it is OK to overwrite.
-        signRequests[name] = SignRequest(request)
-    }
-
-    override fun signAndAddCertificate(serial: CordaX500Name): X509Certificate? {
-        val request = signRequests[serial] ?: return null
-
-        val nodeCaCert = signCertificate(request.request)
-
-        request.certificate = nodeCaCert
-        val name = CordaX500Name.parse(request.request.subject.toString())
-
-        // Add cert to signed certificates
-        certificates[name] = request
-
-        // remove csr from pending requests
-        signRequests.remove(serial)
-        return nodeCaCert
-
-    }
 
     /**
      * Create a certificate, add the email extension with email from the request
@@ -158,14 +111,6 @@ class LocalCertificateAndKeyService : CertificateAndKeyService {
         }
     }
 
-    override fun signedCertificate(serial: CordaX500Name): X509Certificate? {
-        return certificates[serial]?.certificate
-    }
-
-    override fun pendingCertificate(serial: CordaX500Name): PKCS10CertificationRequest? {
-        return signRequests[serial]?.request
-    }
-
     override fun rootCertificate(): X509Certificate {
         return X509Utilities.loadCertificateFromPEMFile(loadResourceWithNullCheck(nutsDiscoveryProperties.rootCertPath))
     }
@@ -178,34 +123,17 @@ class LocalCertificateAndKeyService : CertificateAndKeyService {
         return X509Utilities.loadCertificateFromPEMFile(loadResourceWithNullCheck(nutsDiscoveryProperties.intermediateCertPath))
     }
 
-    override fun signNetworkMap(networkMap: NetworkMap): SignedNetworkMap {
-        return networkMap.signWithCert(networkMapKey(), networkMapCertificate())
-    }
+    /**
+     * Reads the key from disk and returns a PrivateKey instance
+     */
+    fun networkMapKey(): PrivateKey {
+        val reader = PemReader(Files.newBufferedReader(loadResourceWithNullCheck(nutsDiscoveryProperties.networkMapKeyPath)) as Reader?)
+        val key = reader.readPemObject()
 
-    override fun signNetworkParams(networkParams: NetworkParameters): SignedNetworkParameters {
-        return networkParams.signWithCert(networkMapKey(), networkMapCertificate())
-    }
+        reader.close()
 
-    override fun validate(): List<String> {
-        val configProblemSet = mutableMapOf(
-            Pair(::rootCertificate, "root certificate"),
-            Pair(::intermediateCertificate, "intermediate certificate"),
-            Pair(::networkMapCertificate, "network map certificate"),
-            Pair(::intermediateKeyPair, "intermediate key"),
-            Pair(::networkMapKey, "network map key")
-        )
-
-        val configProblems = mutableListOf<String>()
-
-        configProblemSet.forEach { f, m ->
-            try {
-                f.invoke()
-            } catch (e: Exception) {
-                configProblems.add("Failed to load $m, cause: ${e.message}")
-            }
-        }
-
-        return configProblems
+        val kf = KeyFactory.getInstance("RSA") // or "EC" or whatever
+        return kf.generatePrivate(PKCS8EncodedKeySpec(key.content))
     }
 
     /**
@@ -224,16 +152,6 @@ class LocalCertificateAndKeyService : CertificateAndKeyService {
         return Paths.get(uri)
     }
 
-    private fun networkMapKey(): PrivateKey {
-        val reader = PemReader(Files.newBufferedReader(loadResourceWithNullCheck(nutsDiscoveryProperties.networkMapKeyPath)) as Reader?)
-        val key = reader.readPemObject()
-
-        reader.close()
-
-        val kf = KeyFactory.getInstance("RSA") // or "EC" or whatever
-        return kf.generatePrivate(PKCS8EncodedKeySpec(key.content))
-    }
-
     private fun intermediateKeyPair(): KeyPair {
         val keyReader = PemReader(Files.newBufferedReader(loadResourceWithNullCheck(nutsDiscoveryProperties.intermediateKeyPath)))
         val key = keyReader.readPemObject()
@@ -246,16 +164,34 @@ class LocalCertificateAndKeyService : CertificateAndKeyService {
         return KeyPair(intermediateCertificate().publicKey, priKey)
     }
 
-    override fun clearAll() {
-        certificates.clear()
-        signRequests.clear()
+    override fun signNetworkMap(networkMap: NetworkMap): SignedNetworkMap {
+        return networkMap.signWithCert(networkMapKey(), networkMapCertificate())
     }
 
-    override fun pendingSignRequests(): List<SignRequest> {
-        return signRequests.values.toList()
+    override fun signNetworkParams(networkParams: NetworkParameters): SignedNetworkParameters {
+        return networkParams.signWithCert(networkMapKey(), networkMapCertificate())
     }
 
-    override fun signedCertificates(): List<SignRequest> {
-        return certificates.values.toList()
+    override fun validate(): List<String> {
+        val configProblemSet = mutableMapOf(
+            Pair(::rootCertificate, "root certificate"),
+            Pair(::intermediateCertificate, "intermediate certificate"),
+            Pair(::networkMapCertificate, "network map certificate"),
+            Pair(::intermediateCertificate, "intermediate key"),
+            Pair(::networkMapKey, "network map key")
+        )
+
+        val configProblems = mutableListOf<String>()
+
+        configProblemSet.forEach { f, m ->
+            try {
+                f.invoke()
+            } catch (e: Exception) {
+                configProblems.add("Failed to load $m, cause: ${e.message}")
+            }
+        }
+
+        return configProblems
     }
+
 }

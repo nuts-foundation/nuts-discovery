@@ -19,24 +19,16 @@
 
 package nl.nuts.discovery.api
 
-import net.corda.core.crypto.Crypto
 import net.corda.core.identity.CordaX500Name
 import net.corda.core.serialization.deserialize
-import net.corda.core.serialization.internal.nodeSerializationEnv
 import net.corda.core.serialization.serialize
 import net.corda.nodeapi.internal.SignedNodeInfo
-import net.corda.nodeapi.internal.crypto.CertificateType
-import net.corda.nodeapi.internal.crypto.X509Utilities
 import net.corda.nodeapi.internal.network.SignedNetworkMap
 import net.corda.nodeapi.internal.network.SignedNetworkParameters
-import net.corda.testing.core.SerializationEnvironmentRule
-import net.corda.testing.internal.signWith
 import nl.nuts.discovery.TestUtils
 import nl.nuts.discovery.service.CertificateAndKeyService
-import nl.nuts.discovery.service.LocalCertificateAndKeyService
-import nl.nuts.discovery.store.InMemoryRepository
+import nl.nuts.discovery.store.InMemoryNodeRepository
 import org.junit.Before
-import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.springframework.beans.factory.annotation.Autowired
@@ -50,8 +42,8 @@ import kotlin.test.assertNotNull
 import kotlin.test.assertTrue
 
 
-fun InMemoryRepository.clear() { nodeInfoMap.clear() }
-fun NetworkMapApi.clear() { (nodeRepository as InMemoryRepository).clear() }
+fun InMemoryNodeRepository.clear() { nodeInfoMap.clear() }
+fun NetworkMapApi.clear() { (nodeRepository as InMemoryNodeRepository).clear() }
 
 /**
  * Given all the crypto, it's easiest for now to use the LocalCertificateAndKeyService to do all the signing for us
@@ -68,6 +60,9 @@ class NetworkMapApiIntegrationTest {
 
     @Autowired
     lateinit var networkMapApi: NetworkMapApi
+
+    @Autowired
+    lateinit var certificateService: CertificateAndKeyService
 
     @Before
     fun setup() {
@@ -152,7 +147,7 @@ class NetworkMapApiIntegrationTest {
     }
 
     private fun publishNode(subject : CordaX500Name) :ResponseEntity<ByteArray>  {
-        val signedNodeInfo = TestUtils.subjectToSignedNodeInfo(certificateAndKeyService, subject)
+        val signedNodeInfo = TestUtils.subjectToSignedNodeInfo(certificateService, subject)
         val entity = HttpEntity(signedNodeInfo.serialize().bytes, headers())
         return  testRestTemplate.exchange("/network-map/publish", HttpMethod.POST, entity, ByteArray::class.java)
     }

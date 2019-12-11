@@ -31,7 +31,7 @@ import javax.security.auth.x500.X500Principal
  */
 @Profile(value = arrayOf("dev", "test", "default"))
 @Service
-class InMemoryRepository : NodeRepository {
+class InMemoryNodeRepository : NodeRepository {
 
     val nodeInfoMap = HashMap<X500Principal, SignedNodeInfo>()
 

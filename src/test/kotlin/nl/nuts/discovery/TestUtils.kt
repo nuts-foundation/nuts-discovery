@@ -32,7 +32,6 @@ import net.corda.nodeapi.internal.crypto.ContentSignerBuilder
 import net.corda.nodeapi.internal.crypto.X509Utilities
 import net.corda.testing.internal.signWith
 import nl.nuts.discovery.service.CertificateAndKeyService
-import nl.nuts.discovery.service.LocalCertificateAndKeyService
 import org.bouncycastle.asn1.ASN1ObjectIdentifier
 import org.bouncycastle.asn1.DERUTF8String
 import org.bouncycastle.asn1.x500.style.BCStyle
@@ -40,7 +39,6 @@ import org.bouncycastle.pkcs.PKCS10CertificationRequest
 import org.bouncycastle.pkcs.jcajce.JcaPKCS10CertificationRequestBuilder
 import java.security.KeyPair
 import java.security.cert.CertPath
-import java.security.cert.X509Certificate
 
 interface TestUtils {
     companion object {
