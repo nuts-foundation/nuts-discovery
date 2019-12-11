@@ -5,8 +5,8 @@ import net.corda.core.node.NetworkParameters
 import nl.nuts.discovery.service.CertificateAndKeyService
 import nl.nuts.discovery.service.NetworkParametersService
 import nl.nuts.discovery.service.SignRequest
-import nl.nuts.discovery.store.InMemorySignRequestStore
 import nl.nuts.discovery.store.NodeRepository
+import nl.nuts.discovery.store.SignRequestStore
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Autowired
@@ -14,7 +14,6 @@ import org.springframework.http.HttpStatus
 import org.springframework.http.MediaType
 import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.*
-import kotlin.math.sign
 
 /**
  * Admin API handles REST calls for an administrator UI.
@@ -35,7 +34,7 @@ class AdminApi {
     lateinit var nodeRepo: NodeRepository
 
     @Autowired
-    lateinit var signRequestsStore: InMemorySignRequestStore
+    lateinit var signRequestsStore: SignRequestStore
 
     /**
      * Handle the GET request for all sign-requests. Returns a json array of SignRequests
