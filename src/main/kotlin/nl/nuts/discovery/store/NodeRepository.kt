@@ -36,7 +36,7 @@ interface NodeRepository: CrudRepository<Node, Long> {
      *
      * @return Node of the first found node
      */
-    fun findByNameLike(name: String) : Node?
+    fun findByNameContaining(name: String) : Node?
 
     /**
      * Find the node with the specified name as CN

@@ -17,18 +17,31 @@
  *
  */
 
-CREATE TABLE node
-(
-    id   INT AUTO_INCREMENT PRIMARY KEY,
-    hash VARCHAR(64)  NOT NULL UNIQUE,
-    name VARCHAR(255) NOT NULL UNIQUE,
-    raw  BLOB
-);
+package nl.nuts.discovery.store.entity
 
-CREATE TABLE signature
-(
-    id   INT AUTO_INCREMENT PRIMARY KEY,
-    node_id INT,
-    raw  BLOB,
-    FOREIGN KEY (node_id) references node(id) on delete cascade
-);
+import net.corda.core.crypto.DigitalSignature
+import javax.persistence.Entity
+import javax.persistence.GeneratedValue
+import javax.persistence.GenerationType
+import javax.persistence.Id
+
+/**
+ * Signature part of a SignedNodeInfo
+ */
+@Entity
+class Signature {
+
+    companion object {
+        fun from(digitalSignature: DigitalSignature): Signature {
+            return Signature().apply {
+                raw = digitalSignature.bytes
+            }
+        }
+    }
+
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    var id: Long? = null
+
+    var raw: ByteArray? = null
+}

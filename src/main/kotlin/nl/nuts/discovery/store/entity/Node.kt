@@ -19,13 +19,19 @@
 
 package nl.nuts.discovery.store.entity
 
+import net.corda.core.crypto.DigitalSignature
 import net.corda.core.internal.readObject
+import net.corda.core.node.NodeInfo
+import net.corda.core.serialization.SerializedBytes
 import net.corda.nodeapi.internal.SignedNodeInfo
 import java.io.ByteArrayInputStream
+import javax.persistence.CascadeType
 import javax.persistence.Entity
 import javax.persistence.GeneratedValue
 import javax.persistence.GenerationType
 import javax.persistence.Id
+import javax.persistence.JoinColumn
+import javax.persistence.OneToMany
 
 
 @Entity
@@ -37,6 +43,7 @@ class Node {
                 hash = nodeInfo.raw.hash.toString()
                 name = nodeInfo.verified().legalIdentities.firstOrNull()?.name.toString()
                 raw = nodeInfo.raw.bytes
+                signatures = nodeInfo.signatures.map { Signature.from(it) }
             }
         }
     }
@@ -50,8 +57,16 @@ class Node {
      */
     var name: String? = null
     var raw: ByteArray? = null
+    @OneToMany(cascade = [CascadeType.ALL], orphanRemoval = true)
+    @JoinColumn(name = "node_id")
+    var signatures: List<Signature> = mutableListOf()
+
+    fun toNodeInfo(): NodeInfo {
+        return ByteArrayInputStream(raw).readObject()
+    }
 
     fun toSignedNodeInfo(): SignedNodeInfo {
-        return ByteArrayInputStream(raw).readObject()
+        val sigs: List<DigitalSignature> = signatures.map{DigitalSignature(it.raw!!) }
+        return SignedNodeInfo(SerializedBytes(raw!!), sigs)
     }
 }

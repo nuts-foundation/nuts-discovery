@@ -132,12 +132,10 @@ class NetworkMapApi {
      */
     @RequestMapping("node-info/{var}", method = arrayOf(RequestMethod.GET), produces = arrayOf(MediaType.APPLICATION_OCTET_STREAM_VALUE))
     fun getNodeInfo(@PathVariable("var") nodeInfoHash: String): ResponseEntity<ByteArray> {
-        val hash = SecureHash.parse(nodeInfoHash)
+        val node = nodeRepository.findByHash(nodeInfoHash)
 
-        val signedNodeInfo = nodeRepository.findByHash(hash.toString())
-
-        return if (signedNodeInfo != null) {
-            ResponseEntity.ok(signedNodeInfo.serialize().bytes)
+        return if (node != null) {
+            ResponseEntity.ok(node.toSignedNodeInfo().serialize().bytes)
         } else {
             ResponseEntity.status(HttpStatus.NOT_FOUND).build()
         }
@@ -160,9 +158,8 @@ class NetworkMapApi {
     private fun signedNetworkParams(): SignedNetworkParameters {
         return signedNetworkParams(
             nodeRepository
-                .findByNameLike("notary")
-                ?.toSignedNodeInfo()
-                ?.verified()
+                .findByNameContaining("notary")
+                ?.toNodeInfo()
                 ?.legalIdentitiesAndCerts
                 ?.first()
                 ?.certificate

@@ -92,7 +92,7 @@ class AdminApiIntegrationTest {
     fun `network map returns the notary`() {
         val subject = CordaX500Name.parse("O=Org,L=Gr,C=NL")
         val signedNodeInfo = TestUtils.subjectToSignedNodeInfo(service, subject)
-        Mockito.`when`(nodeRepo.findByNameLike("notary")).thenReturn(Node().apply { raw = signedNodeInfo.raw.bytes })
+        Mockito.`when`(nodeRepo.findByNameContaining("notary")).thenReturn(Node().apply { raw = signedNodeInfo.raw.bytes })
 
         val networkMapRequest = testRestTemplate.getForEntity("/admin/network-parameters", String::class.java)
         assertEquals(200, networkMapRequest.statusCodeValue)
