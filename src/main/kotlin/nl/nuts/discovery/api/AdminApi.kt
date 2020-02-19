@@ -1,7 +1,9 @@
 package nl.nuts.discovery.api
 
 import net.corda.core.identity.CordaX500Name
+import net.corda.core.internal.readObject
 import net.corda.core.node.NetworkParameters
+import net.corda.nodeapi.internal.SignedNodeInfo
 import nl.nuts.discovery.service.CertificateAndKeyService
 import nl.nuts.discovery.service.NetworkParametersService
 import nl.nuts.discovery.service.SignRequest
@@ -10,10 +12,12 @@ import nl.nuts.discovery.store.SignRequestStore
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Autowired
+import org.springframework.beans.factory.annotation.Qualifier
 import org.springframework.http.HttpStatus
 import org.springframework.http.MediaType
 import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.*
+import java.io.ByteArrayInputStream
 
 /**
  * Admin API handles REST calls for an administrator UI.
@@ -31,6 +35,7 @@ class AdminApi {
     lateinit var networkParameters: NetworkParametersService
 
     @Autowired
+    @Qualifier("customNodeRepository")
     lateinit var nodeRepo: NodeRepository
 
     @Autowired
@@ -86,7 +91,12 @@ class AdminApi {
     @RequestMapping("/network-map", method = [RequestMethod.GET], produces = [MediaType.APPLICATION_JSON_VALUE])
     fun handleListNodes(): ResponseEntity<List<nl.nuts.discovery.service.NodeInfo>> {
         logger.debug("listing network map status")
-        val list = nodeRepo.allNodes().map { nl.nuts.discovery.service.NodeInfo(it.verified()) }
+
+        val list = nodeRepo.findAll().map {
+            nl.nuts.discovery.service.NodeInfo(
+                ByteArrayInputStream(it.raw).readObject<SignedNodeInfo>().verified()
+            )
+        }
         return ResponseEntity(list, HttpStatus.OK)
     }
 

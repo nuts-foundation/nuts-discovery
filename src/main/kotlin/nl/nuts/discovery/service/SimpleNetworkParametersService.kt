@@ -30,7 +30,13 @@ class SimpleNetworkParametersService : NetworkParametersService {
 
     override fun networkParameters(versionHash: String?): NetworkParameters {
         val notaries = mutableListOf<X509Certificate>()
-        val notary = this.nodeRepository.notary()?.verified()?.legalIdentitiesAndCerts?.first()?.certificate
+        val notary = nodeRepository
+            .findByNameLike("notary")
+            ?.toSignedNodeInfo()
+            ?.verified()
+            ?.legalIdentitiesAndCerts
+            ?.first()
+            ?.certificate
         if (notary != null) {
             notaries.add(notary)
         }

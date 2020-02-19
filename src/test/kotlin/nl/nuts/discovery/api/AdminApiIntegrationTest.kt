@@ -5,22 +5,20 @@ import nl.nuts.discovery.TestUtils
 import nl.nuts.discovery.service.CertificateAndKeyService
 import nl.nuts.discovery.store.NodeRepository
 import nl.nuts.discovery.store.SignRequestStore
+import nl.nuts.discovery.store.entity.Node
 import org.json.JSONArray
 import org.junit.Before
 import org.junit.Test
-import org.junit.runner.RunWith
 import org.mockito.Mockito
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.context.SpringBootTest
 import org.springframework.boot.test.mock.mockito.MockBean
 import org.springframework.boot.test.web.client.TestRestTemplate
 import org.springframework.http.HttpStatus
-import org.springframework.test.context.junit4.SpringRunner
 import kotlin.test.assertEquals
 import kotlin.test.assertNotNull
 import kotlin.test.assertTrue
 
-@RunWith(SpringRunner::class)
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 class AdminApiIntegrationTest {
     @Autowired
@@ -38,7 +36,6 @@ class AdminApiIntegrationTest {
     @Before
     fun clearNodes() {
         signRequestStore.clearAll()
-        nodeRepo.clearAll()
     }
 
     @Test
@@ -95,7 +92,7 @@ class AdminApiIntegrationTest {
     fun `network map returns the notary`() {
         val subject = CordaX500Name.parse("O=Org,L=Gr,C=NL")
         val signedNodeInfo = TestUtils.subjectToSignedNodeInfo(service, subject)
-        Mockito.`when`(nodeRepo.notary()).thenReturn(signedNodeInfo)
+        Mockito.`when`(nodeRepo.findByNameLike("notary")).thenReturn(Node().apply { raw = signedNodeInfo.raw.bytes })
 
         val networkMapRequest = testRestTemplate.getForEntity("/admin/network-parameters", String::class.java)
         assertEquals(200, networkMapRequest.statusCodeValue)

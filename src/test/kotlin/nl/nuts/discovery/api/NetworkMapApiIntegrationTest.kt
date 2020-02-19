@@ -27,7 +27,6 @@ import net.corda.nodeapi.internal.network.SignedNetworkMap
 import net.corda.nodeapi.internal.network.SignedNetworkParameters
 import nl.nuts.discovery.TestUtils
 import nl.nuts.discovery.service.CertificateAndKeyService
-import nl.nuts.discovery.store.InMemoryNodeRepository
 import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -42,8 +41,7 @@ import kotlin.test.assertNotNull
 import kotlin.test.assertTrue
 
 
-fun InMemoryNodeRepository.clear() { nodeInfoMap.clear() }
-fun NetworkMapApi.clear() { (nodeRepository as InMemoryNodeRepository).clear() }
+fun NetworkMapApi.clear() { nodeRepository.deleteAll() }
 
 /**
  * Given all the crypto, it's easiest for now to use the LocalCertificateAndKeyService to do all the signing for us
@@ -54,9 +52,6 @@ class NetworkMapApiIntegrationTest {
 
     @Autowired
     lateinit var testRestTemplate : TestRestTemplate
-
-    @Autowired
-    lateinit var certificateAndKeyService: CertificateAndKeyService
 
     @Autowired
     lateinit var networkMapApi: NetworkMapApi
