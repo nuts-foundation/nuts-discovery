@@ -17,7 +17,7 @@ import java.time.Instant
  * In the later prod network, parameters updates will happen and multiple versions of
  * the parameters must be supported.
  */
-@Profile(value = arrayOf("dev", "test", "default"))
+//@Profile(value = arrayOf("dev", "test", "default"))
 @Service
 class SimpleNetworkParametersService : NetworkParametersService {
 

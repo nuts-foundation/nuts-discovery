@@ -63,7 +63,7 @@ import javax.transaction.Transactional
 /**
  * Certificate and key logic
  */
-@Profile(value = arrayOf("dev", "test", "default"))
+//@Profile(value = arrayOf("dev", "test", "default"))
 @Service
 class CertificateAndKeyService {
 
