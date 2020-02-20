@@ -43,6 +43,7 @@ class AdminApiIntegrationTest {
     fun clearNodes() {
         certificateRequestRepository.deleteAll()
         certificateRepository.deleteAll()
+        nodeRepository.deleteAll()
     }
 
     @Test
