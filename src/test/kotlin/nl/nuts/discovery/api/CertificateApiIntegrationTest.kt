@@ -21,6 +21,7 @@ package nl.nuts.discovery.api
 
 import net.corda.core.identity.CordaX500Name
 import nl.nuts.discovery.TestUtils
+import nl.nuts.discovery.store.CertificateRepository
 import nl.nuts.discovery.store.CertificateRequestRepository
 import org.junit.After
 import org.junit.Before
@@ -47,9 +48,13 @@ class CertificateApiIntegrationTest {
     @Autowired
     lateinit var certificateRequestRepository: CertificateRequestRepository
 
+    @Autowired
+    lateinit var certificateRepository: CertificateRepository
+
     @Before
     fun clearNodes(){
         certificateRequestRepository.deleteAll()
+        certificateRepository.deleteAll()
     }
 
     @Test
