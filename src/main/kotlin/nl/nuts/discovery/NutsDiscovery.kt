@@ -24,7 +24,7 @@ import net.corda.core.serialization.internal.nodeSerializationEnv
 import net.corda.node.serialization.amqp.AMQPServerSerializationScheme
 import net.corda.serialization.internal.AMQP_P2P_CONTEXT
 import net.corda.serialization.internal.SerializationFactoryImpl
-import nl.nuts.discovery.service.LocalCertificateAndKeyService
+import nl.nuts.discovery.service.CertificateAndKeyService
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.autoconfigure.SpringBootApplication
 import org.springframework.boot.context.properties.EnableConfigurationProperties
@@ -39,7 +39,7 @@ import javax.annotation.PostConstruct
 class NutsDiscovery {
 
     @Autowired
-    lateinit var certificateAndKeyService: LocalCertificateAndKeyService
+    lateinit var certificateAndKeyService: CertificateAndKeyService
 
     /**
      * Contains Corda magic to enable Object serialization

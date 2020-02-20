@@ -30,7 +30,7 @@ import kotlin.test.assertNotNull
 
 @RunWith(SpringRunner::class)
 @SpringBootTest
-class LocalCertificateAndKeyServiceTest {
+class CertificateAndKeyServiceTest {
 
     @Autowired
     lateinit var certService: CertificateAndKeyService

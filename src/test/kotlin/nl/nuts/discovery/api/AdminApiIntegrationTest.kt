@@ -3,17 +3,17 @@ package nl.nuts.discovery.api
 import net.corda.core.identity.CordaX500Name
 import nl.nuts.discovery.TestUtils
 import nl.nuts.discovery.service.CertificateAndKeyService
+import nl.nuts.discovery.store.CertificateRepository
+import nl.nuts.discovery.store.CertificateRequestRepository
 import nl.nuts.discovery.store.NodeRepository
-import nl.nuts.discovery.store.SignRequestStore
+import nl.nuts.discovery.store.entity.CertificateRequest
 import nl.nuts.discovery.store.entity.Node
 import org.json.JSONArray
 import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
-import org.mockito.Mockito
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.context.SpringBootTest
-import org.springframework.boot.test.mock.mockito.MockBean
 import org.springframework.boot.test.web.client.TestRestTemplate
 import org.springframework.http.HttpStatus
 import org.springframework.test.context.junit4.SpringRunner
@@ -31,14 +31,18 @@ class AdminApiIntegrationTest {
     lateinit var service: CertificateAndKeyService
 
     @Autowired
-    lateinit var signRequestStore: SignRequestStore
+    lateinit var certificateRepository: CertificateRepository
+
+    @Autowired
+    lateinit var certificateRequestRepository: CertificateRequestRepository
 
     @Autowired
     lateinit var nodeRepository: NodeRepository
 
     @Before
     fun clearNodes() {
-        signRequestStore.clearAll()
+        certificateRequestRepository.deleteAll()
+        certificateRepository.deleteAll()
     }
 
     @Test
@@ -52,9 +56,8 @@ class AdminApiIntegrationTest {
     fun `with an approved certificate, GET certificates returns the certificate`() {
         val subject = CordaX500Name.parse("O=Org,L=Gr,C=NL")
         val req = TestUtils.createCertificateRequest(subject)
-        val signRequest = signRequestStore.addSigningRequest(req)
-        service.signCertificate(req)
-        signRequestStore.markAsSigned(signRequest)
+        val signRequest = certificateRequestRepository.save(CertificateRequest.fromPKCS10(req))
+        service.signCertificate(signRequest)
 
         val signedCertificates = testRestTemplate.getForEntity("/admin/certificates", String::class.java)
         assertEquals(200, signedCertificates.statusCodeValue)
@@ -72,7 +75,7 @@ class AdminApiIntegrationTest {
     fun `with a pending request, GET signrequests returns the request`() {
         val subject = CordaX500Name.parse("O=Org,L=Gr,C=NL")
         val req = TestUtils.createCertificateRequest(subject)
-        signRequestStore.addSigningRequest(req)
+        certificateRequestRepository.save(CertificateRequest.fromPKCS10(req))
 
         val signRequests = testRestTemplate.getForEntity("/admin/certificates/signrequests", String::class.java)
         val body = signRequests.body

@@ -21,7 +21,7 @@ package nl.nuts.discovery.api
 
 import net.corda.core.identity.CordaX500Name
 import nl.nuts.discovery.TestUtils
-import nl.nuts.discovery.store.SignRequestStore
+import nl.nuts.discovery.store.CertificateRequestRepository
 import org.junit.After
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -44,11 +44,11 @@ class CertificateApiIntegrationTest {
     lateinit var testRestTemplate : TestRestTemplate
 
     @Autowired
-    lateinit var signRequestStore : SignRequestStore
+    lateinit var certificateRequestRepository: CertificateRequestRepository
 
     @After
     fun clearNodes(){
-        signRequestStore.clearAll()
+        certificateRequestRepository.deleteAll()
     }
 
     @Test
@@ -80,6 +80,19 @@ class CertificateApiIntegrationTest {
     }
 
     @Test
+    fun`valid request is stored under the right name`() {
+        val subject = CordaX500Name.parse("O=Org,L=Gr,C=NL")
+        val req = TestUtils.createCertificateRequest(subject)
+
+        val entity = HttpEntity(req.encoded, headers())
+
+        val response = testRestTemplate.exchange("/doorman/certificate", HttpMethod.POST, entity, ByteArray::class.java)
+
+        val sr = certificateRequestRepository.findByName(subject.toString())
+        assertNotNull(sr)
+    }
+
+    @Test
     fun`valid request will be pending`() {
         val orgName = "O=Org,L=Gr,C=NL"
         val subject = CordaX500Name.parse(orgName)
@@ -91,21 +104,6 @@ class CertificateApiIntegrationTest {
         val response = testRestTemplate.getForEntity("/doorman/certificate/$orgName", ByteArray::class.java)
 
         assertEquals(204, response.statusCodeValue)
-    }
-
-    @Test
-    fun`valid request will be valid after admin approves`() {
-        val subject = CordaX500Name.parse("O=Org,L=Gr,C=NL")
-        val req = TestUtils.createCertificateRequest(subject)
-
-        val entity = HttpEntity(req.encoded, headers())
-
-        testRestTemplate.exchange("/doorman/certificate", HttpMethod.POST, entity, ByteArray::class.java)
-        testRestTemplate.put("/admin/certificates/signrequests/O=Org,L=Gr,C=NL/approve", null)
-        val response = testRestTemplate.getForEntity("/doorman/certificate/O=Org,L=Gr,C=NL", ByteArray::class.java)
-
-        assertEquals(200, response.statusCodeValue)
-        assertNotNull(response.body)
     }
 
     @Test

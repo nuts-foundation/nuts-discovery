@@ -32,6 +32,7 @@ import net.corda.nodeapi.internal.crypto.ContentSignerBuilder
 import net.corda.nodeapi.internal.crypto.X509Utilities
 import net.corda.testing.internal.signWith
 import nl.nuts.discovery.service.CertificateAndKeyService
+import nl.nuts.discovery.store.entity.CertificateRequest
 import org.bouncycastle.asn1.ASN1ObjectIdentifier
 import org.bouncycastle.asn1.DERUTF8String
 import org.bouncycastle.asn1.x500.style.BCStyle
@@ -72,7 +73,7 @@ interface TestUtils {
             // needs to generate well known identity certificate
 
             val req = createCertificateRequest(subject, nodeKeyPair)
-            val nodeCertificate = service.signCertificate(req)
+            val nodeCertificate = service.signCertificate(CertificateRequest.fromPKCS10(req))
 
             val identityCertificate = X509Utilities.createCertificate(CertificateType.LEGAL_IDENTITY, nodeCertificate, nodeKeyPair, subject.x500Principal, identityKeyPair.public)
 
