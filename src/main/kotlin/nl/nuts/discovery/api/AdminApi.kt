@@ -91,9 +91,7 @@ class AdminApi {
         logger.debug("listing network map status")
 
         val list = nodeRepo.findAll().map {
-            nl.nuts.discovery.service.NodeInfo(
-                ByteArrayInputStream(it.raw).readObject<SignedNodeInfo>().verified()
-            )
+            nl.nuts.discovery.service.NodeInfo(it.toNodeInfo())
         }
         return ResponseEntity(list, HttpStatus.OK)
     }

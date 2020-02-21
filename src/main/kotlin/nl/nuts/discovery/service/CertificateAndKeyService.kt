@@ -135,14 +135,23 @@ class CertificateAndKeyService {
         return x509Jca
     }
 
+    /**
+     * returns the Corda network rootcertificate
+     */
     fun rootCertificate(): X509Certificate {
         return X509Utilities.loadCertificateFromPEMFile(loadResourceWithNullCheck(nutsDiscoveryProperties.rootCertPath))
     }
 
+    /**
+     * returns the Corda network-map certificate
+     */
     fun networkMapCertificate(): X509Certificate {
         return X509Utilities.loadCertificateFromPEMFile(loadResourceWithNullCheck(nutsDiscoveryProperties.networkMapCertPath))
     }
 
+    /**
+     * returns the Corda intermediate certificate
+     */
     fun intermediateCertificate(): X509Certificate {
         return X509Utilities.loadCertificateFromPEMFile(loadResourceWithNullCheck(nutsDiscoveryProperties.intermediateCertPath))
     }
@@ -188,14 +197,23 @@ class CertificateAndKeyService {
         return KeyPair(intermediateCertificate().publicKey, priKey)
     }
 
+    /**
+     * Sign the network-map with the network-map key
+     */
     fun signNetworkMap(networkMap: NetworkMap): SignedNetworkMap {
         return networkMap.signWithCert(networkMapKey(), networkMapCertificate())
     }
 
+    /**
+     * Sign the network-map parameters with the network-map key
+     */
     fun signNetworkParams(networkParams: NetworkParameters): SignedNetworkParameters {
         return networkParams.signWithCert(networkMapKey(), networkMapCertificate())
     }
 
+    /**
+     * validate current setup, are all keys and certificates available?
+     */
     fun validate(): List<String> {
         val configProblemSet = mutableMapOf(
             Pair(::rootCertificate, "root certificate"),

@@ -3,6 +3,7 @@ package nl.nuts.discovery.api
 import net.corda.core.identity.CordaX500Name
 import nl.nuts.discovery.TestUtils
 import nl.nuts.discovery.service.CertificateAndKeyService
+import nl.nuts.discovery.service.NodeInfo
 import nl.nuts.discovery.store.CertificateRepository
 import nl.nuts.discovery.store.CertificateRequestRepository
 import nl.nuts.discovery.store.NodeRepository
@@ -15,7 +16,12 @@ import org.junit.runner.RunWith
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.context.SpringBootTest
 import org.springframework.boot.test.web.client.TestRestTemplate
+import org.springframework.boot.test.web.client.getForEntity
+import org.springframework.http.HttpEntity
+import org.springframework.http.HttpHeaders
+import org.springframework.http.HttpMethod
 import org.springframework.http.HttpStatus
+import org.springframework.http.ResponseEntity
 import org.springframework.test.context.junit4.SpringRunner
 import kotlin.test.assertEquals
 import kotlin.test.assertNotNull
@@ -87,6 +93,19 @@ class AdminApiIntegrationTest {
         assertEquals("a@b.com", obj.getString("email"))
         assertEquals(200, signRequests.statusCodeValue)
     }
+    @Test
+    fun `approve signs a certificate`() {
+        val subject = CordaX500Name.parse("O=Org,L=Gr,C=NL")
+        val req = TestUtils.createCertificateRequest(subject)
+        certificateRequestRepository.save(CertificateRequest.fromPKCS10(req))
+
+        val entity = HttpEntity("", HttpHeaders())
+
+        val response = testRestTemplate.exchange("/admin/certificates/signrequests/${subject}/approve", HttpMethod.PUT, entity, String::class.java)
+        assertEquals(200, response.statusCodeValue)
+
+        assertNotNull(certificateRepository.findByName(subject.toString()))
+    }
 
     @Test
     fun `without nodes, GET network-map returns an empty json list`() {
@@ -104,5 +123,16 @@ class AdminApiIntegrationTest {
         val networkMapRequest = testRestTemplate.getForEntity("/admin/network-parameters", String::class.java)
         assertEquals(200, networkMapRequest.statusCodeValue)
         assertTrue(networkMapRequest.body!!.contains("\"notaries\":[{"))
+    }
+
+    @Test
+    fun `list nodes returns all nodes`() {
+        val subject = CordaX500Name.parse("O=Org,L=Gr,C=NL,CN=notary")
+        val signedNodeInfo = TestUtils.subjectToSignedNodeInfo(service, subject)
+        nodeRepository.save(Node.fromNodeInfo(signedNodeInfo))
+
+        val networkMapRequest = testRestTemplate.getForEntity<List<NodeInfo>>("/admin/network-map")
+        assertEquals(200, networkMapRequest.statusCodeValue)
+        assertEquals(1, networkMapRequest.body?.size)
     }
 }
