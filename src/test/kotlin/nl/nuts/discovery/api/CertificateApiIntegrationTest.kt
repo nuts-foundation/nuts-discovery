@@ -21,8 +21,10 @@ package nl.nuts.discovery.api
 
 import net.corda.core.identity.CordaX500Name
 import nl.nuts.discovery.TestUtils
+import nl.nuts.discovery.service.CertificateAndKeyService
 import nl.nuts.discovery.store.CertificateRepository
 import nl.nuts.discovery.store.CertificateRequestRepository
+import nl.nuts.discovery.store.entity.CertificateRequest
 import org.junit.After
 import org.junit.Before
 import org.junit.Test
@@ -35,9 +37,13 @@ import org.springframework.http.HttpEntity
 import org.springframework.http.HttpHeaders
 import org.springframework.http.HttpMethod
 import org.springframework.test.context.junit4.SpringRunner
+import java.io.ByteArrayInputStream
+import java.util.zip.ZipEntry
+import java.util.zip.ZipInputStream
 import kotlin.test.assertEquals
 import kotlin.test.assertNotNull
 import kotlin.test.assertNull
+import kotlin.test.assertTrue
 
 @RunWith(SpringRunner::class)
 @SpringBootTest(webEnvironment = RANDOM_PORT)
@@ -50,6 +56,9 @@ class CertificateApiIntegrationTest {
 
     @Autowired
     lateinit var certificateRepository: CertificateRepository
+
+    @Autowired
+    lateinit var service: CertificateAndKeyService
 
     @Before
     fun clearNodes(){
@@ -117,6 +126,34 @@ class CertificateApiIntegrationTest {
         val response = testRestTemplate.getForEntity("/doorman/certificate/O=Org,L=Gr,C=NL", ByteArray::class.java)
         assertEquals(403, response.statusCodeValue)
         assertNull(response.body)
+    }
+
+    @Test
+    fun `download an approved certificate, GET certificates returns the certificat`() {
+        val subject = CordaX500Name.parse("O=Org,L=Gr,C=NL")
+        val req = TestUtils.createCertificateRequest(subject)
+        val signRequest = certificateRequestRepository.save(CertificateRequest.fromPKCS10(req))
+        service.signCertificate(signRequest)
+
+        val response = testRestTemplate.getForEntity("/doorman/certificate/${subject}", ByteArray::class.java)
+        assertEquals(200, response.statusCodeValue)
+
+        var found = false
+        val zip = ZipInputStream(ByteArrayInputStream(response.body))
+        zip.use {
+            do {
+                var entry: ZipEntry? = zip.nextEntry
+
+                if (entry == null) {
+                    break
+                }
+
+                if (entry.name.endsWith(".cer")) {
+                    found = true
+                }
+            } while (entry != null)
+        }
+        assertTrue(found)
     }
 
     private fun headers() : HttpHeaders {
