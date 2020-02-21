@@ -34,10 +34,10 @@ import javax.persistence.Id
 @Entity
 class CertificateRequest {
 
-    /**
-     * Create entity from PKCS10CertificationRequest, stores .encoded as bytes
-     */
     companion object {
+        /**
+         * Create entity from PKCS10CertificationRequest, stores .encoded as bytes
+         */
         fun fromPKCS10(request: PKCS10CertificationRequest): CertificateRequest {
             return CertificateRequest().apply {
                 name = CordaX500Name.parse(request.subject.toString()).toString() // this puts stuff in right order

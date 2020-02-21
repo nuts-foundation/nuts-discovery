@@ -35,10 +35,10 @@ import javax.persistence.Id
 @Entity
 class Certificate {
 
-    /**
-     * Create entity from a X509Certificate object, stores .encoded as bytes
-     */
     companion object {
+        /**
+         * Create entity from a X509Certificate object, stores .encoded as bytes
+         */
         fun fromX509Certificate(certificate: X509Certificate): Certificate {
             return Certificate().apply {
                 name = certificate.subjectDN.name

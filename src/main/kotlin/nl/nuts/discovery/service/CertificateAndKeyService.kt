@@ -45,10 +45,13 @@ import org.bouncycastle.util.io.pem.PemReader
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Service
 import java.io.File
+import java.io.IOException
 import java.io.Reader
+import java.net.URISyntaxException
 import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.Paths
+import java.security.GeneralSecurityException
 import java.security.KeyFactory
 import java.security.KeyPair
 import java.security.PrivateKey
@@ -212,7 +215,6 @@ class CertificateAndKeyService {
     /**
      * validate current setup, are all keys and certificates available?
      */
-    @SuppressWarnings("unchecked")
     fun validate(): List<String> {
         val configProblemSet = mutableMapOf(
             Pair(::rootCertificate, "root certificate"),
@@ -227,7 +229,11 @@ class CertificateAndKeyService {
         configProblemSet.forEach { (f, m) ->
             try {
                 f.invoke()
-            } catch (e: Exception) {
+            } catch (e: IOException) {
+                configProblems.add("Failed to load $m, cause: ${e.message}")
+            } catch (e: GeneralSecurityException) {
+                configProblems.add("Failed to load $m, cause: ${e.message}")
+            } catch (e: URISyntaxException) {
                 configProblems.add("Failed to load $m, cause: ${e.message}")
             }
         }
