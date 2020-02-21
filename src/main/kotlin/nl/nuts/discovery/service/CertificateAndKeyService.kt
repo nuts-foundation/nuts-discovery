@@ -230,15 +230,16 @@ class CertificateAndKeyService {
             try {
                 f.invoke()
             } catch (e: IOException) {
-                configProblems.add("Failed to load $m, cause: ${e.message}")
+                configProblems.add(problemMessage(e, m))
             } catch (e: GeneralSecurityException) {
-                configProblems.add("Failed to load $m, cause: ${e.message}")
+                configProblems.add(problemMessage(e, m))
             } catch (e: URISyntaxException) {
-                configProblems.add("Failed to load $m, cause: ${e.message}")
+                configProblems.add(problemMessage(e, m))
             }
         }
 
         return configProblems
     }
 
+    private fun problemMessage(e: Exception, s: String) = "Failed to load $s, cause: ${e.message}"
 }
