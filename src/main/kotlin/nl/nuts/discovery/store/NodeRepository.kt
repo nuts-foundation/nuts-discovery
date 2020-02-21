@@ -23,6 +23,9 @@ import nl.nuts.discovery.store.entity.Node
 import org.springframework.data.repository.CrudRepository
 import org.springframework.stereotype.Repository
 
+/**
+ * DB access to node
+ */
 @Repository
 interface NodeRepository: CrudRepository<Node, Long> {
     /** @param hash the secure hash of the raw NodeInfo object. As hex string

@@ -20,7 +20,6 @@
 package nl.nuts.discovery.store.entity
 
 import net.corda.core.identity.CordaX500Name
-import org.bouncycastle.asn1.x500.X500Name
 import org.bouncycastle.pkcs.PKCS10CertificationRequest
 import java.time.LocalDateTime
 import javax.persistence.Column
@@ -29,9 +28,15 @@ import javax.persistence.GeneratedValue
 import javax.persistence.GenerationType
 import javax.persistence.Id
 
+/**
+ * Entity to store PKCS10CertificationRequest in DB
+ */
 @Entity
 class CertificateRequest {
 
+    /**
+     * Create entity from PKCS10CertificationRequest, stores .encoded as bytes
+     */
     companion object {
         fun fromPKCS10(request: PKCS10CertificationRequest): CertificateRequest {
             return CertificateRequest().apply {
@@ -60,6 +65,9 @@ class CertificateRequest {
     @Column(name = "submitted_at")
     var submittedAt: LocalDateTime? = null
 
+    /**
+     * Create PKCS10CertificationRequest from entity, uses raw bytes to create object
+     */
     fun toPKCS10(): PKCS10CertificationRequest {
         return PKCS10CertificationRequest(pkcs10Csr)
     }

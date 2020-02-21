@@ -20,10 +20,12 @@
 package nl.nuts.discovery.store
 
 import nl.nuts.discovery.store.entity.CertificateRequest
-import nl.nuts.discovery.store.entity.Node
 import org.springframework.data.repository.CrudRepository
 import org.springframework.stereotype.Repository
 
+/**
+ * DB access to certificate_request
+ */
 @Repository
 interface CertificateRequestRepository: CrudRepository<CertificateRequest, Long> {
     /**

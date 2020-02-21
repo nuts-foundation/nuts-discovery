@@ -32,6 +32,10 @@ import javax.persistence.Id
 class Signature {
 
     companion object {
+
+        /**
+         * Create entity from Corda DigitalSignature
+         */
         fun from(digitalSignature: DigitalSignature): Signature {
             return Signature().apply {
                 raw = digitalSignature.bytes

@@ -40,11 +40,9 @@ import org.bouncycastle.asn1.x509.Extension
 import org.bouncycastle.asn1.x509.GeneralName
 import org.bouncycastle.asn1.x509.GeneralNames
 import org.bouncycastle.operator.jcajce.JcaContentVerifierProviderBuilder
-import org.bouncycastle.pkcs.PKCS10CertificationRequest
 import org.bouncycastle.pkcs.jcajce.JcaPKCS10CertificationRequest
 import org.bouncycastle.util.io.pem.PemReader
 import org.springframework.beans.factory.annotation.Autowired
-import org.springframework.context.annotation.Profile
 import org.springframework.stereotype.Service
 import java.io.File
 import java.io.Reader
@@ -214,6 +212,7 @@ class CertificateAndKeyService {
     /**
      * validate current setup, are all keys and certificates available?
      */
+    @SuppressWarnings("unchecked")
     fun validate(): List<String> {
         val configProblemSet = mutableMapOf(
             Pair(::rootCertificate, "root certificate"),

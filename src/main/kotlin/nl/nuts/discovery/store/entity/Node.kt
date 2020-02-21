@@ -33,11 +33,17 @@ import javax.persistence.Id
 import javax.persistence.JoinColumn
 import javax.persistence.OneToMany
 
-
+/**
+ * Entity representing participating Corda nodes
+ */
 @Entity
 class Node {
 
     companion object {
+
+        /**
+         * Create Entity from Corda SignedNodeInfo
+         */
         fun fromNodeInfo(nodeInfo: SignedNodeInfo): Node {
             return Node().apply {
                 hash = nodeInfo.raw.hash.toString()
@@ -61,10 +67,16 @@ class Node {
     @JoinColumn(name = "node_id")
     var signatures: List<Signature> = mutableListOf()
 
+    /**
+     * create Corda NodeInfo from raw bytes
+     */
     fun toNodeInfo(): NodeInfo {
         return ByteArrayInputStream(raw).readObject()
     }
 
+    /**
+     * create Corda SignedNdoeInfo from raw bytes and certificates list
+     */
     fun toSignedNodeInfo(): SignedNodeInfo {
         val sigs: List<DigitalSignature> = signatures.map{DigitalSignature(it.raw!!) }
         return SignedNodeInfo(SerializedBytes(raw!!), sigs)

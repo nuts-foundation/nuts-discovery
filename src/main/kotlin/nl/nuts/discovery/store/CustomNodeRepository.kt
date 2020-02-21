@@ -23,6 +23,9 @@ import nl.nuts.discovery.store.entity.Node
 import org.springframework.stereotype.Repository
 import javax.transaction.Transactional
 
+/**
+ * custom repo for overriding save method
+ */
 @Transactional
 @Repository("customNodeRepository")
 class CustomNodeRepository(private val delegate: NodeRepository): NodeRepository by delegate {

@@ -35,6 +35,9 @@ import javax.persistence.Id
 @Entity
 class Certificate {
 
+    /**
+     * Create entity from a X509Certificate object, stores .encoded as bytes
+     */
     companion object {
         fun fromX509Certificate(certificate: X509Certificate): Certificate {
             return Certificate().apply {
@@ -59,6 +62,9 @@ class Certificate {
     @Column(name = "x509")
     var x509: ByteArray? = null
 
+    /**
+     * create a X509Certificate from the raw bytes (DER encoding)
+     */
     fun toX509(): X509Certificate {
         val certFactory: CertificateFactory = CertificateFactory.getInstance("X.509")
         return certFactory.generateCertificate(ByteArrayInputStream(x509)) as X509Certificate
