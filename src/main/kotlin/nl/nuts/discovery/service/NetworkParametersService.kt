@@ -39,7 +39,10 @@ class NetworkParametersService {
     val maxMessageSize = 10 * 1024 * 1024
     val maxTransactionSize = 10 * 1024 * 1024
 
-    // todo: this makes the new network params active and nodes will fail because of ti
+    // todo: this makes the new network params active and nodes will fail because of it
+    /**
+     * Update the network parameters with a new Notary. It'll also store the Notary node in the node repo
+     */
     @Transactional
     fun updateNetworkParams(notary: Node): nl.nuts.discovery.store.entity.NetworkParameters {
         // save node
@@ -66,6 +69,9 @@ class NetworkParametersService {
         return networkParametersRepository.save(latest)
     }
 
+    /**
+     * create Corda networkParameters from the given entity
+     */
     fun cordaNetworkParameters(params: nl.nuts.discovery.store.entity.NetworkParameters): NetworkParameters {
         return cordaNetworkParameters(params, emptyList())
     }
