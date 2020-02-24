@@ -229,17 +229,11 @@ class CertificateAndKeyService {
         configProblemSet.forEach { (f, m) ->
             try {
                 f.invoke()
-            } catch (e: IOException) {
-                configProblems.add(problemMessage(e, m))
-            } catch (e: GeneralSecurityException) {
-                configProblems.add(problemMessage(e, m))
-            } catch (e: URISyntaxException) {
-                configProblems.add(problemMessage(e, m))
+            } catch (e: Exception) {
+                configProblems.add("Failed to load $m, cause: ${e.message}")
             }
         }
 
         return configProblems
     }
-
-    private fun problemMessage(e: Exception, s: String) = "Failed to load $s, cause: ${e.message}"
 }
