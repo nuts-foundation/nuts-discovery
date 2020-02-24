@@ -27,6 +27,7 @@ import net.corda.nodeapi.internal.network.SignedNetworkMap
 import net.corda.nodeapi.internal.network.SignedNetworkParameters
 import nl.nuts.discovery.TestUtils
 import nl.nuts.discovery.service.CertificateAndKeyService
+import org.junit.After
 import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -37,11 +38,13 @@ import org.springframework.http.*
 import org.springframework.test.context.junit4.SpringRunner
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
-import kotlin.test.assertNotNull
 import kotlin.test.assertTrue
 
 
-fun NetworkMapApi.clear() { nodeRepository.deleteAll() }
+fun NetworkMapApi.clear() {
+    networkParametersRepository.deleteAll()
+    nodeRepository.deleteAll()
+}
 
 /**
  * Given all the crypto, it's easiest for now to use the LocalCertificateAndKeyService to do all the signing for us
@@ -59,26 +62,28 @@ class NetworkMapApiIntegrationTest {
     @Autowired
     lateinit var certificateService: CertificateAndKeyService
 
+    val subjectNotary = CordaX500Name.parse("O=Org,L=Gr,C=NL,CN=notary")
+    val subject = CordaX500Name.parse("O=Org,L=Gr,C=NL")
+
     @Before
     fun setup() {
         networkMapApi.clear()
     }
 
+    @After
+    fun teardown() {
+        networkMapApi.clear()
+    }
+
     @Test
-    fun `signedNetworkMap is empty when no nodes are published`() {
+    fun `signedNetworkMap returns 404 when no notaries are published`() {
         val response = testRestTemplate.getForEntity("/network-map", ByteArray::class.java)
 
-        assertEquals(200, response.statusCodeValue)
-        assertNotNull(response.body)
-
-        val signedNetworkMap = response.body!!.deserialize<SignedNetworkMap>()
-        assertTrue(signedNetworkMap.verified().nodeInfoHashes.isEmpty())
+        assertEquals(404, response.statusCodeValue)
     }
 
     @Test
     fun `publishing a valid node returns 200`() {
-        val subject = CordaX500Name.parse("O=Org,L=Gr,C=NL")
-
         val resp = publishNode(subject)
 
         assertEquals(200, resp.statusCodeValue)
@@ -86,17 +91,17 @@ class NetworkMapApiIntegrationTest {
 
     @Test
     fun `a published node is found in the network map`() {
-        publishNode(CordaX500Name.parse("O=Org,L=Gr,C=NL"))
+        publishNotary()
+        publishNode(subject)
 
         val signedNetworkMap = networkMap()
 
-        assertEquals(1, signedNetworkMap.verified().nodeInfoHashes.size)
+        assertEquals(2, signedNetworkMap.verified().nodeInfoHashes.size)
     }
 
     @Test
     fun `a published node can be retrieved by its hash`() {
-        val subject = CordaX500Name.parse("O=Org,L=Gr,C=NL")
-        publishNode(subject)
+        publishNotary()
 
         val signedNetworkMap = networkMap()
 
@@ -106,31 +111,33 @@ class NetworkMapApiIntegrationTest {
         assertEquals(200, response.statusCodeValue)
         val signedNodeInfo = response.body!!.deserialize<SignedNodeInfo>()
 
-        assertEquals(subject, signedNodeInfo.verified().legalIdentities.first().name)
+        assertEquals(subjectNotary, signedNodeInfo.verified().legalIdentities.first().name)
     }
 
     @Test
-    fun `Network params can be retrieved`() {
-        val signedNetworkParams = networkParams()
+    fun `Network params hash is the same`() {
+        publishNotary()
+        val networkMap = networkMap()
+        val listedHash = networkMap.verified().networkParameterHash
+        val signedNetworkParams = networkParams(listedHash.toString())
+        val calcHash = signedNetworkParams.raw.hash
 
         // simple check
-        assertTrue(signedNetworkParams.verified().notaries.isEmpty())
+        assertEquals(listedHash, calcHash)
     }
 
     @Test
     fun `Network params can be retrieved with a notary`() {
-        val subject = CordaX500Name.parse("O=Org,L=Gr,C=NL,CN=notary")
-        publishNode(subject)
-        val signedNetworkParams = networkParams()
-        val networkParameters = signedNetworkParams.verified()
-        // simple check
+        publishNotary()
+        val networkMap = networkMap()
+        val networkParams = networkParams(networkMap.verified().networkParameterHash.toString()).verified()
 
-        assertFalse(networkParameters.notaries.isEmpty())
-        assertEquals(subject, networkParameters.notaries.first().identity.name)
+        assertFalse(networkParams.notaries.isEmpty())
+        assertEquals(subjectNotary, networkParams.notaries.first().identity.name)
     }
 
-    private fun networkParams() : SignedNetworkParameters {
-        val response = testRestTemplate.getForEntity("/network-map/network-parameters/1", ByteArray::class.java)
+    private fun networkParams(hash: String) : SignedNetworkParameters {
+        val response = testRestTemplate.getForEntity("/network-map/network-parameters/$hash", ByteArray::class.java)
         assertEquals(200, response.statusCodeValue)
         return response.body!!.deserialize()
     }
@@ -143,6 +150,12 @@ class NetworkMapApiIntegrationTest {
 
     private fun publishNode(subject : CordaX500Name) :ResponseEntity<ByteArray>  {
         val signedNodeInfo = TestUtils.subjectToSignedNodeInfo(certificateService, subject)
+        val entity = HttpEntity(signedNodeInfo.serialize().bytes, headers())
+        return  testRestTemplate.exchange("/network-map/publish", HttpMethod.POST, entity, ByteArray::class.java)
+    }
+
+    private fun publishNotary() :ResponseEntity<ByteArray>  {
+        val signedNodeInfo = TestUtils.subjectToSignedNotaryNodeInfo(certificateService, subjectNotary)
         val entity = HttpEntity(signedNodeInfo.serialize().bytes, headers())
         return  testRestTemplate.exchange("/network-map/publish", HttpMethod.POST, entity, ByteArray::class.java)
     }

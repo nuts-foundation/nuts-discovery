@@ -23,6 +23,7 @@ import com.fasterxml.jackson.annotation.JsonIgnore
 import com.fasterxml.jackson.annotation.JsonProperty
 import net.corda.core.CordaOID
 import net.corda.core.identity.CordaX500Name
+import net.corda.core.internal.CertRole
 import org.bouncycastle.asn1.ASN1Integer
 import org.bouncycastle.asn1.ASN1ObjectIdentifier
 import org.bouncycastle.asn1.ASN1String
@@ -57,7 +58,7 @@ data class SignRequest(@JsonIgnore val request: PKCS10CertificationRequest) {
     @JsonProperty
     fun notary(): Boolean {
         val cordaExtension = this.request.getAttributes(ASN1ObjectIdentifier(CordaOID.X509_EXTENSION_CORDA_ROLE))!!.first()
-        return cordaExtension!!.attrValues.contains(ASN1Integer(3))
+        return cordaExtension!!.attrValues.contains(CertRole.SERVICE_IDENTITY.toASN1Primitive())
     }
 
     /**

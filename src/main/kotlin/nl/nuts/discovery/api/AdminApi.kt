@@ -8,6 +8,7 @@ import nl.nuts.discovery.service.CertificateAndKeyService
 import nl.nuts.discovery.service.NetworkParametersService
 import nl.nuts.discovery.store.CertificateRepository
 import nl.nuts.discovery.store.CertificateRequestRepository
+import nl.nuts.discovery.store.NetworkParametersRepository
 import nl.nuts.discovery.store.NodeRepository
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
@@ -35,8 +36,10 @@ class AdminApi {
     lateinit var networkParameters: NetworkParametersService
 
     @Autowired
-    @Qualifier("customNodeRepository")
-    lateinit var nodeRepo: NodeRepository
+    lateinit var networkParametersRepository: NetworkParametersRepository
+
+    @Autowired
+    lateinit var nodeRepository: NodeRepository
 
     @Autowired
     lateinit var certificateRequestRepository: CertificateRequestRepository
@@ -90,7 +93,7 @@ class AdminApi {
     fun handleListNodes(): ResponseEntity<List<nl.nuts.discovery.service.NodeInfo>> {
         logger.debug("listing network map status")
 
-        val list = nodeRepo.findAll().map {
+        val list = nodeRepository.findAll().map {
             nl.nuts.discovery.service.NodeInfo(it.toNodeInfo())
         }
         return ResponseEntity(list, HttpStatus.OK)
@@ -102,7 +105,10 @@ class AdminApi {
     @RequestMapping("network-parameters", method=[RequestMethod.GET], produces = [MediaType.APPLICATION_JSON_VALUE])
     fun handleNetworkParameters(): ResponseEntity<NetworkParameters> {
         logger.debug("request for network-parameters")
-        return ResponseEntity(networkParameters.networkParameters(null), HttpStatus.OK)
+
+        val latest = networkParametersRepository.findFirstByOrderByIdDesc() ?: return ResponseEntity.notFound().build()
+
+        return ResponseEntity(networkParameters.cordaNetworkParameters(latest), HttpStatus.OK)
     }
 
 }

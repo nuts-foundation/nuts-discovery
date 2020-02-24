@@ -82,5 +82,21 @@ interface TestUtils {
 
             return nodeInfo.signWith(listOf(identityKeyPair.private))
         }
+
+        fun subjectToSignedNotaryNodeInfo(service: CertificateAndKeyService, subject: CordaX500Name) : SignedNodeInfo {
+            val nodeKeyPair = Crypto.generateKeyPair(Crypto.RSA_SHA256)
+            val identityKeyPair = Crypto.generateKeyPair(Crypto.RSA_SHA256)
+            // needs to generate well known identity certificate
+
+            val req = createCertificateRequest(subject, nodeKeyPair)
+            val nodeCertificate = service.signCertificate(CertificateRequest.fromPKCS10(req))
+
+            val identityCertificate = X509Utilities.createCertificate(CertificateType.SERVICE_IDENTITY, nodeCertificate, nodeKeyPair, subject.x500Principal, identityKeyPair.public)
+
+            val certPath = X509Utilities.buildCertPath(identityCertificate, nodeCertificate, service.intermediateCertificate(), service.rootCertificate())
+            val nodeInfo = createNodeInfo(certPath)
+
+            return nodeInfo.signWith(listOf(identityKeyPair.private))
+        }
     }
 }

@@ -19,14 +19,19 @@
 
 package nl.nuts.discovery.store.entity
 
+import net.corda.core.CordaOID
 import net.corda.core.crypto.DigitalSignature
+import net.corda.core.internal.CertRole
 import net.corda.core.internal.readObject
 import net.corda.core.node.NodeInfo
 import net.corda.core.serialization.SerializedBytes
 import net.corda.nodeapi.internal.SignedNodeInfo
+import org.bouncycastle.asn1.ASN1Integer
+import org.bouncycastle.cert.jcajce.JcaX509ExtensionUtils
 import java.io.ByteArrayInputStream
 import javax.persistence.CascadeType
 import javax.persistence.Entity
+import javax.persistence.FetchType
 import javax.persistence.GeneratedValue
 import javax.persistence.GenerationType
 import javax.persistence.Id
@@ -46,10 +51,18 @@ class Node {
          */
         fun fromNodeInfo(nodeInfo: SignedNodeInfo): Node {
             return Node().apply {
+                val pAndcert = nodeInfo.verified().legalIdentitiesAndCerts.firstOrNull()?: throw IllegalArgumentException("signedNodeInfo must have legal identity")
+
                 hash = nodeInfo.raw.hash.toString()
-                name = nodeInfo.verified().legalIdentities.firstOrNull()?.name.toString()
+                name = pAndcert.party.name.toString()
                 raw = nodeInfo.raw.bytes
                 signatures = nodeInfo.signatures.map { Signature.from(it) }
+
+                val cert = pAndcert.certificate
+                val extBytes = cert.getExtensionValue(CordaOID.X509_EXTENSION_CORDA_ROLE)
+                val asn1 = JcaX509ExtensionUtils.parseExtensionValue(extBytes)
+
+                notary = CertRole.Companion.getInstance(asn1.encoded) == CertRole.SERVICE_IDENTITY
             }
         }
     }
@@ -58,12 +71,14 @@ class Node {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     var id: Long? = null
     var hash: String? = null
+    var notary: Boolean? = null
+
     /**
      * CN of certificate, like X500Name
      */
     var name: String? = null
     var raw: ByteArray? = null
-    @OneToMany(cascade = [CascadeType.ALL], orphanRemoval = true)
+    @OneToMany(cascade = [CascadeType.ALL], orphanRemoval = true, fetch = FetchType.EAGER)
     @JoinColumn(name = "node_id")
     var signatures: List<Signature> = mutableListOf()
 

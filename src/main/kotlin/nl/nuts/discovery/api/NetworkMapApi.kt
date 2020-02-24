@@ -19,6 +19,7 @@
 
 package nl.nuts.discovery.api
 
+import net.corda.core.CordaOID
 import net.corda.core.crypto.SecureHash
 import net.corda.core.internal.readObject
 import net.corda.core.serialization.serialize
@@ -27,8 +28,12 @@ import net.corda.nodeapi.internal.network.NetworkMap
 import net.corda.nodeapi.internal.network.SignedNetworkParameters
 import nl.nuts.discovery.service.CertificateAndKeyService
 import nl.nuts.discovery.service.NetworkParametersService
+import nl.nuts.discovery.store.NetworkParametersRepository
 import nl.nuts.discovery.store.NodeRepository
+import nl.nuts.discovery.store.entity.NetworkParameters
 import nl.nuts.discovery.store.entity.Node
+import org.bouncycastle.asn1.ASN1Integer
+import org.bouncycastle.asn1.ASN1ObjectIdentifier
 import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.beans.factory.annotation.Qualifier
@@ -57,7 +62,6 @@ class NetworkMapApi {
     val logger = LoggerFactory.getLogger(this.javaClass)
 
     @Autowired
-    @Qualifier("customNodeRepository")
     lateinit var nodeRepository: NodeRepository
 
     @Autowired
@@ -65,6 +69,9 @@ class NetworkMapApi {
 
     @Autowired
     lateinit var networkParametersService: NetworkParametersService
+
+    @Autowired
+    lateinit var networkParametersRepository: NetworkParametersRepository
 
     /**
      * Accept NodeInfo from connecting nodes.
@@ -78,7 +85,12 @@ class NetworkMapApi {
             val node = Node.fromNodeInfo(signedNodeInfo)
             logger.info("received a publish request for legalIdentities: {}", node.name)
 
-            nodeRepository.save(node)
+            if (node.notary!!) {
+                networkParametersService.updateNetworkParams(node)
+            } else {
+                nodeRepository.save(node)
+            }
+
         } catch (e: Exception) {
             logger.error(e.message, e)
             throw e
@@ -104,8 +116,8 @@ class NetworkMapApi {
 
         try {
             val nodeListHashes = nodeRepository.findAll().map { SecureHash.parse(it.hash) }
-            val signedNetworkParameters = signedNetworkParams()
-            val networkMap = NetworkMap(nodeListHashes, signedNetworkParameters.raw.hash, null)
+            val latestNetworkParams = networkParametersRepository.findFirstByOrderByIdDesc() ?: return ResponseEntity.notFound().build()
+            val networkMap = NetworkMap(nodeListHashes, SecureHash.parse(latestNetworkParams.hash!!), null)
             val signedNetworkMap = certificateAndKeyService.signNetworkMap(networkMap)
 
             return ResponseEntity
@@ -147,22 +159,17 @@ class NetworkMapApi {
      */
     @RequestMapping("network-parameters/{var}", method = arrayOf(RequestMethod.GET), produces = arrayOf(MediaType.APPLICATION_OCTET_STREAM_VALUE))
     fun getNetworkParameter(@PathVariable("var") hash: String): ResponseEntity<ByteArray> {
-        return ResponseEntity.ok(signedNetworkParams().serialize().bytes)
+        val np = networkParametersRepository.findByHash(hash) ?: return ResponseEntity.notFound().build()
+
+        return ResponseEntity.ok(signedNetworkParams(np).serialize().bytes)
     }
 
-    private fun signedNetworkParams(notary: X509Certificate?): SignedNetworkParameters {
-        val networkParameters = networkParametersService.networkParameters(null)
-        return certificateAndKeyService.signNetworkParams(networkParameters)
+    private fun signedNetworkParams(np: NetworkParameters): SignedNetworkParameters {
+        return certificateAndKeyService.signNetworkParams(networkParametersService.cordaNetworkParameters(np))
     }
 
-    private fun signedNetworkParams(): SignedNetworkParameters {
-        return signedNetworkParams(
-            nodeRepository
-                .findByNameContaining("notary")
-                ?.toNodeInfo()
-                ?.legalIdentitiesAndCerts
-                ?.first()
-                ?.certificate
-        )
+    private fun signedNetworkParams(): SignedNetworkParameters? {
+        val latest = networkParametersRepository.findFirstByOrderByIdDesc() ?: return null
+        return signedNetworkParams(latest)
     }
 }

@@ -19,53 +19,39 @@
 
 package nl.nuts.discovery.store.entity
 
-import java.io.ByteArrayInputStream
-import java.security.cert.CertificateFactory
-import java.security.cert.X509Certificate
+import java.time.LocalDateTime
 import javax.persistence.Column
 import javax.persistence.Entity
+import javax.persistence.FetchType
 import javax.persistence.GeneratedValue
 import javax.persistence.GenerationType
 import javax.persistence.Id
-
+import javax.persistence.JoinColumn
+import javax.persistence.JoinTable
+import javax.persistence.OneToMany
 
 /**
- * represents X509 certificate
+ * Entity representing current and future network parameters
  */
 @Entity
-class Certificate {
+class NetworkParameters {
 
-    companion object {
-        /**
-         * Create entity from a X509Certificate object, stores .encoded as bytes
-         */
-        fun fromX509Certificate(certificate: X509Certificate): Certificate {
-            return Certificate().apply {
-                name = certificate.subjectDN.name
-                x509 = certificate.encoded
-            }
-        }
-    }
-
+    /**
+     * Doubles as epoch value in NetworkParameters
+     */
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    var id: Long? = null
+    var id: Int? = null
 
     /**
-     * CN of certificate, like X500Name
+     * Hash of raw bytes, since we do not store the raw bytes, hardcoded values can't change
      */
-    var name: String? = null
+    var hash: String? = null
 
-    /**
-     * encoded bytes of X509 (confirms to DER)
-     */
-    var x509: ByteArray? = null
+    @Column(name = "modified_time")
+    var modifiedTime: LocalDateTime? = null
 
-    /**
-     * create a X509Certificate from the raw bytes (DER encoding)
-     */
-    fun toX509(): X509Certificate {
-        val certFactory: CertificateFactory = CertificateFactory.getInstance("X.509")
-        return certFactory.generateCertificate(ByteArrayInputStream(x509)) as X509Certificate
-    }
+    @OneToMany(fetch=FetchType.EAGER)
+    @JoinTable(name="network_parameters_nodes", joinColumns=[JoinColumn(name="network_parameters_id")], inverseJoinColumns=[JoinColumn(name="node_id")] )
+    var notaries: List<Node> = mutableListOf()
 }

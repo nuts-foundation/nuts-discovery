@@ -17,19 +17,22 @@
  *
  */
 
-CREATE TABLE node
-(
-    id     INT AUTO_INCREMENT PRIMARY KEY,
-    hash   VARCHAR(64)  NOT NULL UNIQUE,
-    name   VARCHAR(255) NOT NULL UNIQUE,
-    notary BOOLEAN      NOT NULL,
-    raw    BLOB
-);
+package nl.nuts.discovery.store
 
-CREATE TABLE signature
-(
-    id      INT AUTO_INCREMENT PRIMARY KEY,
-    node_id INT,
-    raw     BLOB,
-    FOREIGN KEY (node_id) references node (id) on delete cascade
-);
+import nl.nuts.discovery.store.entity.NetworkParameters
+import org.springframework.data.repository.CrudRepository
+
+/**
+ * Main interaction for stored NetworkParameters
+ */
+interface NetworkParametersRepository: CrudRepository<NetworkParameters, Long> {
+    /**
+     * Find params with latest ID
+     */
+    fun findFirstByOrderByIdDesc(): NetworkParameters?
+
+    /**
+     * Find by hash
+     */
+    fun findByHash(hash: String): NetworkParameters?
+}

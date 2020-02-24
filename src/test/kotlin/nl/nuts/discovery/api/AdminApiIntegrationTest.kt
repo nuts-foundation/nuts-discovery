@@ -3,13 +3,16 @@ package nl.nuts.discovery.api
 import net.corda.core.identity.CordaX500Name
 import nl.nuts.discovery.TestUtils
 import nl.nuts.discovery.service.CertificateAndKeyService
+import nl.nuts.discovery.service.NetworkParametersService
 import nl.nuts.discovery.service.NodeInfo
 import nl.nuts.discovery.store.CertificateRepository
 import nl.nuts.discovery.store.CertificateRequestRepository
+import nl.nuts.discovery.store.NetworkParametersRepository
 import nl.nuts.discovery.store.NodeRepository
 import nl.nuts.discovery.store.entity.CertificateRequest
 import nl.nuts.discovery.store.entity.Node
 import org.json.JSONArray
+import org.junit.After
 import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -25,6 +28,13 @@ import org.springframework.test.context.junit4.SpringRunner
 import kotlin.test.assertEquals
 import kotlin.test.assertNotNull
 import kotlin.test.assertTrue
+
+fun AdminApi.clear() {
+    networkParametersRepository.deleteAll()
+    certificateRequestRepository.deleteAll()
+    certificateRepository.deleteAll()
+    nodeRepository.deleteAll()
+}
 
 @RunWith(SpringRunner::class)
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
@@ -42,13 +52,22 @@ class AdminApiIntegrationTest {
     lateinit var certificateRequestRepository: CertificateRequestRepository
 
     @Autowired
+    lateinit var networkParametersService: NetworkParametersService
+
+    @Autowired
     lateinit var nodeRepository: NodeRepository
 
+    @Autowired
+    lateinit var adminApi: AdminApi
+
     @Before
-    fun clearNodes() {
-        certificateRequestRepository.deleteAll()
-        certificateRepository.deleteAll()
-        nodeRepository.deleteAll()
+    fun setup() {
+        adminApi.clear()
+    }
+
+    @After
+    fun teardown() {
+        adminApi.clear()
     }
 
     @Test
@@ -116,8 +135,8 @@ class AdminApiIntegrationTest {
     @Test
     fun `network map returns the notary`() {
         val subject = CordaX500Name.parse("O=Org,L=Gr,C=NL,CN=notary")
-        val signedNodeInfo = TestUtils.subjectToSignedNodeInfo(service, subject)
-        nodeRepository.save(Node.fromNodeInfo(signedNodeInfo))
+        val signedNodeInfo = TestUtils.subjectToSignedNotaryNodeInfo(service, subject)
+        networkParametersService.updateNetworkParams(Node.fromNodeInfo(signedNodeInfo))
 
         val networkMapRequest = testRestTemplate.getForEntity("/admin/network-parameters", String::class.java)
         assertEquals(200, networkMapRequest.statusCodeValue)
