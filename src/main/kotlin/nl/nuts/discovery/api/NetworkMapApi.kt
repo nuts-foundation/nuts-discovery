@@ -167,9 +167,4 @@ class NetworkMapApi {
     private fun signedNetworkParams(np: NetworkParameters): SignedNetworkParameters {
         return certificateAndKeyService.signNetworkParams(networkParametersService.cordaNetworkParameters(np))
     }
-
-    private fun signedNetworkParams(): SignedNetworkParameters? {
-        val latest = networkParametersRepository.findFirstByOrderByIdDesc() ?: return null
-        return signedNetworkParams(latest)
-    }
 }

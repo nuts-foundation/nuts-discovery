@@ -41,9 +41,6 @@ import java.time.LocalDateTime
 data class SignRequest(@JsonIgnore val request: PKCS10CertificationRequest) {
     var submissionTime: LocalDateTime = LocalDateTime.now()
 
-    @JsonIgnore
-    var certificate: X509Certificate? = null
-
     /**
      * Returns the CordaX500Name from the subject
      */
