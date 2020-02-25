@@ -107,7 +107,7 @@ class CertificateAndKeyService {
             subject,
             subjectPublicKey,
             window,
-            null, // todo
+            null, // todo add name constraints which confirm to CA tree
             null,
             null)
 

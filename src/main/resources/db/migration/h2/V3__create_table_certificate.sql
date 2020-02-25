@@ -23,3 +23,5 @@ CREATE TABLE certificate
     name VARCHAR(255) NOT NULL,
     x509 BLOB NOT NULL
 );
+
+CREATE INDEX c_name_idx on certificate(name);

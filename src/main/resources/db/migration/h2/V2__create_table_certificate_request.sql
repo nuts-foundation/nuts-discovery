@@ -24,3 +24,5 @@ CREATE TABLE certificate_request
     submitted_at TIMESTAMP    NOT NULL,
     pkcs10_csr   BLOB         NOT NULL
 );
+
+CREATE INDEX c_r_name_idx on certificate_request(name);
