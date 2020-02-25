@@ -19,32 +19,19 @@
 
 package nl.nuts.discovery.store
 
-import nl.nuts.discovery.store.entity.Node
+import nl.nuts.discovery.store.entity.Certificate
 import org.springframework.data.repository.CrudRepository
 import org.springframework.stereotype.Repository
 
 /**
- * DB access to node
+ * DB access to certificate
  */
 @Repository
-interface NodeRepository: CrudRepository<Node, Long> {
-    /** @param hash the secure hash of the raw NodeInfo object. As hex string
-     *
-     * @return the signedNodeInfo if found, null otherwise.
-     */
-    fun findByHash(hash:String) : Node?
-
+interface CertificateRepository: CrudRepository<Certificate, Long> {
     /**
-     * Find the first node with the specified name in the CN
+     * Find the certificate with the specified name as CN
      *
-     * @return Node of the first found node
+     * @return certificate
      */
-    fun findByNameContaining(name: String) : Node?
-
-    /**
-     * Find the node with the specified name as CN
-     *
-     * @return Node
-     */
-    fun findByName(name: String) : Node?
+    fun findByName(name: String) : Certificate?
 }

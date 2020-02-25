@@ -1,19 +1,23 @@
 package nl.nuts.discovery.api
 
 import net.corda.core.identity.CordaX500Name
+import net.corda.core.internal.readObject
 import net.corda.core.node.NetworkParameters
+import net.corda.nodeapi.internal.SignedNodeInfo
 import nl.nuts.discovery.service.CertificateAndKeyService
 import nl.nuts.discovery.service.NetworkParametersService
-import nl.nuts.discovery.service.SignRequest
+import nl.nuts.discovery.store.CertificateRepository
+import nl.nuts.discovery.store.CertificateRequestRepository
 import nl.nuts.discovery.store.NodeRepository
-import nl.nuts.discovery.store.SignRequestStore
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Autowired
+import org.springframework.beans.factory.annotation.Qualifier
 import org.springframework.http.HttpStatus
 import org.springframework.http.MediaType
 import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.*
+import java.io.ByteArrayInputStream
 
 /**
  * Admin API handles REST calls for an administrator UI.
@@ -31,10 +35,14 @@ class AdminApi {
     lateinit var networkParameters: NetworkParametersService
 
     @Autowired
+    @Qualifier("customNodeRepository")
     lateinit var nodeRepo: NodeRepository
 
     @Autowired
-    lateinit var signRequestsStore: SignRequestStore
+    lateinit var certificateRequestRepository: CertificateRequestRepository
+
+    @Autowired
+    lateinit var certificateRepository: CertificateRepository
 
     /**
      * Handle the GET request for all sign-requests. Returns a json array of SignRequests
@@ -42,7 +50,7 @@ class AdminApi {
     @RequestMapping("/certificates/signrequests", method = [RequestMethod.GET], produces = [MediaType.APPLICATION_JSON_VALUE])
     fun handleListSignRequests(): ResponseEntity<List<SignRequest>> {
         logger.debug("listing pending sign requests")
-        val list = signRequestsStore.pendingSignRequests()
+        val list = certificateRequestRepository.findAll().map { SignRequest(it.toPKCS10()) }
         return ResponseEntity(list, HttpStatus.OK)
     }
 
@@ -50,9 +58,9 @@ class AdminApi {
      * Handle the GET request for all signed certificates in the network. Returns an
      */
     @RequestMapping("/certificates", method = [RequestMethod.GET], produces = [MediaType.APPLICATION_JSON_VALUE])
-    fun handleListCertificates(): ResponseEntity<List<SignRequest>> {
+    fun handleListCertificates(): ResponseEntity<List<Certificate>> {
         logger.debug("listing signed certificates")
-        val list = signRequestsStore.signedCertificates()
+        val list = certificateRepository.findAll().map { Certificate(it.toX509()) }
         return ResponseEntity(list, HttpStatus.OK)
     }
 
@@ -64,15 +72,10 @@ class AdminApi {
         logger.debug("received sign request for: $nodeId")
         try {
             // find pending sign request by name
-            val subject = CordaX500Name.parse(nodeId)
-            val request = signRequestsStore.pendingSignRequest(subject) ?: return ResponseEntity.notFound().build()
+            val request = certificateRequestRepository.findByName(nodeId) ?: return ResponseEntity.notFound().build()
 
             // sign it
-            val nodeCaCert = certificateAndKeyService.signCertificate(request.request)
-            request.certificate = nodeCaCert
-
-            // move from pending to signed
-            signRequestsStore.markAsSigned(request)
+            certificateAndKeyService.signCertificate(request)
         } catch (e: Exception) {
             logger.error(e.message, e)
             return ResponseEntity.badRequest().build()
@@ -86,7 +89,10 @@ class AdminApi {
     @RequestMapping("/network-map", method = [RequestMethod.GET], produces = [MediaType.APPLICATION_JSON_VALUE])
     fun handleListNodes(): ResponseEntity<List<nl.nuts.discovery.service.NodeInfo>> {
         logger.debug("listing network map status")
-        val list = nodeRepo.allNodes().map { nl.nuts.discovery.service.NodeInfo(it.verified()) }
+
+        val list = nodeRepo.findAll().map {
+            nl.nuts.discovery.service.NodeInfo(it.toNodeInfo())
+        }
         return ResponseEntity(list, HttpStatus.OK)
     }
 

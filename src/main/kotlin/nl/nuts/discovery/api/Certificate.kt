@@ -1,9 +1,10 @@
-package nl.nuts.discovery.service
+package nl.nuts.discovery.api
 
 import com.fasterxml.jackson.annotation.JsonIgnore
 import com.fasterxml.jackson.annotation.JsonProperty
 import net.corda.core.CordaOID
 import net.corda.core.identity.CordaX500Name
+import net.corda.core.internal.toAttributesMap
 import org.bouncycastle.asn1.ASN1Integer
 import org.bouncycastle.asn1.ASN1ObjectIdentifier
 import org.bouncycastle.asn1.ASN1String
@@ -13,23 +14,19 @@ import org.bouncycastle.util.io.pem.PemObject
 import org.bouncycastle.util.io.pem.PemWriter
 import java.io.StringWriter
 import java.security.cert.X509Certificate
+import java.security.cert.X509Extension
 import java.time.LocalDateTime
 
 /**
- * SignReuest wraps a PKCS10CertificationRequest and provides extra properties to serialize it as json.
+ * SignRequest wraps a X509Certificate and provides extra properties to serialize it as json.
  */
-data class SignRequest(@JsonIgnore val request: PKCS10CertificationRequest) {
-    var submissionTime: LocalDateTime = LocalDateTime.now()
-
-    @JsonIgnore
-    var certificate: X509Certificate? = null
-
+data class Certificate(@JsonIgnore var certificate: X509Certificate) {
     /**
      * Returns the CordaX500Name from the subject
      */
     @JsonProperty
     fun legalName(): CordaX500Name {
-        return CordaX500Name.parse(this.request.subject.toString())
+        return CordaX500Name.parse(certificate.subjectDN.name)
     }
 
     /**
@@ -37,18 +34,18 @@ data class SignRequest(@JsonIgnore val request: PKCS10CertificationRequest) {
      */
     @JsonProperty
     fun notary(): Boolean {
-        val cordaExtension = this.request.getAttributes(ASN1ObjectIdentifier(CordaOID.X509_EXTENSION_CORDA_ROLE))!!.first()
-        return cordaExtension!!.attrValues.contains(ASN1Integer(3))
+        val cordaExtension = certificate.getExtensionValue(CordaOID.X509_EXTENSION_CORDA_ROLE)
+        return ASN1Integer.fromByteArray(cordaExtension) == ASN1Integer(3)
     }
 
     /**
      * returns the email from the certificate request
      */
     @JsonProperty
-    fun email(): String {
-        val emailAttr = this.request.getAttributes(BCStyle.EmailAddress)!!.first()
-        val emailASN1String = emailAttr!!.attrValues.getObjectAt(0) as ASN1String
-        return emailASN1String.string
+    fun email(): String? {
+        return certificate.issuerX500Principal.toAttributesMap(
+            setOf(BCStyle.EmailAddress, BCStyle.CN, BCStyle.C, BCStyle.L, BCStyle.O)
+        )[BCStyle.EmailAddress]
     }
 
     /**
@@ -56,10 +53,9 @@ data class SignRequest(@JsonIgnore val request: PKCS10CertificationRequest) {
      */
     @JsonProperty
     fun publicKey(): String {
-        this.request
         val str = StringWriter()
         val pemWriter = PemWriter(str)
-        val pemObject = PemObject("CERTIFICATE REQUEST", this.request.encoded)
+        val pemObject = PemObject("CERTIFICATE REQUEST", certificate.encoded)
         pemWriter.writeObject(pemObject)
         pemWriter.close()
         str.close()
@@ -71,7 +67,7 @@ data class SignRequest(@JsonIgnore val request: PKCS10CertificationRequest) {
      */
     @JsonProperty
     fun approved(): Boolean {
-        return certificate != null
+        return true
     }
 
 }

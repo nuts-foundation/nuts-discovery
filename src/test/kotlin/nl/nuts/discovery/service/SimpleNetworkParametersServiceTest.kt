@@ -3,7 +3,9 @@ package nl.nuts.discovery.service
 import net.corda.core.identity.CordaX500Name
 import nl.nuts.discovery.TestUtils
 import nl.nuts.discovery.store.NodeRepository
+import nl.nuts.discovery.store.entity.Node
 import org.junit.Assert.assertEquals
+import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.mockito.Mockito
@@ -22,8 +24,13 @@ class SimpleNetworkParametersServiceTest {
     @Autowired
     lateinit var certificateAndKeyService: CertificateAndKeyService
 
-    @MockBean
+    @Autowired
     lateinit var nodeRepository: NodeRepository
+
+    @Before
+    fun before() {
+        nodeRepository.deleteAll()
+    }
 
     @Test
     fun `it has the correct minimum platform version`() {
@@ -39,9 +46,10 @@ class SimpleNetworkParametersServiceTest {
 
     @Test
     fun `when set, it returns the notary`() {
-        val subject = CordaX500Name.parse("O=Org,L=Gr,C=NL")
+        val subject = CordaX500Name.parse("O=Org,L=Gr,C=NL,CN=notary")
         val signedNodeInfo = TestUtils.subjectToSignedNodeInfo(certificateAndKeyService, subject)
-        Mockito.`when`(nodeRepository.notary()).thenReturn(signedNodeInfo)
+        nodeRepository.save(Node.fromNodeInfo(signedNodeInfo))
+
         val parameters = this.networkParametersService.networkParameters(null)
         assertEquals(1, parameters.notaries.size)
         assertEquals(subject, parameters.notaries.first().identity.name)

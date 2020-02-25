@@ -28,13 +28,19 @@ import net.corda.nodeapi.internal.network.SignedNetworkParameters
 import nl.nuts.discovery.service.CertificateAndKeyService
 import nl.nuts.discovery.service.NetworkParametersService
 import nl.nuts.discovery.store.NodeRepository
+import nl.nuts.discovery.store.entity.Node
 import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Autowired
+import org.springframework.beans.factory.annotation.Qualifier
 import org.springframework.http.CacheControl
 import org.springframework.http.HttpStatus
 import org.springframework.http.MediaType
 import org.springframework.http.ResponseEntity
-import org.springframework.web.bind.annotation.*
+import org.springframework.web.bind.annotation.PathVariable
+import org.springframework.web.bind.annotation.RequestBody
+import org.springframework.web.bind.annotation.RequestMapping
+import org.springframework.web.bind.annotation.RequestMethod
+import org.springframework.web.bind.annotation.RestController
 import java.io.ByteArrayInputStream
 import java.io.InputStream
 import java.security.cert.X509Certificate
@@ -46,11 +52,12 @@ import java.util.concurrent.TimeUnit
  * Taken from net.corda.testing.node.internal.network.NetworkMapServer
  */
 @RestController
-@RequestMapping("/network-map", produces = arrayOf("*/*") ,consumes = arrayOf("*/*"))
+@RequestMapping("/network-map", produces = arrayOf("*/*"), consumes = arrayOf("*/*"))
 class NetworkMapApi {
     val logger = LoggerFactory.getLogger(this.javaClass)
 
     @Autowired
+    @Qualifier("customNodeRepository")
     lateinit var nodeRepository: NodeRepository
 
     @Autowired
@@ -63,15 +70,15 @@ class NetworkMapApi {
      * Accept NodeInfo from connecting nodes.
      */
     @RequestMapping("/publish", method = arrayOf(RequestMethod.POST), produces = arrayOf(MediaType.APPLICATION_OCTET_STREAM_VALUE))
-    fun publishNodeInfo(@RequestBody input: ByteArray) : ResponseEntity<ByteArray> {
+    fun publishNodeInfo(@RequestBody input: ByteArray): ResponseEntity<ByteArray> {
         try {
             val signedNodeInfo = ByteArrayInputStream(input).readObject<SignedNodeInfo>()
 
             //verify
-            val nodeInfo = signedNodeInfo.verified()
-            logger.info("received a publish request for legalIdentities: {}", nodeInfo.legalIdentities)
+            val node = Node.fromNodeInfo(signedNodeInfo)
+            logger.info("received a publish request for legalIdentities: {}", node.name)
 
-            nodeRepository.addNode(signedNodeInfo)
+            nodeRepository.save(node)
         } catch (e: Exception) {
             logger.error(e.message, e)
             throw e
@@ -84,7 +91,7 @@ class NetworkMapApi {
      * Currently not supported
      */
     @RequestMapping("/ack-parameters", method = arrayOf(RequestMethod.POST), consumes = arrayOf(MediaType.APPLICATION_OCTET_STREAM_VALUE))
-    fun ackNetworkParameters(@RequestBody input: InputStream) : ResponseEntity<Any> {
+    fun ackNetworkParameters(@RequestBody input: InputStream): ResponseEntity<Any> {
 
         return ResponseEntity.ok().build()
     }
@@ -96,16 +103,16 @@ class NetworkMapApi {
     fun getGlobalNetworkMap(): ResponseEntity<ByteArray> {
 
         try {
-            val nodeListHashes = nodeRepository.allNodes().map {it.raw.hash }
+            val nodeListHashes = nodeRepository.findAll().map { SecureHash.parse(it.hash) }
             val signedNetworkParameters = signedNetworkParams()
             val networkMap = NetworkMap(nodeListHashes, signedNetworkParameters.raw.hash, null)
             val signedNetworkMap = certificateAndKeyService.signNetworkMap(networkMap)
 
             return ResponseEntity
-                    .ok()
-                    .cacheControl(CacheControl.maxAge(10, TimeUnit.SECONDS))
-                    .body(signedNetworkMap.serialize().bytes)
-        } catch(e:Exception) {
+                .ok()
+                .cacheControl(CacheControl.maxAge(10, TimeUnit.SECONDS))
+                .body(signedNetworkMap.serialize().bytes)
+        } catch (e: Exception) {
             logger.error(e.message, e)
             throw e
         }
@@ -125,12 +132,10 @@ class NetworkMapApi {
      */
     @RequestMapping("node-info/{var}", method = arrayOf(RequestMethod.GET), produces = arrayOf(MediaType.APPLICATION_OCTET_STREAM_VALUE))
     fun getNodeInfo(@PathVariable("var") nodeInfoHash: String): ResponseEntity<ByteArray> {
-        val hash = SecureHash.parse(nodeInfoHash)
+        val node = nodeRepository.findByHash(nodeInfoHash)
 
-        val signedNodeInfo = nodeRepository.nodeByHash(hash)
-
-        return if (signedNodeInfo != null) {
-            ResponseEntity.ok(signedNodeInfo.serialize().bytes)
+        return if (node != null) {
+            ResponseEntity.ok(node.toSignedNodeInfo().serialize().bytes)
         } else {
             ResponseEntity.status(HttpStatus.NOT_FOUND).build()
         }
@@ -145,12 +150,19 @@ class NetworkMapApi {
         return ResponseEntity.ok(signedNetworkParams().serialize().bytes)
     }
 
-    private fun signedNetworkParams(notary: X509Certificate?) : SignedNetworkParameters {
+    private fun signedNetworkParams(notary: X509Certificate?): SignedNetworkParameters {
         val networkParameters = networkParametersService.networkParameters(null)
         return certificateAndKeyService.signNetworkParams(networkParameters)
     }
 
-    private fun signedNetworkParams() : SignedNetworkParameters {
-        return signedNetworkParams(nodeRepository.notary()?.verified()?.legalIdentitiesAndCerts?.first()?.certificate)
+    private fun signedNetworkParams(): SignedNetworkParameters {
+        return signedNetworkParams(
+            nodeRepository
+                .findByNameContaining("notary")
+                ?.toNodeInfo()
+                ?.legalIdentitiesAndCerts
+                ?.first()
+                ?.certificate
+        )
     }
 }

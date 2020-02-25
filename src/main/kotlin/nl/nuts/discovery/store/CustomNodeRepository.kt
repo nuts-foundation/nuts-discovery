@@ -1,6 +1,6 @@
 /*
  *     Nuts discovery service for Corda network creation
- *     Copyright (C) 2019 Nuts community
+ *     Copyright (C) 2020 Nuts community
  *
  *     This program is free software: you can redistribute it and/or modify
  *     it under the terms of the GNU General Public License as published by
@@ -20,31 +20,27 @@
 package nl.nuts.discovery.store
 
 import nl.nuts.discovery.store.entity.Node
-import org.springframework.data.repository.CrudRepository
 import org.springframework.stereotype.Repository
+import javax.transaction.Transactional
 
 /**
- * DB access to node
+ * custom repo for overriding save method
  */
-@Repository
-interface NodeRepository: CrudRepository<Node, Long> {
-    /** @param hash the secure hash of the raw NodeInfo object. As hex string
-     *
-     * @return the signedNodeInfo if found, null otherwise.
-     */
-    fun findByHash(hash:String) : Node?
-
+@Transactional
+@Repository("customNodeRepository")
+class CustomNodeRepository(private val delegate: NodeRepository): NodeRepository by delegate {
     /**
-     * Find the first node with the specified name in the CN
-     *
-     * @return Node of the first found node
+     * Custom implementation that replaces node based on CN/Name
      */
-    fun findByNameContaining(name: String) : Node?
+    override fun <S : Node?> save(entity: S): S {
+        if (entity?.name == null) {
+            throw IllegalArgumentException("name can't be null")
+        }
+        val node = delegate.findByName(entity.name!!) ?: return delegate.save(entity)
 
-    /**
-     * Find the node with the specified name as CN
-     *
-     * @return Node
-     */
-    fun findByName(name: String) : Node?
+        return delegate.save(node.apply {
+            hash = entity.hash
+            raw = entity.raw
+        }) as S
+    }
 }

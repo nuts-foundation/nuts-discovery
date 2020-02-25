@@ -17,7 +17,7 @@ import java.time.Instant
  * In the later prod network, parameters updates will happen and multiple versions of
  * the parameters must be supported.
  */
-@Profile(value = arrayOf("dev", "test", "default"))
+//@Profile(value = arrayOf("dev", "test", "default"))
 @Service
 class SimpleNetworkParametersService : NetworkParametersService {
 
@@ -30,7 +30,12 @@ class SimpleNetworkParametersService : NetworkParametersService {
 
     override fun networkParameters(versionHash: String?): NetworkParameters {
         val notaries = mutableListOf<X509Certificate>()
-        val notary = this.nodeRepository.notary()?.verified()?.legalIdentitiesAndCerts?.first()?.certificate
+        val notary = nodeRepository
+            .findByNameContaining("notary")
+            ?.toNodeInfo()
+            ?.legalIdentitiesAndCerts
+            ?.first()
+            ?.certificate
         if (notary != null) {
             notaries.add(notary)
         }
