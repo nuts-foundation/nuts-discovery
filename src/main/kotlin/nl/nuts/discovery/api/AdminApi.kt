@@ -1,9 +1,6 @@
 package nl.nuts.discovery.api
 
-import net.corda.core.identity.CordaX500Name
-import net.corda.core.internal.readObject
 import net.corda.core.node.NetworkParameters
-import net.corda.nodeapi.internal.SignedNodeInfo
 import nl.nuts.discovery.service.CertificateAndKeyService
 import nl.nuts.discovery.service.NetworkParametersService
 import nl.nuts.discovery.store.CertificateRepository
@@ -17,8 +14,11 @@ import org.springframework.beans.factory.annotation.Qualifier
 import org.springframework.http.HttpStatus
 import org.springframework.http.MediaType
 import org.springframework.http.ResponseEntity
-import org.springframework.web.bind.annotation.*
-import java.io.ByteArrayInputStream
+import org.springframework.web.bind.annotation.CrossOrigin
+import org.springframework.web.bind.annotation.PathVariable
+import org.springframework.web.bind.annotation.RequestMapping
+import org.springframework.web.bind.annotation.RequestMethod
+import org.springframework.web.bind.annotation.RestController
 
 /**
  * Admin API handles REST calls for an administrator UI.

@@ -9,7 +9,6 @@ import nl.nuts.discovery.store.entity.Node
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Service
 import java.time.LocalDateTime
-import java.time.ZoneId
 import java.time.ZoneOffset
 import javax.transaction.Transactional
 
