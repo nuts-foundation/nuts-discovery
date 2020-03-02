@@ -35,7 +35,7 @@ data class Certificate(@JsonIgnore var certificate: X509Certificate) {
      */
     @JsonProperty
     fun notary(): Boolean {
-        return CertRole.extract(certificate) == CertRole.SERVICE_IDENTITY
+        return certificate.subjectDN.name.contains("notary")
     }
 
     /**

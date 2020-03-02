@@ -71,8 +71,4 @@ class Certificate {
         val certFactory: CertificateFactory = CertificateFactory.getInstance("X.509")
         return certFactory.generateCertificate(ByteArrayInputStream(x509)) as X509Certificate
     }
-
-    fun notary(): Boolean {
-        return CertRole.extract(toX509()) == CertRole.SERVICE_IDENTITY
-    }
 }

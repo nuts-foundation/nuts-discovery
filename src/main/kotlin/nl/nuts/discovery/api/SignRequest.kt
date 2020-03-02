@@ -54,8 +54,7 @@ data class SignRequest(@JsonIgnore val request: PKCS10CertificationRequest) {
      */
     @JsonProperty
     fun notary(): Boolean {
-        val cordaExtension = this.request.getAttributes(ASN1ObjectIdentifier(CordaOID.X509_EXTENSION_CORDA_ROLE))!!.first()
-        return cordaExtension!!.attrValues.contains(CertRole.SERVICE_IDENTITY.toASN1Primitive())
+        return this.request.subject.toString().contains("notary")
     }
 
     /**

@@ -57,12 +57,7 @@ class Node {
                 name = pAndcert.party.name.toString()
                 raw = nodeInfo.raw.bytes
                 signatures = nodeInfo.signatures.map { Signature.from(it) }
-
-                val cert = pAndcert.certificate
-                val extBytes = cert.getExtensionValue(CordaOID.X509_EXTENSION_CORDA_ROLE)
-                val asn1 = JcaX509ExtensionUtils.parseExtensionValue(extBytes)
-
-                notary = CertRole.Companion.getInstance(asn1.encoded) == CertRole.SERVICE_IDENTITY
+                notary = name!!.contains("notary")
             }
         }
     }

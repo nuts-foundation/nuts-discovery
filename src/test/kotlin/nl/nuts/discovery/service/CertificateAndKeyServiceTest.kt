@@ -61,12 +61,4 @@ class CertificateAndKeyServiceTest {
     fun `service validates with existing certificates and keys`() {
         assertEquals(0, certService.validate().size)
     }
-
-    @Test
-    fun `signing a notary sets the correct extension`() {
-        val pkcs10 = TestUtils.createNotaryCertificateRequest(subjectNotary)
-        val x509 = certService.signCertificate(CertificateRequest.fromPKCS10(pkcs10))
-
-        assertTrue(Certificate.fromX509Certificate(x509).notary())
-    }
 }

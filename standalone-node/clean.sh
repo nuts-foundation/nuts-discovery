@@ -5,5 +5,6 @@ rm -rf logs
 rm -rf certificates
 rm nodeInfo*
 rm persistence.*
+rm network-parameters
 rm corda.jar
 rm ../keys/*

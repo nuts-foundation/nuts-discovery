@@ -20,6 +20,7 @@
 package nl.nuts.discovery.api
 
 import net.corda.core.crypto.SecureHash
+import net.corda.core.internal.CertRole
 import net.corda.core.internal.readObject
 import net.corda.core.serialization.serialize
 import net.corda.nodeapi.internal.SignedNodeInfo
@@ -77,10 +78,12 @@ class NetworkMapApi {
             val signedNodeInfo = ByteArrayInputStream(input).readObject<SignedNodeInfo>()
 
             //verify
+            val pAndcert = signedNodeInfo.verified().legalIdentitiesAndCerts.firstOrNull()?: throw IllegalArgumentException("signedNodeInfo must have legal identity")
             val node = Node.fromNodeInfo(signedNodeInfo)
-            logger.info("received a publish request for legalIdentities: {}", node.name)
+            logger.info("received a publish request for legalIdentities: {} with role", node.name, CertRole.extract(pAndcert.certificate))
 
-            if (node.notary!!) {
+            if (node.notary == true) {
+                logger.debug("new notary detected")
                 networkParametersService.updateNetworkParams(node)
             } else {
                 nodeRepository.save(node)

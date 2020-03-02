@@ -68,7 +68,6 @@ class CertificateApi {
 
             val req = certificateRequestRepository.save(CertificateRequest.fromPKCS10(pkcs10Request))
 
-            // temp auto-sign
             //certificateAndKeyService.signCertificate(req)
 
             ResponseEntity.ok(pkcs10Request.subject.toString())
