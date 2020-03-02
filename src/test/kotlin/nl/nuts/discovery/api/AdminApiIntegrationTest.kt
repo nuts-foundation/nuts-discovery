@@ -135,7 +135,7 @@ class AdminApiIntegrationTest {
     @Test
     fun `network map returns the notary`() {
         val subject = CordaX500Name.parse("O=Org,L=Gr,C=NL,CN=notary")
-        val signedNodeInfo = TestUtils.subjectToSignedNotaryNodeInfo(service, subject)
+        val signedNodeInfo = TestUtils.subjectToSignedNodeInfo(service, subject)
         networkParametersService.updateNetworkParams(Node.fromNodeInfo(signedNodeInfo))
 
         val networkMapRequest = testRestTemplate.getForEntity("/admin/network-parameters", String::class.java)

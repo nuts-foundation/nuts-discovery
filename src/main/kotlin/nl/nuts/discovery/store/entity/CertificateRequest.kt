@@ -19,12 +19,7 @@
 
 package nl.nuts.discovery.store.entity
 
-import com.fasterxml.jackson.annotation.JsonProperty
-import net.corda.core.CordaOID
 import net.corda.core.identity.CordaX500Name
-import net.corda.core.internal.CertRole
-import net.corda.nodeapi.internal.crypto.CertificateType
-import org.bouncycastle.asn1.ASN1ObjectIdentifier
 import org.bouncycastle.pkcs.PKCS10CertificationRequest
 import java.time.LocalDateTime
 import javax.persistence.Column

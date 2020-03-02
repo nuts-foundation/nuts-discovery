@@ -14,4 +14,5 @@ class NutsDiscoveryProperties {
     lateinit var intermediateKeyPath: String
     lateinit var networkMapCertPath: String
     lateinit var networkMapKeyPath: String
+    var autoAck: Boolean = false
 }

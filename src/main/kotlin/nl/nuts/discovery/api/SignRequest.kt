@@ -21,18 +21,13 @@ package nl.nuts.discovery.api
 
 import com.fasterxml.jackson.annotation.JsonIgnore
 import com.fasterxml.jackson.annotation.JsonProperty
-import net.corda.core.CordaOID
 import net.corda.core.identity.CordaX500Name
-import net.corda.core.internal.CertRole
-import org.bouncycastle.asn1.ASN1Integer
-import org.bouncycastle.asn1.ASN1ObjectIdentifier
 import org.bouncycastle.asn1.ASN1String
 import org.bouncycastle.asn1.x500.style.BCStyle
 import org.bouncycastle.pkcs.PKCS10CertificationRequest
 import org.bouncycastle.util.io.pem.PemObject
 import org.bouncycastle.util.io.pem.PemWriter
 import java.io.StringWriter
-import java.security.cert.X509Certificate
 import java.time.LocalDateTime
 
 /**
