@@ -21,6 +21,7 @@ import java.time.LocalDateTime
 fun NetworkParametersService.clear() {
     networkParametersRepository.deleteAll()
     nodeRepository.deleteAll()
+    initialParams()
 }
 
 @RunWith(SpringRunner::class)

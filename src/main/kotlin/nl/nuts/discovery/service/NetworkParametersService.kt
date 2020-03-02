@@ -10,6 +10,7 @@ import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Service
 import java.time.LocalDateTime
 import java.time.ZoneOffset
+import javax.annotation.PostConstruct
 import javax.transaction.Transactional
 
 /**
@@ -19,6 +20,7 @@ import javax.transaction.Transactional
  * In the later prod network, parameters updates will happen and multiple versions of
  * the parameters must be supported.
  */
+@Transactional
 @Service
 class NetworkParametersService {
 
@@ -38,11 +40,20 @@ class NetworkParametersService {
     val maxMessageSize = 10 * 1024 * 1024
     val maxTransactionSize = 10 * 1024 * 1024
 
+    /**
+     * Post construct to make sure
+     */
+    @PostConstruct
+    fun initialParams() {
+        if (networkParametersRepository.findFirstByOrderByIdDesc() == null) {
+            networkParametersRepository.save(createEmptyParams())
+        }
+    }
+
     // todo: this makes the new network params active and nodes will fail because of it
     /**
      * Update the network parameters with a new Notary. It'll also store the Notary node in the node repo
      */
-    @Transactional
     fun updateNetworkParams(notary: Node): nl.nuts.discovery.store.entity.NetworkParameters {
         // save node
         nodeRepository.save(notary)
@@ -50,11 +61,7 @@ class NetworkParametersService {
         // latest or new
         var latest = networkParametersRepository.findFirstByOrderByIdDesc()
         if (latest == null) {
-            latest = networkParametersRepository.save(
-                nl.nuts.discovery.store.entity.NetworkParameters().apply {
-                    modifiedTime = LocalDateTime.now()
-                }
-            )
+            latest = networkParametersRepository.save(createEmptyParams())
         }
 
         // create corda variant for hash
@@ -68,6 +75,20 @@ class NetworkParametersService {
         return networkParametersRepository.save(latest)
     }
 
+    private fun createEmptyParams(): nl.nuts.discovery.store.entity.NetworkParameters {
+        val np =  nl.nuts.discovery.store.entity.NetworkParameters().apply {
+            modifiedTime = LocalDateTime.now()
+        }
+
+        // create corda variant for hash
+        val cnp = cordaNetworkParameters(np, emptyList())
+
+        // sign and extract hash
+        np.hash = certificateAndKeyService.signNetworkParams(cnp).raw.hash.toString()
+
+        return np
+    }
+
     /**
      * create Corda networkParameters from the given entity
      */
@@ -76,13 +97,16 @@ class NetworkParametersService {
     }
 
     private fun cordaNetworkParameters(params: nl.nuts.discovery.store.entity.NetworkParameters, additionalNotaries: List<Node>): NetworkParameters {
+
+        val id = params.id ?: 1
+
         return NetworkParameters(
             minPlatformVersion,
             (params.notaries + additionalNotaries).map { toNotaryInfo(it) },
             maxMessageSize,
             maxTransactionSize,
             params.modifiedTime!!.toInstant(ZoneOffset.systemDefault().getRules().getOffset(params.modifiedTime)),
-            params.id!!,
+            id,
             linkedMapOf()
         )
     }

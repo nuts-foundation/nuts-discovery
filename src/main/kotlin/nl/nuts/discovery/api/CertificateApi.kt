@@ -66,7 +66,10 @@ class CertificateApi {
             logger.info("Client-Version: $clientVersion")
             logger.info("Private-Network-Map: $pnm")
 
-            certificateRequestRepository.save(CertificateRequest.fromPKCS10(pkcs10Request))
+            val req = certificateRequestRepository.save(CertificateRequest.fromPKCS10(pkcs10Request))
+
+            // temp auto-sign
+            //certificateAndKeyService.signCertificate(req)
 
             ResponseEntity.ok(pkcs10Request.subject.toString())
         } catch (e: Exception) {

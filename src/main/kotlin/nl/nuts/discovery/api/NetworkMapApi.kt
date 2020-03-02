@@ -19,7 +19,6 @@
 
 package nl.nuts.discovery.api
 
-import net.corda.core.CordaOID
 import net.corda.core.crypto.SecureHash
 import net.corda.core.internal.readObject
 import net.corda.core.serialization.serialize
@@ -32,11 +31,8 @@ import nl.nuts.discovery.store.NetworkParametersRepository
 import nl.nuts.discovery.store.NodeRepository
 import nl.nuts.discovery.store.entity.NetworkParameters
 import nl.nuts.discovery.store.entity.Node
-import org.bouncycastle.asn1.ASN1Integer
-import org.bouncycastle.asn1.ASN1ObjectIdentifier
 import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Autowired
-import org.springframework.beans.factory.annotation.Qualifier
 import org.springframework.http.CacheControl
 import org.springframework.http.HttpStatus
 import org.springframework.http.MediaType
@@ -48,7 +44,6 @@ import org.springframework.web.bind.annotation.RequestMethod
 import org.springframework.web.bind.annotation.RestController
 import java.io.ByteArrayInputStream
 import java.io.InputStream
-import java.security.cert.X509Certificate
 import java.util.concurrent.TimeUnit
 
 /**
@@ -114,11 +109,15 @@ class NetworkMapApi {
     @RequestMapping("", method = arrayOf(RequestMethod.GET), produces = arrayOf(MediaType.APPLICATION_OCTET_STREAM_VALUE))
     fun getGlobalNetworkMap(): ResponseEntity<ByteArray> {
 
+        logger.debug("received network-map request")
+
         try {
             val nodeListHashes = nodeRepository.findAll().map { SecureHash.parse(it.hash) }
             val latestNetworkParams = networkParametersRepository.findFirstByOrderByIdDesc() ?: return ResponseEntity.notFound().build()
             val networkMap = NetworkMap(nodeListHashes, SecureHash.parse(latestNetworkParams.hash!!), null)
             val signedNetworkMap = certificateAndKeyService.signNetworkMap(networkMap)
+
+            logger.debug("returned networkMap with params hash: {}", latestNetworkParams.hash)
 
             return ResponseEntity
                 .ok()
@@ -144,6 +143,9 @@ class NetworkMapApi {
      */
     @RequestMapping("node-info/{var}", method = arrayOf(RequestMethod.GET), produces = arrayOf(MediaType.APPLICATION_OCTET_STREAM_VALUE))
     fun getNodeInfo(@PathVariable("var") nodeInfoHash: String): ResponseEntity<ByteArray> {
+
+        logger.debug("received node-info request for {}", nodeInfoHash)
+
         val node = nodeRepository.findByHash(nodeInfoHash)
 
         return if (node != null) {
@@ -159,6 +161,8 @@ class NetworkMapApi {
      */
     @RequestMapping("network-parameters/{var}", method = arrayOf(RequestMethod.GET), produces = arrayOf(MediaType.APPLICATION_OCTET_STREAM_VALUE))
     fun getNetworkParameter(@PathVariable("var") hash: String): ResponseEntity<ByteArray> {
+        logger.debug("received network-parameters request for {}", hash)
+
         val np = networkParametersRepository.findByHash(hash) ?: return ResponseEntity.notFound().build()
 
         return ResponseEntity.ok(signedNetworkParams(np).serialize().bytes)

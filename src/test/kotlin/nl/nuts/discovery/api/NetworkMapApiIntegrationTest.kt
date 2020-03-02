@@ -27,6 +27,7 @@ import net.corda.nodeapi.internal.network.SignedNetworkMap
 import net.corda.nodeapi.internal.network.SignedNetworkParameters
 import nl.nuts.discovery.TestUtils
 import nl.nuts.discovery.service.CertificateAndKeyService
+import nl.nuts.discovery.service.clear
 import org.junit.After
 import org.junit.Before
 import org.junit.Test
@@ -42,8 +43,7 @@ import kotlin.test.assertTrue
 
 
 fun NetworkMapApi.clear() {
-    networkParametersRepository.deleteAll()
-    nodeRepository.deleteAll()
+    networkParametersService.clear()
 }
 
 /**
@@ -76,10 +76,10 @@ class NetworkMapApiIntegrationTest {
     }
 
     @Test
-    fun `signedNetworkMap returns 404 when no notaries are published`() {
+    fun `signedNetworkMap returns 200 when no notaries are published`() {
         val response = testRestTemplate.getForEntity("/network-map", ByteArray::class.java)
 
-        assertEquals(404, response.statusCodeValue)
+        assertEquals(200, response.statusCodeValue)
     }
 
     @Test
