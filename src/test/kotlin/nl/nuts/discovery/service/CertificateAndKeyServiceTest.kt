@@ -19,6 +19,10 @@
 
 package nl.nuts.discovery.service
 
+import net.corda.core.identity.CordaX500Name
+import nl.nuts.discovery.TestUtils
+import nl.nuts.discovery.store.entity.Certificate
+import nl.nuts.discovery.store.entity.CertificateRequest
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.springframework.beans.factory.annotation.Autowired
@@ -26,11 +30,14 @@ import org.springframework.boot.test.context.SpringBootTest
 import org.springframework.test.context.junit4.SpringRunner
 import kotlin.test.assertEquals
 import kotlin.test.assertNotNull
+import kotlin.test.assertTrue
 
 
 @RunWith(SpringRunner::class)
 @SpringBootTest
 class CertificateAndKeyServiceTest {
+
+    val subjectNotary = CordaX500Name.parse("O=Org,L=Gr,C=NL,CN=notary")
 
     @Autowired
     lateinit var certService: CertificateAndKeyService
@@ -55,4 +62,11 @@ class CertificateAndKeyServiceTest {
         assertEquals(0, certService.validate().size)
     }
 
+    @Test
+    fun `signing a notary sets the correct extension`() {
+        val pkcs10 = TestUtils.createNotaryCertificateRequest(subjectNotary)
+        val x509 = certService.signCertificate(CertificateRequest.fromPKCS10(pkcs10))
+
+        assertTrue(Certificate.fromX509Certificate(x509).notary())
+    }
 }

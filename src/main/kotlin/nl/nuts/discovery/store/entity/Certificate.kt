@@ -19,6 +19,9 @@
 
 package nl.nuts.discovery.store.entity
 
+import net.corda.core.CordaOID
+import net.corda.core.internal.CertRole
+import org.bouncycastle.asn1.ASN1Integer
 import java.io.ByteArrayInputStream
 import java.security.cert.CertificateFactory
 import java.security.cert.X509Certificate
@@ -67,5 +70,9 @@ class Certificate {
     fun toX509(): X509Certificate {
         val certFactory: CertificateFactory = CertificateFactory.getInstance("X.509")
         return certFactory.generateCertificate(ByteArrayInputStream(x509)) as X509Certificate
+    }
+
+    fun notary(): Boolean {
+        return CertRole.extract(toX509()) == CertRole.SERVICE_IDENTITY
     }
 }

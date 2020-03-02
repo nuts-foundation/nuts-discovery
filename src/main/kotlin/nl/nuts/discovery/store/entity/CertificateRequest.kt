@@ -19,7 +19,11 @@
 
 package nl.nuts.discovery.store.entity
 
+import com.fasterxml.jackson.annotation.JsonProperty
+import net.corda.core.CordaOID
 import net.corda.core.identity.CordaX500Name
+import net.corda.core.internal.CertRole
+import org.bouncycastle.asn1.ASN1ObjectIdentifier
 import org.bouncycastle.pkcs.PKCS10CertificationRequest
 import java.time.LocalDateTime
 import javax.persistence.Column
@@ -70,5 +74,13 @@ class CertificateRequest {
      */
     fun toPKCS10(): PKCS10CertificationRequest {
         return PKCS10CertificationRequest(pkcs10Csr)
+    }
+
+    /**
+     * Returns whether or not this node is a notary
+     */
+    fun notary(): Boolean {
+        val cordaExtension = this.toPKCS10().getAttributes(ASN1ObjectIdentifier(CordaOID.X509_EXTENSION_CORDA_ROLE))!!.first()
+        return cordaExtension!!.attrValues.contains(CertRole.SERVICE_IDENTITY.toASN1Primitive())
     }
 }

@@ -21,6 +21,7 @@ package nl.nuts.discovery.service
 
 import net.corda.core.crypto.Crypto
 import net.corda.core.identity.CordaX500Name
+import net.corda.core.internal.CertRole
 import net.corda.core.internal.signWithCert
 import net.corda.core.node.NetworkParameters
 import net.corda.nodeapi.internal.crypto.CertificateType
@@ -88,8 +89,13 @@ class CertificateAndKeyService {
         val pkcs10 = JcaPKCS10CertificationRequest(request.toPKCS10())
         val name = CordaX500Name.parse(request.name!!)
 
+        // extract role
+        var certificateType = CertificateType.NODE_CA
+        if (request.notary()) {
+            certificateType = CertificateType.SERVICE_IDENTITY
+        }
+
         val issuerCertificate = intermediateCertificate()
-        val certificateType = CertificateType.NODE_CA
         val issuer = issuerCertificate.subjectX500Principal
         val issuerKeyPair = intermediateKeyPair()
         val subject = name.x500Principal
@@ -186,7 +192,7 @@ class CertificateAndKeyService {
         return Paths.get(uri)
     }
 
-    private fun intermediateKeyPair(): KeyPair {
+    fun intermediateKeyPair(): KeyPair {
         val keyReader = PemReader(Files.newBufferedReader(loadResourceWithNullCheck(nutsDiscoveryProperties.intermediateKeyPath)))
         val key = keyReader.readPemObject()
 

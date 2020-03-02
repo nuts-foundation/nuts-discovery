@@ -4,6 +4,7 @@ import com.fasterxml.jackson.annotation.JsonIgnore
 import com.fasterxml.jackson.annotation.JsonProperty
 import net.corda.core.CordaOID
 import net.corda.core.identity.CordaX500Name
+import net.corda.core.internal.CertRole
 import net.corda.core.internal.toAttributesMap
 import org.bouncycastle.asn1.ASN1Integer
 import org.bouncycastle.asn1.ASN1ObjectIdentifier
@@ -34,8 +35,7 @@ data class Certificate(@JsonIgnore var certificate: X509Certificate) {
      */
     @JsonProperty
     fun notary(): Boolean {
-        val cordaExtension = certificate.getExtensionValue(CordaOID.X509_EXTENSION_CORDA_ROLE)
-        return ASN1Integer.fromByteArray(cordaExtension) == ASN1Integer(3)
+        return CertRole.extract(certificate) == CertRole.SERVICE_IDENTITY
     }
 
     /**
