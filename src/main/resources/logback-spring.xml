@@ -2,10 +2,12 @@
     <include resource="org/springframework/boot/logging/logback/base.xml"/>
     <include resource="org/springframework/boot/logging/logback/defaults.xml" />
 
-    <logger name="org.apache" level="WARN" additivity="false"/>
-    <logger name="org.springframework" level="WARN" additivity="false"/>
+    <logger name="org.apache" level="INFO" additivity="false"/>
+    <logger name="org.springframework" level="INFO" additivity="false"/>
+    <logger name="com.zaxxer" level="WARN" additivity="false"/>
     <logger name="net.corda" level="WARN" additivity="false"/>
     <logger name="org.hibernate" level="WARN" additivity="false"/>
+    <logger name="org.flywaydb" level="WARN" additivity="false"/>
 
     <appender name="STDOUT" class="ch.qos.logback.core.ConsoleAppender">
         <encoder>

@@ -19,6 +19,9 @@
 
 package nl.nuts.discovery.store.entity
 
+import net.corda.core.CordaOID
+import net.corda.core.internal.CertRole
+import org.bouncycastle.asn1.ASN1Integer
 import java.io.ByteArrayInputStream
 import java.security.cert.CertificateFactory
 import java.security.cert.X509Certificate
@@ -59,7 +62,6 @@ class Certificate {
     /**
      * encoded bytes of X509 (confirms to DER)
      */
-    @Column(name = "x509")
     var x509: ByteArray? = null
 
     /**

@@ -45,17 +45,22 @@ interface TestUtils {
     companion object {
         fun createCertificateRequest(subject: CordaX500Name): PKCS10CertificationRequest {
             val keyPair = Crypto.generateKeyPair(Crypto.RSA_SHA256)
-            return createCertificateRequest(subject, keyPair)
+            return createCertificateRequest(subject, keyPair, CertRole.NODE_CA)
         }
 
-        fun createCertificateRequest(subject: CordaX500Name, keyPair : KeyPair): PKCS10CertificationRequest {
+        fun createNotaryCertificateRequest(subject: CordaX500Name): PKCS10CertificationRequest {
+            val keyPair = Crypto.generateKeyPair(Crypto.RSA_SHA256)
+            return createCertificateRequest(subject, keyPair, CertRole.SERVICE_IDENTITY)
+        }
+
+        fun createCertificateRequest(subject: CordaX500Name, keyPair : KeyPair, certRole: CertRole): PKCS10CertificationRequest {
             val signatureScheme = Crypto.RSA_SHA256
             val email = "a@b.com"
 
             val signer = ContentSignerBuilder.build(signatureScheme, keyPair.private, Crypto.findProvider(signatureScheme.providerName))
             return JcaPKCS10CertificationRequestBuilder(subject.x500Principal, keyPair.public)
                     .addAttribute(BCStyle.E, DERUTF8String(email))
-                    .addAttribute(ASN1ObjectIdentifier(CordaOID.X509_EXTENSION_CORDA_ROLE), CertRole.NODE_CA)
+                    .addAttribute(ASN1ObjectIdentifier(CordaOID.X509_EXTENSION_CORDA_ROLE), certRole)
                     .build(signer)
         }
 
@@ -72,12 +77,22 @@ interface TestUtils {
             val identityKeyPair = Crypto.generateKeyPair(Crypto.RSA_SHA256)
             // needs to generate well known identity certificate
 
-            val req = createCertificateRequest(subject, nodeKeyPair)
+            val req = createCertificateRequest(subject, nodeKeyPair, CertRole.NODE_CA)
             val nodeCertificate = service.signCertificate(CertificateRequest.fromPKCS10(req))
 
             val identityCertificate = X509Utilities.createCertificate(CertificateType.LEGAL_IDENTITY, nodeCertificate, nodeKeyPair, subject.x500Principal, identityKeyPair.public)
 
             val certPath = X509Utilities.buildCertPath(identityCertificate, nodeCertificate, service.intermediateCertificate(), service.rootCertificate())
+            val nodeInfo = createNodeInfo(certPath)
+
+            return nodeInfo.signWith(listOf(identityKeyPair.private))
+        }
+
+        fun subjectToSignedNotaryNodeInfo(service: CertificateAndKeyService, subject: CordaX500Name) : SignedNodeInfo {
+            val identityKeyPair = Crypto.generateKeyPair(Crypto.RSA_SHA256)
+            val identityCertificate = X509Utilities.createCertificate(CertificateType.SERVICE_IDENTITY, service.intermediateCertificate(), service.intermediateKeyPair(), subject.x500Principal, identityKeyPair.public)
+
+            val certPath = X509Utilities.buildCertPath(identityCertificate, service.intermediateCertificate(), service.rootCertificate())
             val nodeInfo = createNodeInfo(certPath)
 
             return nodeInfo.signWith(listOf(identityKeyPair.private))

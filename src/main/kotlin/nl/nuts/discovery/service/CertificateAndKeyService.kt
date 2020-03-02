@@ -186,7 +186,7 @@ class CertificateAndKeyService {
         return Paths.get(uri)
     }
 
-    private fun intermediateKeyPair(): KeyPair {
+    fun intermediateKeyPair(): KeyPair {
         val keyReader = PemReader(Files.newBufferedReader(loadResourceWithNullCheck(nutsDiscoveryProperties.intermediateKeyPath)))
         val key = keyReader.readPemObject()
 

@@ -19,3 +19,14 @@ build
 
 # Project specific
 keys
+.srl
+standalone-node/additional-node-infos/
+standalone-node/artemis/
+standalone-node/brokers/
+standalone-node/certificates/
+standalone-node/corda.jar
+standalone-node/logs/
+standalone-node/network-parameters
+standalone-node/nodeInfo*
+standalone-node/persistence.mv.db
+standalone-node/persistence.trace.db

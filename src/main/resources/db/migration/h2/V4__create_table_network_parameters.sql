@@ -17,19 +17,17 @@
  *
  */
 
-CREATE TABLE node
+CREATE TABLE network_parameters
 (
-    id     INT AUTO_INCREMENT PRIMARY KEY,
-    hash   VARCHAR(64)  NOT NULL UNIQUE,
-    name   VARCHAR(255) NOT NULL UNIQUE,
-    notary BOOLEAN      NOT NULL,
-    raw    BLOB
+    id            INT AUTO_INCREMENT PRIMARY KEY,
+    hash          VARCHAR(64) UNIQUE,
+    modified_time TIMESTAMP   NOT NULL
 );
 
-CREATE TABLE signature
+CREATE TABLE network_parameters_nodes
 (
-    id      INT AUTO_INCREMENT PRIMARY KEY,
-    node_id INT,
-    raw     BLOB,
-    FOREIGN KEY (node_id) references node (id) on delete cascade
+    network_parameters_id INT,
+    node_id               INT,
+    FOREIGN KEY (network_parameters_id) references network_parameters (id),
+    FOREIGN KEY (node_id) references node (id)
 );
