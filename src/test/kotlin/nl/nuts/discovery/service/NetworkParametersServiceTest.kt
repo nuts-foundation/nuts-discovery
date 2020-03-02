@@ -62,7 +62,7 @@ class NetworkParametersServiceTest {
     @Test
     fun `update network parameters`() {
         val subject = CordaX500Name.parse("O=Org,L=Gr,C=NL,CN=notary")
-        val signedNodeInfo = TestUtils.subjectToSignedNotaryNodeInfo(certificateAndKeyService, subject)
+        val signedNodeInfo = TestUtils.subjectToSignedNodeInfo(certificateAndKeyService, subject)
         val node = nodeRepository.save(Node.fromNodeInfo(signedNodeInfo))
 
         val parameters = networkParametersService.updateNetworkParams(node)

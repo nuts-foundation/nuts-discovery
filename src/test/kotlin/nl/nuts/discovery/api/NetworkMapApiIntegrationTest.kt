@@ -155,7 +155,7 @@ class NetworkMapApiIntegrationTest {
     }
 
     private fun publishNotary() :ResponseEntity<ByteArray>  {
-        val signedNodeInfo = TestUtils.subjectToSignedNotaryNodeInfo(certificateService, subjectNotary)
+        val signedNodeInfo = TestUtils.subjectToSignedNodeInfo(certificateService, subjectNotary)
         val entity = HttpEntity(signedNodeInfo.serialize().bytes, headers())
         return  testRestTemplate.exchange("/network-map/publish", HttpMethod.POST, entity, ByteArray::class.java)
     }

@@ -19,15 +19,11 @@
 
 package nl.nuts.discovery.store.entity
 
-import net.corda.core.CordaOID
 import net.corda.core.crypto.DigitalSignature
-import net.corda.core.internal.CertRole
 import net.corda.core.internal.readObject
 import net.corda.core.node.NodeInfo
 import net.corda.core.serialization.SerializedBytes
 import net.corda.nodeapi.internal.SignedNodeInfo
-import org.bouncycastle.asn1.ASN1Integer
-import org.bouncycastle.cert.jcajce.JcaX509ExtensionUtils
 import java.io.ByteArrayInputStream
 import javax.persistence.CascadeType
 import javax.persistence.Entity

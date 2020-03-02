@@ -22,6 +22,7 @@ package nl.nuts.discovery.api
 import net.corda.core.identity.CordaX500Name
 import nl.nuts.discovery.TestUtils
 import nl.nuts.discovery.service.CertificateAndKeyService
+import nl.nuts.discovery.service.NutsDiscoveryProperties
 import nl.nuts.discovery.store.CertificateRepository
 import nl.nuts.discovery.store.CertificateRequestRepository
 import nl.nuts.discovery.store.entity.CertificateRequest
@@ -60,10 +61,14 @@ class CertificateApiIntegrationTest {
     @Autowired
     lateinit var service: CertificateAndKeyService
 
+    @Autowired
+    lateinit var nutsDiscoveryProperties: NutsDiscoveryProperties
+
     @Before
     fun clearNodes(){
         certificateRequestRepository.deleteAll()
         certificateRepository.deleteAll()
+        nutsDiscoveryProperties.autoAck = false
     }
 
     @Test
@@ -101,7 +106,7 @@ class CertificateApiIntegrationTest {
 
         val entity = HttpEntity(req.encoded, headers())
 
-        val response = testRestTemplate.exchange("/doorman/certificate", HttpMethod.POST, entity, ByteArray::class.java)
+        testRestTemplate.exchange("/doorman/certificate", HttpMethod.POST, entity, ByteArray::class.java)
 
         val sr = certificateRequestRepository.findByName(subject.toString())
         assertNotNull(sr)
@@ -119,6 +124,21 @@ class CertificateApiIntegrationTest {
         val response = testRestTemplate.getForEntity("/doorman/certificate/$orgName", ByteArray::class.java)
 
         assertEquals(204, response.statusCodeValue)
+    }
+
+    @Test
+    fun`valid request will be signed with autoAck enabled`() {
+        nutsDiscoveryProperties.autoAck = true
+        val orgName = "O=Org,L=Gr,C=NL"
+        val subject = CordaX500Name.parse(orgName)
+        val req = TestUtils.createCertificateRequest(subject)
+
+        val entity = HttpEntity(req.encoded, headers())
+
+        testRestTemplate.exchange("/doorman/certificate", HttpMethod.POST, entity, ByteArray::class.java)
+        val response = testRestTemplate.getForEntity("/doorman/certificate/$orgName", ByteArray::class.java)
+
+        assertEquals(200, response.statusCodeValue)
     }
 
     @Test

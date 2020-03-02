@@ -22,6 +22,7 @@ package nl.nuts.discovery.api
 import net.corda.core.identity.CordaX500Name
 import net.corda.nodeapi.internal.crypto.X509Utilities
 import nl.nuts.discovery.service.CertificateAndKeyService
+import nl.nuts.discovery.service.NutsDiscoveryProperties
 import nl.nuts.discovery.store.CertificateRepository
 import nl.nuts.discovery.store.CertificateRequestRepository
 import nl.nuts.discovery.store.entity.CertificateRequest
@@ -53,6 +54,9 @@ class CertificateApi {
     @Autowired
     lateinit var certificateRepository: CertificateRepository
 
+    @Autowired
+    lateinit var nutsDiscoveryProperties: NutsDiscoveryProperties
+
     @RequestMapping("", method = arrayOf(RequestMethod.POST), produces = arrayOf("*/*"), consumes = arrayOf("*/*"))
     fun handleCertificateRequest(@RequestBody input: ByteArray,
                                  @RequestHeader("Platform-Version") platformVersion: String,
@@ -67,8 +71,9 @@ class CertificateApi {
             logger.info("Private-Network-Map: $pnm")
 
             val req = certificateRequestRepository.save(CertificateRequest.fromPKCS10(pkcs10Request))
-
-            //certificateAndKeyService.signCertificate(req)
+            if (nutsDiscoveryProperties.autoAck) {
+                certificateAndKeyService.signCertificate(req)
+            }
 
             ResponseEntity.ok(pkcs10Request.subject.toString())
         } catch (e: Exception) {
