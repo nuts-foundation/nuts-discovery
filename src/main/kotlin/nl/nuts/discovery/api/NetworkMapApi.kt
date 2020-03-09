@@ -34,6 +34,7 @@ import nl.nuts.discovery.store.entity.NetworkParameters
 import nl.nuts.discovery.store.entity.Node
 import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Autowired
+import org.springframework.beans.factory.annotation.Qualifier
 import org.springframework.http.CacheControl
 import org.springframework.http.HttpStatus
 import org.springframework.http.MediaType
@@ -57,6 +58,7 @@ import java.util.concurrent.TimeUnit
 class NetworkMapApi {
     val logger = LoggerFactory.getLogger(this.javaClass)
 
+    @Qualifier("customNodeRepository")
     @Autowired
     lateinit var nodeRepository: NodeRepository
 

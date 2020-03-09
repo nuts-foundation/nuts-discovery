@@ -90,6 +90,14 @@ class NetworkMapApiIntegrationTest {
     }
 
     @Test
+    fun `publishing a valid node twice returns 200`() {
+        publishNode(subject)
+        val resp = publishNode(subject)
+
+        assertEquals(200, resp.statusCodeValue)
+    }
+
+    @Test
     fun `a published node is found in the network map`() {
         publishNotary()
         publishNode(subject)
