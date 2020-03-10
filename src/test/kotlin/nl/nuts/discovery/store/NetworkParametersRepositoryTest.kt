@@ -68,7 +68,7 @@ class NetworkParametersRepositoryTest {
         val signedNodeInfo = TestUtils.subjectToSignedNodeInfo(certificateAndKeyService, subject)
 
         val n = nodeRepository.save(Node.fromNodeInfo(signedNodeInfo))
-        np.notaries = listOf(n)
+        np.notaries = mutableListOf(n)
         networkParametersRepository.save(np)
     }
     @After
