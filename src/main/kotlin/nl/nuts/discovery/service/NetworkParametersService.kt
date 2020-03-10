@@ -7,6 +7,7 @@ import nl.nuts.discovery.store.NetworkParametersRepository
 import nl.nuts.discovery.store.NodeRepository
 import nl.nuts.discovery.store.entity.Node
 import org.springframework.beans.factory.annotation.Autowired
+import org.springframework.beans.factory.annotation.Qualifier
 import org.springframework.stereotype.Service
 import java.time.LocalDateTime
 import java.time.ZoneOffset
@@ -30,6 +31,7 @@ class NetworkParametersService {
     @Autowired
     lateinit var certificateAndKeyService: CertificateAndKeyService
 
+    @Qualifier("customNodeRepository")
     @Autowired
     lateinit var nodeRepository: NodeRepository
 
