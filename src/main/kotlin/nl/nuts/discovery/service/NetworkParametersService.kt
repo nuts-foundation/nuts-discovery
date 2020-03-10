@@ -57,21 +57,21 @@ class NetworkParametersService {
      * Update the network parameters with a new Notary. It'll also store the Notary node in the node repo
      */
     fun updateNetworkParams(notary: Node): nl.nuts.discovery.store.entity.NetworkParameters {
-        // save node
-        nodeRepository.save(notary)
-
         // latest or new
         var latest = networkParametersRepository.findFirstByOrderByIdDesc()
         if (latest == null) {
             latest = networkParametersRepository.save(createEmptyParams())
         }
 
+        // save node
+        val savedNotary = nodeRepository.save(notary)
+
         // create corda variant for hash
-        val cnp = cordaNetworkParameters(latest, listOf(notary))
+        val cnp = cordaNetworkParameters(latest, listOf(savedNotary))
 
         // sign and extract hash
         latest.hash = certificateAndKeyService.signNetworkParams(cnp).raw.hash.toString()
-        latest.notaries = latest.notaries + notary
+        latest.notaries = (latest.notaries + savedNotary).toSet().toMutableList()
 
         // update record
         return networkParametersRepository.save(latest)
@@ -104,7 +104,7 @@ class NetworkParametersService {
 
         return NetworkParameters(
             minPlatformVersion,
-            (params.notaries + additionalNotaries).map { toNotaryInfo(it) },
+            (params.notaries + additionalNotaries).toSet().map { toNotaryInfo(it) },
             maxMessageSize,
             maxTransactionSize,
             params.modifiedTime!!.toInstant(ZoneOffset.systemDefault().getRules().getOffset(params.modifiedTime)),

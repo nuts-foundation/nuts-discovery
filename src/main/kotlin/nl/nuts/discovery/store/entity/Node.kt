@@ -87,4 +87,21 @@ class Node {
         val sigs: List<DigitalSignature> = signatures.map{DigitalSignature(it.raw!!) }
         return SignedNodeInfo(SerializedBytes(raw!!), sigs)
     }
+
+    override fun equals(other: Any?): Boolean {
+        if (this === other) return true
+        if (javaClass != other?.javaClass) return false
+
+        other as Node
+
+        if (hash != other.hash) return false
+
+        return true
+    }
+
+    override fun hashCode(): Int {
+        return hash?.hashCode() ?: 0
+    }
+
+
 }

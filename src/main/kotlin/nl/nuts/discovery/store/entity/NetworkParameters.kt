@@ -53,5 +53,5 @@ class NetworkParameters {
 
     @OneToMany(fetch=FetchType.EAGER)
     @JoinTable(name="network_parameters_nodes", joinColumns=[JoinColumn(name="network_parameters_id")], inverseJoinColumns=[JoinColumn(name="node_id")] )
-    var notaries: List<Node> = mutableListOf()
+    var notaries: MutableList<Node> = mutableListOf()
 }
