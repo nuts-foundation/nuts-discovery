@@ -144,6 +144,15 @@ class NetworkMapApiIntegrationTest {
         assertEquals(subjectNotary, networkParams.notaries.first().identity.name)
     }
 
+    @Test
+    fun `Latest network params can be retrieved with a notary`() {
+        publishNotary()
+        val networkParams = networkParams("latest").verified()
+
+        assertFalse(networkParams.notaries.isEmpty())
+        assertEquals(subjectNotary, networkParams.notaries.first().identity.name)
+    }
+
     private fun networkParams(hash: String) : SignedNetworkParameters {
         val response = testRestTemplate.getForEntity("/network-map/network-parameters/$hash", ByteArray::class.java)
         assertEquals(200, response.statusCodeValue)
