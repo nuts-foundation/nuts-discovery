@@ -161,8 +161,20 @@ class NetworkMapApi {
     }
 
     /**
-     * Get the network parameters based on its hash.
+     * Get the latest network parameters.
      * Right now it returns the latest params and doesn't support any others yet.
+     */
+    @RequestMapping("network-parameters/latest", method = arrayOf(RequestMethod.GET), produces = arrayOf(MediaType.APPLICATION_OCTET_STREAM_VALUE))
+    fun getLatestNetworkParameter(): ResponseEntity<ByteArray> {
+        logger.debug("received latest network-parameters request")
+
+        val np = networkParametersRepository.findFirstByOrderByIdDesc() ?: return ResponseEntity.notFound().build()
+
+        return ResponseEntity.ok(signedNetworkParams(np).serialize().bytes)
+    }
+
+    /**
+     * Get the network parameters based on its hash.
      */
     @RequestMapping("network-parameters/{var}", method = arrayOf(RequestMethod.GET), produces = arrayOf(MediaType.APPLICATION_OCTET_STREAM_VALUE))
     fun getNetworkParameter(@PathVariable("var") hash: String): ResponseEntity<ByteArray> {
