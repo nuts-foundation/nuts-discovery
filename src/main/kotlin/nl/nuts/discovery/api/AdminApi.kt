@@ -1,5 +1,6 @@
 package nl.nuts.discovery.api
 
+import net.corda.core.identity.CordaX500Name
 import net.corda.core.node.NetworkParameters
 import nl.nuts.discovery.service.CertificateAndKeyService
 import nl.nuts.discovery.service.NetworkParametersService
@@ -72,9 +73,13 @@ class AdminApi {
     @RequestMapping("/certificates/signrequests/{nodeId}/approve", method = [RequestMethod.PUT])
     fun handleApproveSignRequest(@PathVariable("nodeId") nodeId: String): ResponseEntity<Any> {
         logger.debug("received sign request for: $nodeId")
+
+        // parse nodeId for correct formatting
+        val cordaName = CordaX500Name.parse(nodeId)
+
         try {
             // find pending sign request by name
-            val request = certificateRequestRepository.findByName(nodeId) ?: return ResponseEntity.notFound().build()
+            val request = certificateRequestRepository.findByName(cordaName.toString()) ?: return ResponseEntity.notFound().build()
 
             // sign it
             certificateAndKeyService.signCertificate(request)
