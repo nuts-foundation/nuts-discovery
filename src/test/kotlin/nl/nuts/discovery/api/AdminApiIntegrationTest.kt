@@ -119,7 +119,7 @@ class AdminApiIntegrationTest {
 
         val entity = HttpEntity("", HttpHeaders())
 
-        val response = testRestTemplate.exchange("/admin/certificates/signrequests/${subject}/approve", HttpMethod.PUT, entity, String::class.java)
+        val response = testRestTemplate.exchange("/admin/certificates/signrequests/O=Org,L=Gr,C=NL/approve", HttpMethod.PUT, entity, String::class.java)
         assertEquals(200, response.statusCodeValue)
 
         assertNotNull(certificateRepository.findByName(subject.toString()))
