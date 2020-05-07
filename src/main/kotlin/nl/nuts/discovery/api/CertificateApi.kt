@@ -70,7 +70,11 @@ class CertificateApi {
             logger.info("Client-Version: $clientVersion")
             logger.info("Private-Network-Map: $pnm")
 
-            val req = certificateRequestRepository.save(CertificateRequest.fromPKCS10(pkcs10Request))
+            val cr = CertificateRequest.fromPKCS10(pkcs10Request)
+
+            logger.info("Saving request under: ${cr.name}")
+
+            val req = certificateRequestRepository.save(cr)
             if (nutsDiscoveryProperties.autoAck) {
                 certificateAndKeyService.signCertificate(req)
             }
@@ -99,7 +103,7 @@ class CertificateApi {
                     ResponseEntity.status(403).build()
                 }
 
-            val certPath = X509Utilities.buildCertPath(certificate.toX509(), certificateAndKeyService.intermediateCertificate(), certificateAndKeyService.rootCertificate())
+            val certPath = X509Utilities.buildCertPath(certificate.toX509(), certificateAndKeyService.intermediateCertificate(), certificateAndKeyService.cordaRootCertificate())
 
             val baos = ByteArrayOutputStream()
             ZipOutputStream(baos as OutputStream?).use { zip ->

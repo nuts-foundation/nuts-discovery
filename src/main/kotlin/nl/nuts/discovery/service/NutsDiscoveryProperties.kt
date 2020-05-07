@@ -9,7 +9,7 @@ import org.springframework.context.annotation.Configuration
 @Configuration
 @ConfigurationProperties("nuts.discovery")
 class NutsDiscoveryProperties {
-    lateinit var rootCertPath: String
+    lateinit var cordaRootCertPath: String
     lateinit var intermediateCertPath: String
     lateinit var intermediateKeyPath: String
     lateinit var networkMapCertPath: String

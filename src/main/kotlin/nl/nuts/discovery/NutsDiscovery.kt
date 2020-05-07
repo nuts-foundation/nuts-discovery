@@ -71,5 +71,9 @@ class NutsDiscovery {
 }
 
 fun main(args: Array<String>) {
-    runApplication<NutsDiscovery>(*args)
+    try {
+        runApplication<NutsDiscovery>(*args)
+    } catch(e: Exception) {
+        e.printStackTrace()
+    }
 }

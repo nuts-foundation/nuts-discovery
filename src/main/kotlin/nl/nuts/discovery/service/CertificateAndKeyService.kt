@@ -136,8 +136,8 @@ class CertificateAndKeyService {
     /**
      * returns the Corda network rootcertificate
      */
-    fun rootCertificate(): X509Certificate {
-        return X509Utilities.loadCertificateFromPEMFile(loadResourceWithNullCheck(nutsDiscoveryProperties.rootCertPath))
+    fun cordaRootCertificate(): X509Certificate {
+        return X509Utilities.loadCertificateFromPEMFile(loadResourceWithNullCheck(nutsDiscoveryProperties.cordaRootCertPath))
     }
 
     /**
@@ -214,7 +214,7 @@ class CertificateAndKeyService {
      */
     fun validate(): List<String> {
         val configProblemSet = mutableMapOf(
-            Pair(::rootCertificate, "root certificate"),
+            Pair(::cordaRootCertificate, "root certificate"),
             Pair(::intermediateCertificate, "intermediate certificate"),
             Pair(::networkMapCertificate, "network map certificate"),
             Pair(::intermediateCertificate, "intermediate key"),
