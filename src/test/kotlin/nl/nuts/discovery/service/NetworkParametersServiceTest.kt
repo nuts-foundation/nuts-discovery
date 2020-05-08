@@ -60,6 +60,14 @@ class NetworkParametersServiceTest {
     }
 
     @Test
+    fun `it lists the whitelistedContracts`() {
+        val parameters = networkParametersService.cordaNetworkParameters(networkParameters())
+        assertEquals(2, parameters.whitelistedContractImplementations[NetworkParametersService.CONTRACT_PACKAGE]?.size)
+        assertEquals(2, parameters.whitelistedContractImplementations[NetworkParametersService.FLOW_PACKAGE]?.size)
+        assertEquals(2, parameters.whitelistedContractImplementations[NetworkParametersService.SCHEMA_PACKAGE]?.size)
+    }
+
+    @Test
     fun `update network parameters`() {
         val subject = CordaX500Name.parse("O=Org,L=Gr,C=NL,CN=notary")
         val signedNodeInfo = TestUtils.subjectToSignedNodeInfo(certificateAndKeyService, subject)

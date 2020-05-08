@@ -17,6 +17,8 @@ nuts.discovery.intermediateKeyPath      keys/doorman.key        Corda doorman ke
 nuts.discovery.intermediateCertPath     keys/doorman.crt        Corda doorman certificate path
 nuts.discovery.networkMapCertPath       keys/network_map.crt    Corda network map certificate path
 nuts.discovery.networkMapKeyPath        keys/network_map.key    Corda network map key path, used to sign network parameters and nodeinfo objects
+nuts.discovery.flowHashes                                       Sha256 of jars for nl.nuts.consent.flow package (comma separated)
+nuts.discovery.contractHashes                                   Sha256 of jars for nl.nuts.consent.contract package (comma separated)
 nuts.discovery.autoAck                  false                   Automatically signs all signing requests
 ===================================     ====================    ================================================================================
 
@@ -29,6 +31,8 @@ These locations can be overriden by providing an alternative properties file wit
     nuts.discovery.intermediateCertPath = keys/doorman.crt
     nuts.discovery.networkMapCertPath = keys/network_map.crt
     nuts.discovery.networkMapKeyPath = keys/network_map.key
+    nuts.discovery.contractHashes = 6ACDE387C0DF227A6C4ED77407B58E9103C2EA1A66796CE37BC497931F4E1631
+    nuts.discovery.flowHashes = 5f60201e5f4e698300f3baf94dad1517a1314b4f406fd90610a78d798ffe972d
     nuts.discovery.autoAck = true
 
 The alternative config file can be passed to the executable by param like this
