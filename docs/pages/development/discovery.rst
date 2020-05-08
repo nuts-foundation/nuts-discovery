@@ -47,16 +47,16 @@ This requires some files to be present in the *keys* sub-directory. Check :ref:`
 Docker
 ******
 
-Two docker files are available in ``docker/``, the ``Dockerfile-dev`` is targeted at running a Nuts node at your laptop/workstation. The dev-image is tagged as ``latest-dev``.
-
-To build locally
+A Dockerfile is provided. As default it will run with dev properties and keys. This can be overriden by mounting the right dirs:
 
 .. code-block:: shell
 
-    docker build . -f docker/Dockerfile
-    docker build . -f docker/Dockerfile-dev
+    docker run -it \
+        -v {{KEYS_DIR}}:/opt/nuts/discovery/keys \
+        -v {{CONF_DIR}}:/opt/nuts/discovery/conf \
+        -p 8080:8080 \
+        nutsfoundation/nuts-discovery:latest
 
-Checkout :ref:`nuts-network-local-development-docker` for setting up a complete environment with ``docker-compose``.
 
 README
 ******
