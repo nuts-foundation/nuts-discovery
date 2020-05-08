@@ -3,8 +3,9 @@ nuts-discovery
 
 Discovery service by the Nuts foundation for bootstrapping the network
 
-.. image:: https://travis-ci.org/nuts-foundation/nuts-discovery.svg?branch=master
-    :target: https://travis-ci.org/nuts-foundation/nuts-discovery
+.. image:: https://circleci.com/gh/nuts-foundation/nuts-discovery.svg?style=svg
+    :target: https://circleci.com/gh/nuts-foundation/nuts-discovery
+    :alt: Build Status
 
 .. image:: https://api.codacy.com/project/badge/Grade/cd7e8a20fd474ba1b5b5539dc68ffa3b
     :target: https://www.codacy.com/manual/nuts-foundation/nuts-discovery?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=nuts-foundation/nuts-discovery&amp;utm_campaign=Badge_Grade
