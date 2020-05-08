@@ -14,5 +14,7 @@ class NutsDiscoveryProperties {
     lateinit var intermediateKeyPath: String
     lateinit var networkMapCertPath: String
     lateinit var networkMapKeyPath: String
+    lateinit var contractHashes: String
+    lateinit var flowHashes: String
     var autoAck: Boolean = false
 }

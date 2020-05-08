@@ -1,13 +1,16 @@
 package nl.nuts.discovery.service
 
+import net.corda.core.crypto.SecureHash
 import net.corda.core.identity.Party
 import net.corda.core.node.NetworkParameters
 import net.corda.core.node.NotaryInfo
+import net.corda.core.node.services.AttachmentId
 import nl.nuts.discovery.store.NetworkParametersRepository
 import nl.nuts.discovery.store.NodeRepository
 import nl.nuts.discovery.store.entity.Node
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.beans.factory.annotation.Qualifier
+import org.springframework.beans.factory.annotation.Value
 import org.springframework.stereotype.Service
 import java.time.LocalDateTime
 import java.time.ZoneOffset
@@ -25,6 +28,12 @@ import javax.transaction.Transactional
 @Service
 class NetworkParametersService {
 
+    companion object {
+        const val SCHEMA_PACKAGE = "nl.nuts.consent.schema"
+        const val FLOW_PACKAGE = "nl.nuts.consent.flow"
+        const val CONTRACT_PACKAGE = "nl.nuts.consent.contract"
+    }
+
     @Autowired
     lateinit var networkParametersRepository: NetworkParametersRepository
 
@@ -34,6 +43,9 @@ class NetworkParametersService {
     @Qualifier("customNodeRepository")
     @Autowired
     lateinit var nodeRepository: NodeRepository
+
+    @Autowired
+    lateinit var nutsDiscoveryProperties: NutsDiscoveryProperties
 
     /**
      * todo: Hardcoded values, if these change, stored hashes are no longer valid!
@@ -109,8 +121,22 @@ class NetworkParametersService {
             maxTransactionSize,
             params.modifiedTime!!.toInstant(ZoneOffset.systemDefault().getRules().getOffset(params.modifiedTime)),
             id,
-            linkedMapOf()
+            whitelistedContractImplementations()
         )
+    }
+
+    private fun whitelistedContractImplementations(): HashMap<String, List<AttachmentId>> {
+        val wci = LinkedHashMap<String, List<AttachmentId>>()
+        val contractHashes = nutsDiscoveryProperties.contractHashes.split(",").map { it.trim() }
+        val flowHashes = nutsDiscoveryProperties.flowHashes.split(",").map { it.trim() }
+
+        val l = contractHashes.filter { it.isNotBlank() }.map { SecureHash.parse(it) }
+        wci[CONTRACT_PACKAGE] = l
+        wci[SCHEMA_PACKAGE] = l
+
+        wci[FLOW_PACKAGE] = flowHashes.filter { it.isNotBlank() }.map { SecureHash.parse(it) }
+
+        return wci
     }
 
     private fun toNotaryInfo(node: Node): NotaryInfo {
