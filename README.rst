@@ -3,8 +3,9 @@ nuts-discovery
 
 Discovery service by the Nuts foundation for bootstrapping the network
 
-.. image:: https://travis-ci.org/nuts-foundation/nuts-discovery.svg?branch=master
-    :target: https://travis-ci.org/nuts-foundation/nuts-discovery
+.. image:: https://circleci.com/gh/nuts-foundation/nuts-discovery.svg?style=svg
+    :target: https://circleci.com/gh/nuts-foundation/nuts-discovery
+    :alt: Build Status
 
 .. image:: https://api.codacy.com/project/badge/Grade/cd7e8a20fd474ba1b5b5539dc68ffa3b
     :target: https://www.codacy.com/manual/nuts-foundation/nuts-discovery?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=nuts-foundation/nuts-discovery&amp;utm_campaign=Badge_Grade
@@ -104,6 +105,7 @@ nuts.discovery.intermediateKeyPath      keys/doorman.key        Corda doorman ke
 nuts.discovery.intermediateCertPath     keys/doorman.crt        Corda doorman certificate path
 nuts.discovery.networkMapCertPath       keys/network_map.crt    Corda network map certificate path
 nuts.discovery.networkMapKeyPath        keys/network_map.key    Corda network map key path, used to sign network parameters and nodeinfo objects
+nuts.discovery.autoAck                  false                   Automatically signs all signing requests
 ===================================     ====================    ================================================================================
 
 These locations can be overriden by providing an alternative properties file with the following contents
@@ -115,6 +117,7 @@ These locations can be overriden by providing an alternative properties file wit
     nuts.discovery.intermediateCertPath = keys/doorman.crt
     nuts.discovery.networkMapCertPath = keys/network_map.crt
     nuts.discovery.networkMapKeyPath = keys/network_map.key
+    nuts.discovery.autoAck = true
 
 The alternative config file can be passed to the executable by param like this
 
