@@ -7,8 +7,9 @@ Discovery service by the Nuts foundation for bootstrapping the network
     :target: https://circleci.com/gh/nuts-foundation/nuts-discovery
     :alt: Build Status
 
-.. image:: https://api.codacy.com/project/badge/Grade/cd7e8a20fd474ba1b5b5539dc68ffa3b
-    :target: https://www.codacy.com/manual/nuts-foundation/nuts-discovery?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=nuts-foundation/nuts-discovery&amp;utm_campaign=Badge_Grade
+.. image:: https://api.codeclimate.com/v1/badges/6d39940d517f06989299/maintainability
+   :target: https://codeclimate.com/github/nuts-foundation/nuts-discovery/maintainability
+   :alt: Maintainability
 
 .. image:: https://readthedocs.org/projects/nuts-discovery/badge/?version=latest
     :target: https://nuts-documentation.readthedocs.io/projects/nuts-discovery/en/latest/
@@ -58,16 +59,16 @@ This requires some files to be present in the *keys* sub-directory. Check :ref:`
 Docker
 ******
 
-Two docker files are available in ``docker/``, the ``Dockerfile-dev`` is targeted at running a Nuts node at your laptop/workstation. The dev-image is tagged as ``latest-dev``.
-
-To build locally
+A Dockerfile is provided. As default it will run with dev properties and keys. This can be overriden by mounting the right dirs:
 
 .. code-block:: shell
 
-    docker build . -f docker/Dockerfile
-    docker build . -f docker/Dockerfile-dev
+    docker run -it \
+        -v {{KEYS_DIR}}:/opt/nuts/discovery/keys \
+        -v {{CONF_DIR}}:/opt/nuts/discovery/conf \
+        -p 8080:8080 \
+        nutsfoundation/nuts-discovery:latest
 
-Checkout :ref:`nuts-network-local-development-docker` for setting up a complete environment with ``docker-compose``.
 
 README
 ******
@@ -105,6 +106,8 @@ nuts.discovery.intermediateKeyPath      keys/doorman.key        Corda doorman ke
 nuts.discovery.intermediateCertPath     keys/doorman.crt        Corda doorman certificate path
 nuts.discovery.networkMapCertPath       keys/network_map.crt    Corda network map certificate path
 nuts.discovery.networkMapKeyPath        keys/network_map.key    Corda network map key path, used to sign network parameters and nodeinfo objects
+nuts.discovery.flowHashes                                       Sha256 of jars for nl.nuts.consent.flow package (comma separated)
+nuts.discovery.contractHashes                                   Sha256 of jars for nl.nuts.consent.contract package (comma separated)
 nuts.discovery.autoAck                  false                   Automatically signs all signing requests
 ===================================     ====================    ================================================================================
 
@@ -117,6 +120,8 @@ These locations can be overriden by providing an alternative properties file wit
     nuts.discovery.intermediateCertPath = keys/doorman.crt
     nuts.discovery.networkMapCertPath = keys/network_map.crt
     nuts.discovery.networkMapKeyPath = keys/network_map.key
+    nuts.discovery.contractHashes = 6ACDE387C0DF227A6C4ED77407B58E9103C2EA1A66796CE37BC497931F4E1631
+    nuts.discovery.flowHashes = 5f60201e5f4e698300f3baf94dad1517a1314b4f406fd90610a78d798ffe972d
     nuts.discovery.autoAck = true
 
 The alternative config file can be passed to the executable by param like this
