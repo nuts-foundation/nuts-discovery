@@ -1,0 +1,27 @@
+openapi: "3.0.0"
+info:
+  title: Nuts discovery API spec
+  description: API specification for certificate related services hosted by the network authority
+  version: 0.1.0
+  license:
+    name: GPLv3
+paths:
+  /api/csr:
+    post:
+      operationId: submitCertificateSigningRequest
+      summary: "submit a PEM encoded CSR to the network authority"
+      tags:
+        - certificates
+      requestBody:
+        description: PEM encoded CSR
+        required: true
+        content:
+          text/plain:
+            schema:
+              type: string
+      responses:
+        '202':
+          description: "accepted"
+#components:
+#  schemas:
+

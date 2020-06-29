@@ -20,12 +20,14 @@ buildscript {
     ext {
         kotlinVersion = '1.2.71'
         springBootVersion = '2.1.12.RELEASE'
+        openApiPluginVersion = '3.3.4'
     }
 
     dependencies {
         classpath("org.springframework.boot:spring-boot-gradle-plugin:${springBootVersion}")
         classpath("org.jetbrains.kotlin:kotlin-gradle-plugin:${kotlinVersion}")
         classpath("org.jetbrains.kotlin:kotlin-allopen:${kotlinVersion}")
+        classpath "org.openapitools:openapi-generator-gradle-plugin:$openApiPluginVersion"
     }
 }
 
@@ -110,6 +112,14 @@ dependencies {
     annotationProcessor "org.springframework.boot:spring-boot-configuration-processor"
 }
 
+sourceSets {
+    main {
+        java {
+            srcDirs 'src/main/generated'
+        }
+    }
+}
+
 bootRun {
     environment SPRING_PROFILES_ACTIVE: environment.SPRING_PROFILES_ACTIVE ?: "default"
 }
@@ -133,3 +143,29 @@ jacocoTestReport {
 }
 
 check.dependsOn jacocoTestReport
+
+apply plugin: 'org.openapi.generator'
+
+task generateServerApiStub(type: org.openapitools.generator.gradle.plugin.tasks.GenerateTask){
+    generatorName = "kotlin-spring"
+    outputDir = "${project.rootDir}"
+    inputSpec = "docs/_static/nuts-discovery.yaml"
+    verbose = false
+    apiPackage = "nl.nuts.discovery.api"
+    modelPackage = "nl.nuts.discovery.model"
+    invokerPackage = "nl.nuts.discovery"
+    generateApiDocumentation = false
+    generateModelDocumentation = false
+    generateModelTests = false
+    generateApiTests = false
+    withXml = false
+    configOptions = [
+            dateLibrary: "java8",
+            serviceInterface: true,
+            exceptionHandler: true,
+            gradleBuildFile: false,
+            supportingFiles: [],
+            sourceFolder: "src/main/generated"
+    ]
+    skipOverwrite = false
+}

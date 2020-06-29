@@ -15,6 +15,15 @@ This can give problems on several linux distro's. In that case use the latest Op
 
 The project is build with Gradle. A gradle wrapper is present in the project.
 
+Generating code
+***************
+
+To generate the Api stubs based on the Open Api Spec:
+
+.. code-block:: shell
+
+    ./gradlew generateServerApiStub
+
 Running tests
 *************
 
