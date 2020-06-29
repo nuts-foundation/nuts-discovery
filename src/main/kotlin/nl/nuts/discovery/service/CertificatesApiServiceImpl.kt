@@ -37,5 +37,4 @@ class CertificatesApiServiceImpl : CertificatesApiService {
     override fun submit(body: String): CertificateSigningRequest {
         TODO("Not yet implemented")
     }
-
 }
