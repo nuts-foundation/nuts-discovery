@@ -1,5 +1,6 @@
 package nl.nuts.discovery.api
 
+import nl.nuts.discovery.model.CertificateRequest
 import org.springframework.http.HttpStatus
 import org.springframework.http.MediaType
 import org.springframework.http.ResponseEntity
@@ -38,10 +39,20 @@ class CertificatesApiController(@Autowired(required = true) val service: Certifi
 
 
     @RequestMapping(
+            value = ["/api/csr/{urn}"],
+            produces = ["application/json"], 
+            method = [RequestMethod.GET])
+    fun listRequests( @PathVariable("urn") urn: String): ResponseEntity<List<CertificateRequest>> {
+        return ResponseEntity(service.listRequests(urn), HttpStatus.OK)
+    }
+
+
+    @RequestMapping(
             value = ["/api/csr"],
+            produces = ["application/json"], 
             consumes = ["text/plain"],
             method = [RequestMethod.POST])
-    fun submit( @Valid @RequestBody body: String): ResponseEntity<Unit> {
+    fun submit( @Valid @RequestBody body: String): ResponseEntity<CertificateRequest> {
         return ResponseEntity(service.submit(body), HttpStatus.OK)
     }
 }

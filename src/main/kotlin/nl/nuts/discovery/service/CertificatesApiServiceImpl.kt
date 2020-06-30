@@ -20,6 +20,7 @@
 package nl.nuts.discovery.service
 
 import nl.nuts.discovery.api.CertificatesApiService
+import nl.nuts.discovery.model.CertificateRequest
 import org.springframework.stereotype.Service
 
 @Service
@@ -28,7 +29,11 @@ class CertificatesApiServiceImpl : CertificatesApiService {
         TODO("Not yet implemented")
     }
 
-    override fun submit(body: String) {
+    override fun listRequests(urn: String): List<CertificateRequest> {
+        TODO("Not yet implemented")
+    }
+
+    override fun submit(body: String): CertificateRequest {
         TODO("Not yet implemented")
     }
 }

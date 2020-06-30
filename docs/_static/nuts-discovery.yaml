@@ -20,8 +20,34 @@ paths:
             schema:
               type: string
       responses:
-        '202':
-          description: "accepted"
+        '200':
+          description: "request was accepted"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/certificate_request"
+  /api/csr/{urn}:
+    get:
+      operationId: listRequests
+      summary: "list certificate signing requests"
+      tags:
+        - certificates
+      parameters:
+        - name: urn
+          in: path
+          description: "vendor oid in urn format"
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: "success"
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/certificate_request"
   /api/x509/{urn}:
     get:
       operationId: listCertificates
@@ -52,6 +78,25 @@ paths:
                 type: string
 components:
   schemas:
+    certificate_request:
+      required:
+        - name
+        - oid
+        - pem
+        - submittedAt
+      properties:
+        name:
+          type: string
+          description: "CN of request"
+        oid:
+          type: string
+          description: "oid of vendor, can be used to query requests"
+        pem:
+          type: string
+          description: "the pem-encoded CSR"
+        submittedAt:
+          type: string
+          description: "Date at which the request was submitted"
     certificate:
       type: string
       description: "PEM encoded certificate"

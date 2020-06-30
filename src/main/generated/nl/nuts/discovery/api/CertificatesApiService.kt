@@ -1,9 +1,12 @@
 package nl.nuts.discovery.api
 
+import nl.nuts.discovery.model.CertificateRequest
 
 interface CertificatesApiService {
 
     fun listCertificates(urn: String): List<String>
 
-    fun submit(body: String): Unit
+    fun listRequests(urn: String): List<CertificateRequest>
+
+    fun submit(body: String): CertificateRequest
 }
