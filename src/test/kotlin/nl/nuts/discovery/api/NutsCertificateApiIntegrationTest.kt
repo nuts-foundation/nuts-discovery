@@ -23,6 +23,7 @@ import nl.nuts.discovery.TestUtils
 import nl.nuts.discovery.model.CertificateRequest
 import nl.nuts.discovery.service.NutsDiscoveryProperties
 import nl.nuts.discovery.store.NutsCertificateRequestRepository
+import nl.nuts.discovery.store.entity.NutsCertificateRequest
 import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -30,6 +31,7 @@ import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.context.SpringBootTest
 import org.springframework.boot.test.context.SpringBootTest.WebEnvironment.RANDOM_PORT
 import org.springframework.boot.test.web.client.TestRestTemplate
+import org.springframework.core.ParameterizedTypeReference
 import org.springframework.http.HttpEntity
 import org.springframework.http.HttpMethod
 import org.springframework.http.HttpStatus
@@ -58,7 +60,7 @@ class NutsCertificateApiIntegrationTest {
     }
 
     @Test
-    fun`valid request returns 200`() {
+    fun`valid submit request returns 200`() {
         val req = TestUtils.loadTestCSR("test.csr")
         val entity = HttpEntity(req)
 
@@ -74,12 +76,25 @@ class NutsCertificateApiIntegrationTest {
     }
 
     @Test
-    fun`invalid request returns 400`() {
+    fun`invalid submit request returns 400`() {
         val req = TestUtils.loadTestCSR("missing_oid.csr")
         val entity = HttpEntity(req)
 
         val response = testRestTemplate.exchange("/api/csr", HttpMethod.POST, entity, String::class.java)
 
         assertEquals(HttpStatus.BAD_REQUEST, response.statusCode)
+    }
+
+    private inline fun <reified T> typeReference() = object : ParameterizedTypeReference<T>() {}
+
+    @Test
+    fun `list returns list of requests`() {
+        val pem = TestUtils.loadTestCSR("test.csr")
+        nutsCertificateRequestRepository.save(NutsCertificateRequest.fromPEM(pem))
+
+        val response = testRestTemplate.exchange("/api/csr/urn:oid:kvk", HttpMethod.GET, null, typeReference<List<CertificateRequest>>())
+
+        assertEquals(HttpStatus.OK, response.statusCode)
+        assertEquals(1, response.body?.size)
     }
 }

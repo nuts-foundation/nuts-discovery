@@ -21,6 +21,7 @@ package nl.nuts.discovery.service
 
 import nl.nuts.discovery.TestUtils.Companion.loadTestCSR
 import nl.nuts.discovery.store.NutsCertificateRequestRepository
+import nl.nuts.discovery.store.entity.NutsCertificateRequest
 import org.junit.After
 import org.junit.Before
 import org.junit.Test
@@ -60,6 +61,15 @@ class CertificatesApiServiceImplTest {
         val csrs = nutsCertificateRequestRepository.findAll()
 
         assertEquals(1, csrs.count())
+    }
 
+    @Test
+    fun `submitted csr can be listed`() {
+        val pem = loadTestCSR("test.csr")
+
+        nutsCertificateRequestRepository.save(NutsCertificateRequest.fromPEM(pem))
+        val csrs = certificatesApiServiceImpl.listRequests("urn:oid:kvk")
+
+        assertEquals(1, csrs.count())
     }
 }

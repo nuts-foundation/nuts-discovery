@@ -45,7 +45,9 @@ class CertificatesApiServiceImpl : CertificatesApiService {
     }
 
     override fun listRequests(otherName: String): List<CertificateSigningRequest> {
-        TODO("Not yet implemented")
+        return nutsCertificateRequestRepository.findByOid(otherName).map {
+            entityToApiModel(it)
+        }
     }
 
     override fun submit(body: String): CertificateSigningRequest {
@@ -58,6 +60,10 @@ class CertificatesApiServiceImpl : CertificatesApiService {
              //todo sign
         }
 
+        return entityToApiModel(nutsCertificateRequest)
+    }
+
+    private fun entityToApiModel(nutsCertificateRequest: NutsCertificateRequest) : CertificateSigningRequest {
         return CertificateSigningRequest(
             subject = nutsCertificateRequest.name!!,
             pem = nutsCertificateRequest.pem!!,
