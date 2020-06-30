@@ -29,10 +29,19 @@ class CertificatesApiController(@Autowired(required = true) val service: Certifi
 
 
     @RequestMapping(
+            value = ["/api/x509/{urn}"],
+            produces = ["application/json", "text/plain"], 
+            method = [RequestMethod.GET])
+    fun listCertificates( @PathVariable("urn") urn: String): ResponseEntity<List<String>> {
+        return ResponseEntity(service.listCertificates(urn), HttpStatus.OK)
+    }
+
+
+    @RequestMapping(
             value = ["/api/csr"],
             consumes = ["text/plain"],
             method = [RequestMethod.POST])
-    fun submitCertificateSigningRequest( @Valid @RequestBody body: String): ResponseEntity<Unit> {
-        return ResponseEntity(service.submitCertificateSigningRequest(body), HttpStatus.OK)
+    fun submit( @Valid @RequestBody body: String): ResponseEntity<Unit> {
+        return ResponseEntity(service.submit(body), HttpStatus.OK)
     }
 }

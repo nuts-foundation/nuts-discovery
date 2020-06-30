@@ -3,5 +3,7 @@ package nl.nuts.discovery.api
 
 interface CertificatesApiService {
 
-    fun submitCertificateSigningRequest(body: String): Unit
+    fun listCertificates(urn: String): List<String>
+
+    fun submit(body: String): Unit
 }

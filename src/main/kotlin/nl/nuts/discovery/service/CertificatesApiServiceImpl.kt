@@ -24,7 +24,11 @@ import org.springframework.stereotype.Service
 
 @Service
 class CertificatesApiServiceImpl : CertificatesApiService {
-    override fun submitCertificateSigningRequest(body: String) {
+    override fun listCertificates(urn: String): List<String> {
+        TODO("Not yet implemented")
+    }
+
+    override fun submit(body: String) {
         TODO("Not yet implemented")
     }
 }
