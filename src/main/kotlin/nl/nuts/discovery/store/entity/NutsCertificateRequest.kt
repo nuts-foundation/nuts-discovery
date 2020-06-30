@@ -21,11 +21,14 @@ package nl.nuts.discovery.store.entity
 
 import net.corda.core.identity.CordaX500Name
 import org.bouncycastle.asn1.ASN1ObjectIdentifier
+import org.bouncycastle.cert.X509CertificateHolder
+import org.bouncycastle.cert.jcajce.JcaX509CertificateConverter
 import org.bouncycastle.openssl.PEMParser
 import org.bouncycastle.pkcs.PKCS10CertificationRequest
 import java.io.BufferedReader
 import java.io.ByteArrayInputStream
 import java.io.InputStreamReader
+import java.io.StringReader
 import java.time.LocalDateTime
 import javax.persistence.Column
 import javax.persistence.Entity
@@ -99,4 +102,14 @@ class NutsCertificateRequest {
 
     @Column(name = "submitted_at")
     var submittedAt: LocalDateTime? = null
+
+    /**
+     * Create PKCS10CertificationRequest from entity
+     */
+    fun toPKCS10(): PKCS10CertificationRequest {
+        val reader = StringReader(pem)
+        val pemReader = PEMParser(reader)
+
+        return pemReader.readObject() as PKCS10CertificationRequest
+    }
 }

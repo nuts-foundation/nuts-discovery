@@ -78,6 +78,13 @@ then
   echo "unable to generate nuts_root.crt"
   exit 1
 fi
+if ! openssl pkcs8 -topk8 -in ${OUTDIR}nuts_root.key -out ${OUTDIR}nuts_root_temp.key -nocrypt
+then
+  echo "unable to convert nuts_root.key to pkcs8"
+  exit 1
+fi
+rm ${OUTDIR}nuts_root.key
+mv ${OUTDIR}nuts_root_temp.key ${OUTDIR}nuts_root.key
 
 echo "Generating Nuts CA key and certificate..."
 if ! openssl ecparam -out ${OUTDIR}nuts_ca.key -name secp384r1 -genkey
@@ -95,5 +102,12 @@ then
   echo "unable to generate nuts_ca.crt"
   exit 1
 fi
+if ! openssl pkcs8 -topk8 -in ${OUTDIR}nuts_ca.key -out ${OUTDIR}nuts_ca_temp.key -nocrypt
+then
+  echo "unable to convert nuts_ca.key to pkcs8"
+  exit 1
+fi
+rm ${OUTDIR}nuts_ca.key
+mv ${OUTDIR}nuts_ca_temp.key ${OUTDIR}nuts_ca.key
 
 echo "done"

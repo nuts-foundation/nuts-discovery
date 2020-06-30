@@ -20,6 +20,7 @@
 package nl.nuts.discovery.service
 
 import nl.nuts.discovery.TestUtils.Companion.loadTestCSR
+import nl.nuts.discovery.store.CertificateRepository
 import nl.nuts.discovery.store.NutsCertificateRequestRepository
 import nl.nuts.discovery.store.entity.NutsCertificateRequest
 import org.junit.After
@@ -30,15 +31,17 @@ import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.context.SpringBootTest
 import org.springframework.test.context.junit4.SpringRunner
 import kotlin.test.assertEquals
+import kotlin.test.assertNotNull
 
 @RunWith(SpringRunner::class)
 @SpringBootTest
 class CertificatesApiServiceImplTest {
     @Autowired
-    lateinit var nutsDiscoveryProperties: NutsDiscoveryProperties
+    lateinit var nutsCertificateRequestRepository: NutsCertificateRequestRepository
 
     @Autowired
-    lateinit var nutsCertificateRequestRepository: NutsCertificateRequestRepository
+    lateinit var certificateRepository: CertificateRepository
+
 
     @Autowired
     lateinit var certificatesApiServiceImpl: CertificatesApiServiceImpl
@@ -46,11 +49,13 @@ class CertificatesApiServiceImplTest {
     @Before
     fun before() {
         nutsCertificateRequestRepository.deleteAll()
+        certificateRepository.deleteAll()
     }
 
     @After
     fun teardown() {
         nutsCertificateRequestRepository.deleteAll()
+        certificateRepository.deleteAll()
     }
 
     @Test
@@ -71,5 +76,16 @@ class CertificatesApiServiceImplTest {
         val csrs = certificatesApiServiceImpl.listRequests("urn:oid:kvk")
 
         assertEquals(1, csrs.count())
+    }
+
+    @Test
+    fun `csr can be signed`() {
+        val pem = loadTestCSR("test.csr")
+        val req = NutsCertificateRequest.fromPEM(pem)
+
+        nutsCertificateRequestRepository.save(req)
+        val x509 = certificatesApiServiceImpl.sign(req)
+
+        assertNotNull(x509)
     }
 }

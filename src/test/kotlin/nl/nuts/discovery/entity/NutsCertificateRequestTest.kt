@@ -67,4 +67,12 @@ class NutsCertificateRequestTest {
             NutsCertificateRequest.fromPEM(pem)
         }
     }
+
+    @Test
+    fun `converting to PKCS10`() {
+        val pem = loadTestCSR("test.csr")
+        val req = NutsCertificateRequest.fromPEM(pem).toPKCS10()
+
+        assertNotNull(req)
+    }
 }
