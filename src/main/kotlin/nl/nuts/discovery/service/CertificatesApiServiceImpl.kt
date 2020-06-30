@@ -22,10 +22,24 @@ package nl.nuts.discovery.service
 import nl.nuts.discovery.api.CertificatesApiService
 import nl.nuts.discovery.model.CertificateSigningRequest
 import nl.nuts.discovery.model.CertificateWithChain
+import nl.nuts.discovery.model.CertificateRequest
+import nl.nuts.discovery.store.NutsCertificateRequestRepository
+import nl.nuts.discovery.store.entity.NutsCertificateRequest
+import org.slf4j.Logger
+import org.slf4j.LoggerFactory
+import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Service
 
 @Service
 class CertificatesApiServiceImpl : CertificatesApiService {
+    val logger: Logger = LoggerFactory.getLogger(this.javaClass)
+
+    @Autowired
+    lateinit var nutsDiscoveryProperties: NutsDiscoveryProperties
+
+    @Autowired
+    lateinit var nutsCertificateRequestRepository: NutsCertificateRequestRepository
+
     override fun listCertificates(otherName: String): List<CertificateWithChain> {
         TODO("Not yet implemented")
     }
@@ -35,6 +49,13 @@ class CertificatesApiServiceImpl : CertificatesApiService {
     }
 
     override fun submit(body: String): CertificateSigningRequest {
-        TODO("Not yet implemented")
+        val nutsCertificationRequest = NutsCertificateRequest.fromPEM(body)
+
+        logger.info("Received request for: ${nutsCertificationRequest.name}, oid: ${nutsCertificationRequest.oid}")
+
+        nutsCertificateRequestRepository.save(nutsCertificationRequest)
+        if (nutsDiscoveryProperties.autoAck) {
+             //todo sign
+        }
     }
 }

@@ -82,5 +82,11 @@ interface TestUtils {
 
             return nodeInfo.signWith(listOf(identityKeyPair.private))
         }
+
+        fun loadTestCSR(filename: String) : String {
+            return this.javaClass.classLoader.getResourceAsStream("csrs/$filename").run {
+                String(this.readBytes())
+            }
+        }
     }
 }

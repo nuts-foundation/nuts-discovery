@@ -19,6 +19,7 @@
 
 package nl.nuts.discovery.entity
 
+import nl.nuts.discovery.TestUtils.Companion.loadTestCSR
 import nl.nuts.discovery.store.entity.NutsCertificateRequest
 import org.junit.Test
 import java.lang.IllegalArgumentException
@@ -64,12 +65,6 @@ class NutsCertificateRequestTest {
 
         assertFailsWith(IllegalArgumentException::class) {
             NutsCertificateRequest.fromPEM(pem)
-        }
-    }
-
-    fun loadTestCSR(filename: String) : String {
-        return this.javaClass.classLoader.getResourceAsStream("csrs/$filename").run {
-            String(this.readBytes())
         }
     }
 }
