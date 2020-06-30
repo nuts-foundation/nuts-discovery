@@ -4,7 +4,7 @@
 Nuts discovery Api
 ******************
 
-The *Nuts Discovery Service* consists of 3 api's: the network map and certificate api's. The certificate api's are only used in the initial setup phase of a node. To publish the node details with an electronic signature and retrieve the signed certificate from the *Nuts Discovery Service*. The network map api is used to retrieve details about all the nodes that are connected to the network. These api's are called by the Corda node and should not be called by any other logic.
+The *Nuts Discovery Service* consists of 3 api's: the network map and certificate api's. The certificate api's are only used in the initial setup phase of a node. To publish the node details with an electronic signature and retrieve the signed certificate from the *Nuts Discovery Service*. The network map api is used to retrieve details about all the nodes that are connected to the network. These api's are called by the Corda node and should not be called by any other logic. 
 
 Nuts certificate API
 ====================
