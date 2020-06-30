@@ -20,6 +20,7 @@
 package nl.nuts.discovery.api
 
 import nl.nuts.discovery.TestUtils
+import nl.nuts.discovery.model.CertificateRequest
 import nl.nuts.discovery.service.NutsDiscoveryProperties
 import nl.nuts.discovery.store.NutsCertificateRequestRepository
 import org.junit.Before
@@ -33,7 +34,10 @@ import org.springframework.http.HttpEntity
 import org.springframework.http.HttpMethod
 import org.springframework.http.HttpStatus
 import org.springframework.test.context.junit4.SpringRunner
+import java.time.LocalDateTime
+import java.time.format.DateTimeFormatter
 import kotlin.test.assertEquals
+import kotlin.test.assertNotNull
 
 @RunWith(SpringRunner::class)
 @SpringBootTest(webEnvironment = RANDOM_PORT)
@@ -58,9 +62,15 @@ class NutsCertificateApiIntegrationTest {
         val req = TestUtils.loadTestCSR("test.csr")
         val entity = HttpEntity(req)
 
-        val response = testRestTemplate.exchange("/api/csr", HttpMethod.POST, entity, String::class.java)
+        val response = testRestTemplate.exchange("/api/csr", HttpMethod.POST, entity, CertificateRequest::class.java)
 
         assertEquals(HttpStatus.OK, response.statusCode)
+        assertNotNull(response.body)
+        assertEquals("urn:oid:kvk", response.body?.oid)
+
+        val ldt = response.body?.submittedAt
+        // no explosions
+        LocalDateTime.parse(ldt, DateTimeFormatter.ISO_LOCAL_DATE_TIME)
     }
 
     @Test

@@ -84,7 +84,7 @@ interface TestUtils {
         }
 
         fun loadTestCSR(filename: String) : String {
-            return this.javaClass.classLoader.getResourceAsStream("csrs/$filename").run {
+            return this::class.java.classLoader.getResourceAsStream("csrs/$filename").run {
                 String(this.readBytes())
             }
         }

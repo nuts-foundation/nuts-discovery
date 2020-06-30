@@ -49,13 +49,19 @@ class CertificatesApiServiceImpl : CertificatesApiService {
     }
 
     override fun submit(body: String): CertificateSigningRequest {
-        val nutsCertificationRequest = NutsCertificateRequest.fromPEM(body)
+        val nutsCertificateRequest = NutsCertificateRequest.fromPEM(body)
 
-        logger.info("Received request for: ${nutsCertificationRequest.name}, oid: ${nutsCertificationRequest.oid}")
+        logger.info("Received request for: ${nutsCertificateRequest.name}, oid: ${nutsCertificateRequest.oid}")
 
-        nutsCertificateRequestRepository.save(nutsCertificationRequest)
+        nutsCertificateRequestRepository.save(nutsCertificateRequest)
         if (nutsDiscoveryProperties.autoAck) {
              //todo sign
         }
+
+        return CertificateSigningRequest(
+            subject = nutsCertificateRequest.name!!,
+            pem = nutsCertificateRequest.pem!!,
+            submittedAt = nutsCertificateRequest.submittedAt.toString()
+        )
     }
 }
