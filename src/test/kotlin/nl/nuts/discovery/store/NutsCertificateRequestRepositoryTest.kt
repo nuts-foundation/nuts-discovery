@@ -57,6 +57,7 @@ class NutsCertificateRequestRepositoryTest {
         val sr = nutsCertificateRequestRepository.findByOid("kvk")
 
         assertNotNull(sr)
-        assertEquals(dt, sr!!.submittedAt)
+        assertEquals(1, sr.size)
+        assertEquals(dt, sr[0].submittedAt)
     }
 }

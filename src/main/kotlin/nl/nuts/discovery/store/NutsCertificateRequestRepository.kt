@@ -33,5 +33,5 @@ interface NutsCertificateRequestRepository: CrudRepository<NutsCertificateReques
      *
      * @return CSR
      */
-    fun findByOid(oid: String) : NutsCertificateRequest?
+    fun findByOid(oid: String) : List<NutsCertificateRequest>
 }
