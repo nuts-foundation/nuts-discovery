@@ -21,6 +21,7 @@ package nl.nuts.discovery.service
 
 import net.corda.core.crypto.Crypto
 import net.corda.core.identity.CordaX500Name
+import net.corda.core.internal.copyTo
 import net.corda.core.internal.signWithCert
 import net.corda.core.node.NetworkParameters
 import net.corda.nodeapi.internal.crypto.CertificateType
@@ -44,6 +45,7 @@ import org.bouncycastle.pkcs.jcajce.JcaPKCS10CertificationRequest
 import org.bouncycastle.util.io.pem.PemReader
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Service
+import java.io.ByteArrayOutputStream
 import java.io.File
 import java.io.Reader
 import java.nio.file.Files
@@ -127,10 +129,22 @@ class CertificateAndKeyService {
         val x509Jca = x509.toJca()
 
         // delete request and store certificate
-        certificateRepository.save(Certificate.fromX509Certificate(x509Jca))
+        certificateRepository.save(Certificate.fromX509Certificate(x509Jca, chainAsPEM()))
         certificateRequestRepository.delete(request)
 
         return x509Jca
+    }
+
+    private fun chainAsPEM() : String {
+        val rootPath = loadResourceWithNullCheck(nutsDiscoveryProperties.cordaRootCertPath)
+        val caPath = loadResourceWithNullCheck(nutsDiscoveryProperties.intermediateCertPath)
+
+        val out = ByteArrayOutputStream()
+        caPath.copyTo(out)
+        out.write("\n".toByteArray())
+        rootPath.copyTo(out)
+
+        return out.toString(Charsets.UTF_8.name())
     }
 
     /**

@@ -19,6 +19,7 @@
 
 package nl.nuts.discovery.service
 
+import net.corda.core.internal.copyTo
 import net.corda.nodeapi.internal.crypto.X509Utilities
 import nl.nuts.discovery.api.CertificatesApiService
 import nl.nuts.discovery.model.CertificateSigningRequest
@@ -49,6 +50,7 @@ import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Service
 import java.io.ByteArrayInputStream
+import java.io.ByteArrayOutputStream
 import java.io.File
 import java.io.InputStream
 import java.io.Reader
@@ -125,7 +127,7 @@ class CertificatesApiServiceImpl : CertificatesApiService, CertificateSigningSer
             X500Name(issuer.subjectX500Principal.getName(X500Principal.RFC1779)),
             BigInteger("1"),
             Date(System.currentTimeMillis()),
-            Date(System.currentTimeMillis() + (3 * 365 * 24 * 60 * 60 * 1000)),
+            Date(System.currentTimeMillis() + (3L * 365 * 24 * 60 * 60 * 1000)),
             pkcs10.subject,
             pair.public
         ).addExtension(
@@ -167,12 +169,24 @@ class CertificatesApiServiceImpl : CertificatesApiService, CertificateSigningSer
         val theCert = cf.generateCertificate(is1) as X509Certificate
         is1.close()
 
-        certificateRepository.save(Certificate.fromX509Certificate(theCert))
+        certificateRepository.save(Certificate.fromX509Certificate(theCert, chainAsPEM()))
         nutsCertificateRequestRepository.delete(request)
 
         return theCert
 
         // todo validation?
+    }
+
+    private fun chainAsPEM() : String {
+        val rootPath = loadResourceWithNullCheck(nutsDiscoveryProperties.nutsRootCertPath)
+        val caPath = loadResourceWithNullCheck(nutsDiscoveryProperties.nutsCACertPath)
+
+        val out = ByteArrayOutputStream()
+        caPath.copyTo(out)
+        out.write("\n".toByteArray())
+        rootPath.copyTo(out)
+
+        return out.toString(Charsets.UTF_8.name())
     }
 
     /**

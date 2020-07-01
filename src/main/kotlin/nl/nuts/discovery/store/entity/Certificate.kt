@@ -44,11 +44,12 @@ class Certificate {
         /**
          * Create entity from a X509Certificate object, stores .encoded as bytes
          */
-        fun fromX509Certificate(certificate: X509Certificate): Certificate {
+        fun fromX509Certificate(certificate: X509Certificate, chain: String): Certificate {
             return Certificate().apply {
                 name = certificate.subjectDN.name
                 x509 = certificate.encoded
                 oid = extractOID(certificate)
+                this.chain = chain
             }
         }
 
@@ -89,6 +90,11 @@ class Certificate {
      * encoded bytes of X509 (confirms to DER)
      */
     var x509: ByteArray? = null
+
+    /**
+     * any intermediate CA and the root, stored for historical purposes
+     */
+    var chain: String? = null
 
     /**
      * create a X509Certificate from the raw bytes (DER encoding)

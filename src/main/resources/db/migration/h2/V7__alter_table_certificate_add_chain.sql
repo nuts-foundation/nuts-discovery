@@ -1,6 +1,6 @@
 /*
- *     Nuts discovery service for Corda network creation
- *     Copyright (C) 2019 Nuts community
+ *     Nuts discovery service
+ *     Copyright (C) 2020 Nuts community
  *
  *     This program is free software: you can redistribute it and/or modify
  *     it under the terms of the GNU General Public License as published by
@@ -17,26 +17,4 @@
  *
  */
 
-package nl.nuts.discovery.store
-
-import nl.nuts.discovery.store.entity.Certificate
-import org.springframework.data.repository.CrudRepository
-import org.springframework.stereotype.Repository
-
-/**
- * DB access to certificate
- */
-@Repository
-interface CertificateRepository: CrudRepository<Certificate, Long> {
-    /**
-     * Find the certificate with the specified name as CN
-     *
-     * @return certificate
-     */
-    fun findByName(name: String) : Certificate?
-
-    /**
-     * Find certificates with the specified oid in the SAN
-     */
-    fun findByOid(oid: String) : List<Certificate>
-}
+ALTER TABLE certificate ADD COLUMN chain TEXT;
