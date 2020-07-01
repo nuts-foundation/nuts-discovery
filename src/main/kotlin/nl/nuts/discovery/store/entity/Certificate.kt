@@ -19,6 +19,12 @@
 
 package nl.nuts.discovery.store.entity
 
+import org.bouncycastle.asn1.ASN1Encodable
+import org.bouncycastle.asn1.ASN1String
+import org.bouncycastle.asn1.DERUTF8String
+import org.bouncycastle.asn1.DLSequence
+import org.bouncycastle.asn1.x509.GeneralName
+import org.bouncycastle.cert.jcajce.JcaX509ExtensionUtils
 import java.io.ByteArrayInputStream
 import java.security.cert.CertificateFactory
 import java.security.cert.X509Certificate
@@ -42,7 +48,26 @@ class Certificate {
             return Certificate().apply {
                 name = certificate.subjectDN.name
                 x509 = certificate.encoded
+                oid = extractOID(certificate)
             }
+        }
+
+        /**
+         * Find Nuts identifier in extensions
+         */
+        fun extractOID(certificate: X509Certificate): String? {
+            val sans = JcaX509ExtensionUtils.getSubjectAlternativeNames(certificate)
+            sans.forEach {// GeneralNames
+                val generalName = it as List<*> // GeneralName
+                if (generalName[0] == GeneralName.otherName) {
+                    // then this should be a DLSequence
+                    val seq = generalName[1] as DLSequence
+                    if (seq.getObjectAt(0) == NutsCertificateRequest.NUTS_VENDOR_EXTENSION) {
+                        return (seq.getObjectAt(1) as DERUTF8String).toString()
+                    }
+                }
+            }
+            return null
         }
     }
 
@@ -54,6 +79,11 @@ class Certificate {
      * CN of certificate, like X500Name
      */
     var name: String? = null
+
+    /**
+     * Nuts org/vendor identifier
+     */
+    var oid: String? = null
 
     /**
      * encoded bytes of X509 (confirms to DER)

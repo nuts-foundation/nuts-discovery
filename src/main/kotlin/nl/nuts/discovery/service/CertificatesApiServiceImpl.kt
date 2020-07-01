@@ -30,6 +30,8 @@ import nl.nuts.discovery.store.entity.Certificate
 import nl.nuts.discovery.store.entity.NutsCertificateRequest
 import org.bouncycastle.asn1.ASN1String
 import org.bouncycastle.asn1.DERGeneralString
+import org.bouncycastle.asn1.DERUTF8String
+import org.bouncycastle.asn1.DLSequence
 import org.bouncycastle.asn1.x500.X500Name
 import org.bouncycastle.asn1.x500.style.BCStyle
 import org.bouncycastle.asn1.x509.BasicConstraints
@@ -113,6 +115,10 @@ class CertificatesApiServiceImpl : CertificatesApiService, CertificateSigningSer
         val pair = caKeyPair()
         val issuer = caCertificate()
 
+        if (request.oid == null) {
+            throw java.lang.IllegalArgumentException("missing oid")
+        }
+
         // todo validity periods
         // todo serial number generation
         val certificateBuilder = JcaX509v3CertificateBuilder(
@@ -134,20 +140,21 @@ class CertificatesApiServiceImpl : CertificatesApiService, CertificateSigningSer
                 X509KeyUsage.keyCertSign   or
                 X509KeyUsage.cRLSign
             )
-        ).addExtension(
-            NutsCertificateRequest.NUTS_VENDOR_EXTENSION, // TODO: or in SAN as described in RFC?
-            false,
-            DERGeneralString(request.oid)
         )
+
+        val oidSeq = DLSequence(arrayOf(NutsCertificateRequest.NUTS_VENDOR_EXTENSION, DERUTF8String(request.oid)))
+        val names = mutableListOf(GeneralName(GeneralName.otherName, oidSeq))
 
         val emailAttr = pkcs10.getAttributes(BCStyle.EmailAddress)
         if (emailAttr != null && emailAttr.isNotEmpty()) {
             val emailASN1String = emailAttr.first().attrValues.getObjectAt(0) as ASN1String
             val email = emailASN1String.string
 
-            val subjectAltNames = GeneralNames(GeneralName(GeneralName.rfc822Name, email))
-            certificateBuilder.addExtension(Extension.subjectAlternativeName, false, subjectAltNames)
+            names.add(GeneralName(GeneralName.rfc822Name, email))
         }
+
+        val subjectAltNames = GeneralNames(names.toTypedArray())
+        certificateBuilder.addExtension(Extension.subjectAlternativeName, false, subjectAltNames)
 
         val sigGen = JcaContentSignerBuilder("SHA384WITHECDSA").build(pair.private)
 

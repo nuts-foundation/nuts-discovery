@@ -21,8 +21,14 @@ package nl.nuts.discovery.store.entity
 
 import net.corda.core.identity.CordaX500Name
 import org.bouncycastle.asn1.ASN1ObjectIdentifier
-import org.bouncycastle.cert.X509CertificateHolder
-import org.bouncycastle.cert.jcajce.JcaX509CertificateConverter
+import org.bouncycastle.asn1.DERTaggedObject
+import org.bouncycastle.asn1.DERUTF8String
+import org.bouncycastle.asn1.DLSequence
+import org.bouncycastle.asn1.pkcs.PKCSObjectIdentifiers
+import org.bouncycastle.asn1.x509.Extension
+import org.bouncycastle.asn1.x509.Extensions
+import org.bouncycastle.asn1.x509.GeneralName
+import org.bouncycastle.asn1.x509.GeneralNames
 import org.bouncycastle.openssl.PEMParser
 import org.bouncycastle.pkcs.PKCS10CertificationRequest
 import java.io.BufferedReader
@@ -77,6 +83,24 @@ class NutsCertificateRequest {
             for (attribute in certAttributes) {
                 if (attribute.attrType == NUTS_VENDOR_EXTENSION) {
                     return attribute.attrValues.getObjectAt(0).toString()
+                }
+
+                if (attribute.attrType.equals(PKCSObjectIdentifiers.pkcs_9_at_extensionRequest)) {
+                    val extensions = Extensions.getInstance(attribute.attrValues.getObjectAt(0))
+                    val gns = GeneralNames.fromExtensions(extensions, Extension.subjectAlternativeName)
+                    val names = gns.names
+                    for (san in names) {
+                        if (san.tagNo == GeneralName.otherName) {
+                            if (san.name is DLSequence) {
+                                val oid = (san.name as DLSequence).getObjectAt(0)
+                                if (oid == NUTS_VENDOR_EXTENSION) {
+                                    val taggedObject = (san.name as DLSequence).getObjectAt(1) as DERTaggedObject
+                                    val value = taggedObject.`object` as DERUTF8String
+                                    return value.toString()
+                                }
+                            }
+                        }
+                    }
                 }
             }
 

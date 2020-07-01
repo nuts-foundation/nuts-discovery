@@ -87,5 +87,9 @@ class CertificatesApiServiceImplTest {
         val x509 = certificatesApiServiceImpl.sign(req)
 
         assertNotNull(x509)
+
+        certificateRepository.findAll().forEach {
+            assertEquals("urn:oid:kvk", it.oid)
+        }
     }
 }
