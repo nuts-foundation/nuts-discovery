@@ -19,8 +19,10 @@
 
 package nl.nuts.discovery.api
 
+import net.corda.core.serialization.serialize
 import nl.nuts.discovery.TestUtils
 import nl.nuts.discovery.model.CertificateRequest
+import nl.nuts.discovery.model.CertificateWithChain
 import nl.nuts.discovery.service.NutsDiscoveryProperties
 import nl.nuts.discovery.store.NutsCertificateRequestRepository
 import nl.nuts.discovery.store.entity.NutsCertificateRequest
@@ -33,8 +35,10 @@ import org.springframework.boot.test.context.SpringBootTest.WebEnvironment.RANDO
 import org.springframework.boot.test.web.client.TestRestTemplate
 import org.springframework.core.ParameterizedTypeReference
 import org.springframework.http.HttpEntity
+import org.springframework.http.HttpHeaders
 import org.springframework.http.HttpMethod
 import org.springframework.http.HttpStatus
+import org.springframework.http.MediaType
 import org.springframework.test.context.junit4.SpringRunner
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
@@ -51,12 +55,15 @@ class NutsCertificateApiIntegrationTest {
     lateinit var nutsCertificateRequestRepository: NutsCertificateRequestRepository
 
     @Autowired
+    lateinit var certificatesApiService: CertificatesApiService
+
+    @Autowired
     lateinit var nutsDiscoveryProperties: NutsDiscoveryProperties
 
     @Before
     fun clearNodes(){
         nutsCertificateRequestRepository.deleteAll()
-        nutsDiscoveryProperties.autoAck = false
+        nutsDiscoveryProperties.autoAck = true
     }
 
     @Test
@@ -96,5 +103,23 @@ class NutsCertificateApiIntegrationTest {
 
         assertEquals(HttpStatus.OK, response.statusCode)
         assertEquals(1, response.body?.size)
+    }
+
+    @Test
+    fun `list of certificates returns list of x509 with chain`() {
+        val pem = TestUtils.loadTestCSR("test.csr")
+        certificatesApiService.submit(pem)
+
+        val entity = HttpEntity(null, headers())
+        val response = testRestTemplate.exchange("/api/x509/urn:oid:kvk", HttpMethod.GET, entity, typeReference<List<CertificateWithChain>>())
+
+        assertEquals(HttpStatus.OK, response.statusCode)
+        assertEquals(1, response.body?.size)
+    }
+
+    private fun headers() : HttpHeaders {
+        val headers = HttpHeaders()
+        headers.accept = listOf(MediaType.APPLICATION_JSON)
+        return headers
     }
 }

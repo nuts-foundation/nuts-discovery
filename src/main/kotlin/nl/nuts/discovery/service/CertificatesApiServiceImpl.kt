@@ -24,7 +24,6 @@ import net.corda.nodeapi.internal.crypto.X509Utilities
 import nl.nuts.discovery.api.CertificatesApiService
 import nl.nuts.discovery.model.CertificateSigningRequest
 import nl.nuts.discovery.model.CertificateWithChain
-import nl.nuts.discovery.model.CertificateRequest
 import nl.nuts.discovery.store.CertificateRepository
 import nl.nuts.discovery.store.NutsCertificateRequestRepository
 import nl.nuts.discovery.store.entity.Certificate
@@ -81,7 +80,9 @@ class CertificatesApiServiceImpl : CertificatesApiService, CertificateSigningSer
     lateinit var certificateRepository: CertificateRepository
 
     override fun listCertificates(otherName: String): List<CertificateWithChain> {
-        TODO("Not yet implemented")
+        return certificateRepository.findByOid(otherName).map {
+            CertificateWithChain(it.toPem(), it.chain!!)
+        }
     }
 
     override fun listRequests(otherName: String): List<CertificateSigningRequest> {

@@ -19,13 +19,18 @@
 
 package nl.nuts.discovery.store.entity
 
-import org.bouncycastle.asn1.ASN1Encodable
-import org.bouncycastle.asn1.ASN1String
 import org.bouncycastle.asn1.DERUTF8String
 import org.bouncycastle.asn1.DLSequence
 import org.bouncycastle.asn1.x509.GeneralName
 import org.bouncycastle.cert.jcajce.JcaX509ExtensionUtils
+import sun.misc.BASE64Encoder
+import sun.security.provider.X509Factory
+import java.io.BufferedOutputStream
+import java.io.BufferedWriter
 import java.io.ByteArrayInputStream
+import java.io.ByteArrayOutputStream
+import java.io.PrintWriter
+import java.io.StringWriter
 import java.security.cert.CertificateFactory
 import java.security.cert.X509Certificate
 import javax.persistence.Entity
@@ -102,5 +107,16 @@ class Certificate {
     fun toX509(): X509Certificate {
         val certFactory: CertificateFactory = CertificateFactory.getInstance("X.509")
         return certFactory.generateCertificate(ByteArrayInputStream(x509)) as X509Certificate
+    }
+
+    fun toPem(): String {
+        val s = ByteArrayOutputStream()
+        val pw = PrintWriter(s, true)
+        val encoder = BASE64Encoder()
+        pw.println(X509Factory.BEGIN_CERT.toByteArray())
+        encoder.encodeBuffer(x509, s)
+        pw.println(X509Factory.END_CERT.toByteArray())
+
+        return s.toString()
     }
 }
