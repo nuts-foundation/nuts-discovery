@@ -1,6 +1,7 @@
 package nl.nuts.discovery.api
 
 import nl.nuts.discovery.model.CertificateRequest
+import nl.nuts.discovery.model.CertificateWithChain
 import org.springframework.http.HttpStatus
 import org.springframework.http.MediaType
 import org.springframework.http.ResponseEntity
@@ -33,7 +34,7 @@ class CertificatesApiController(@Autowired(required = true) val service: Certifi
             value = ["/api/x509/{urn}"],
             produces = ["application/json", "text/plain"], 
             method = [RequestMethod.GET])
-    fun listCertificates( @PathVariable("urn") urn: String): ResponseEntity<List<String>> {
+    fun listCertificates( @PathVariable("urn") urn: String): ResponseEntity<List<CertificateWithChain>> {
         return ResponseEntity(service.listCertificates(urn), HttpStatus.OK)
     }
 

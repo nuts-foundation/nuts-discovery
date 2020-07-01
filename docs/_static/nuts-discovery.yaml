@@ -69,7 +69,7 @@ paths:
               schema:
                 type: array
                 items:
-                  $ref: "#/components/schemas/certificate"
+                  $ref: "#/components/schemas/certificateWithChain"
         404:
           description: "No certificates found for given urn"
           content:
@@ -97,7 +97,19 @@ components:
         submittedAt:
           type: string
           description: "Date at which the request was submitted"
+    certificateWithChain:
+      required:
+        - certificate
+        - chain
+      properties:
+        certificate:
+          $ref: '#/components/schemas/certificate'
+        chain:
+          $ref: '#/components/schemas/chain'
     certificate:
       type: string
       description: "PEM encoded certificate"
+    chain:
+      type: string
+      description: "PEM encoded list of certificates, the first being the intermediate and the last the root"
 
