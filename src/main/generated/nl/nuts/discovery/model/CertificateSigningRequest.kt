@@ -7,18 +7,14 @@ import javax.validation.constraints.*
 
 /**
  * 
- * @param name CN of request
- * @param oid oid of vendor, can be used to query requests
+ * @param subject DN of request
  * @param pem the pem-encoded CSR
  * @param submittedAt Date at which the request was submitted
  */
-data class CertificateRequest (
+data class CertificateSigningRequest (
 
         @get:NotNull 
-        @JsonProperty("name") val name: String,
-
-        @get:NotNull 
-        @JsonProperty("oid") val oid: String,
+        @JsonProperty("subject") val subject: String,
 
         @get:NotNull 
         @JsonProperty("pem") val pem: String,

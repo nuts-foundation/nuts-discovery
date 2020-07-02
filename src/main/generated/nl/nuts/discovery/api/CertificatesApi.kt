@@ -1,6 +1,6 @@
 package nl.nuts.discovery.api
 
-import nl.nuts.discovery.model.CertificateRequest
+import nl.nuts.discovery.model.CertificateSigningRequest
 import nl.nuts.discovery.model.CertificateWithChain
 import org.springframework.http.HttpStatus
 import org.springframework.http.MediaType
@@ -31,29 +31,29 @@ class CertificatesApiController(@Autowired(required = true) val service: Certifi
 
 
     @RequestMapping(
-            value = ["/api/x509/{urn}"],
-            produces = ["application/json", "text/plain"], 
-            method = [RequestMethod.GET])
-    fun listCertificates( @PathVariable("urn") urn: String): ResponseEntity<List<CertificateWithChain>> {
-        return ResponseEntity(service.listCertificates(urn), HttpStatus.OK)
-    }
-
-
-    @RequestMapping(
-            value = ["/api/csr/{urn}"],
+            value = ["/api/x509"],
             produces = ["application/json"], 
             method = [RequestMethod.GET])
-    fun listRequests( @PathVariable("urn") urn: String): ResponseEntity<List<CertificateRequest>> {
-        return ResponseEntity(service.listRequests(urn), HttpStatus.OK)
+    fun listCertificates(@NotNull  @RequestParam(value = "otherName", required = true, defaultValue="null") otherName: String): ResponseEntity<List<CertificateWithChain>> {
+        return ResponseEntity(service.listCertificates(otherName), HttpStatus.OK)
     }
 
 
     @RequestMapping(
             value = ["/api/csr"],
             produces = ["application/json"], 
+            method = [RequestMethod.GET])
+    fun listRequests(@NotNull  @RequestParam(value = "otherName", required = true, defaultValue="null") otherName: String): ResponseEntity<List<CertificateSigningRequest>> {
+        return ResponseEntity(service.listRequests(otherName), HttpStatus.OK)
+    }
+
+
+    @RequestMapping(
+            value = ["/api/csr"],
+            produces = ["application/json", "text/plain"], 
             consumes = ["text/plain"],
             method = [RequestMethod.POST])
-    fun submit( @Valid @RequestBody body: String): ResponseEntity<CertificateRequest> {
+    fun submit( @Valid @RequestBody body: String): ResponseEntity<CertificateSigningRequest> {
         return ResponseEntity(service.submit(body), HttpStatus.OK)
     }
 }

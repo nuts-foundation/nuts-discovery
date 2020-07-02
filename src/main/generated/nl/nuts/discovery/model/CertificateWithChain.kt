@@ -8,7 +8,7 @@ import javax.validation.constraints.*
 /**
  * 
  * @param certificate PEM encoded certificate
- * @param chain PEM encoded list of certificates, the first being the intermediate and the last the root
+ * @param chain 
  */
 data class CertificateWithChain (
 
@@ -16,7 +16,7 @@ data class CertificateWithChain (
         @JsonProperty("certificate") val certificate: String,
 
         @get:NotNull 
-        @JsonProperty("chain") val chain: String
+        @JsonProperty("chain") val chain: List<String>
 ) {
 
 }

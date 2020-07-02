@@ -20,20 +20,22 @@
 package nl.nuts.discovery.service
 
 import nl.nuts.discovery.api.CertificatesApiService
-import nl.nuts.discovery.model.CertificateRequest
+import nl.nuts.discovery.model.CertificateSigningRequest
+import nl.nuts.discovery.model.CertificateWithChain
 import org.springframework.stereotype.Service
 
 @Service
 class CertificatesApiServiceImpl : CertificatesApiService {
-    override fun listCertificates(urn: String): List<String> {
+    override fun listCertificates(otherName: String): List<CertificateWithChain> {
         TODO("Not yet implemented")
     }
 
-    override fun listRequests(urn: String): List<CertificateRequest> {
+    override fun listRequests(otherName: String): List<CertificateSigningRequest> {
         TODO("Not yet implemented")
     }
 
-    override fun submit(body: String): CertificateRequest {
+    override fun submit(body: String): CertificateSigningRequest {
         TODO("Not yet implemented")
     }
+
 }

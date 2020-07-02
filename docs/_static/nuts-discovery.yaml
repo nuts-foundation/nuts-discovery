@@ -21,76 +21,70 @@ paths:
               type: string
       responses:
         '200':
-          description: "request was accepted"
+          description: "request was received. If autoAck is enabled on the discovery service, the CSR will be signed"
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/certificate_request"
-  /api/csr/{urn}:
+                $ref: "#/components/schemas/certificateSigningRequest"
+        '400':
+          description: "the CSR is not up to standards"
+          content:
+            text/plain:
+              example: "missing oid in subjectAltName.otherName"
     get:
       operationId: listRequests
-      summary: "list certificate signing requests"
+      summary: "list certificate signing requests given a subjectAltName.otherName identifier"
       tags:
         - certificates
       parameters:
-        - name: urn
-          in: path
-          description: "vendor oid in urn format"
+        - name: otherName
+          in: query
+          description: "some identifier that matches the subjectAltName.otherName field in the certificate"
           required: true
           schema:
             type: string
       responses:
         '200':
-          description: "success"
+          description: "list of certificateSigningRequest, might be empty"
           content:
             application/json:
               schema:
                 type: array
                 items:
-                  $ref: "#/components/schemas/certificate_request"
-  /api/x509/{urn}:
+                  $ref: "#/components/schemas/certificateSigningRequest"
+  /api/x509:
     get:
       operationId: listCertificates
-      summary: "get signed certificate(s) based on urn. The urn must be an oid which corresponds to the oid in the SAN"
+      summary: "get signed certificate(s) based on subjectAltName.otherName"
       tags:
         - certificates
       parameters:
-        - name: urn
-          in: path
-          description: "vendor oid in urn format"
+        - name: otherName
+          in: query
+          description: "some identifier that matches the subjectAltName.otherName field in the certificate"
           required: true
           schema:
             type: string
       responses:
         200:
-          description: "List of signed certificates for given urn. The certificates might be for different keys and/or different validity. The client should match them."
+          description: "List of signed certificates for given identifier. The certificates might be for different keys and/or different validity. The client should select the current valid certificates (or for another time period) as needed. Might be empty list"
           content:
             application/json:
               schema:
                 type: array
                 items:
                   $ref: "#/components/schemas/certificateWithChain"
-        404:
-          description: "No certificates found for given urn"
-          content:
-            text/plain:
-              schema:
-                type: string
 components:
   schemas:
-    certificate_request:
+    certificateSigningRequest:
       required:
-        - name
-        - oid
+        - subject
         - pem
         - submittedAt
       properties:
-        name:
+        subject:
           type: string
-          description: "CN of request"
-        oid:
-          type: string
-          description: "oid of vendor, can be used to query requests"
+          description: "DN of request"
         pem:
           type: string
           description: "the pem-encoded CSR"
@@ -105,11 +99,14 @@ components:
         certificate:
           $ref: '#/components/schemas/certificate'
         chain:
+          type: array
           $ref: '#/components/schemas/chain'
     certificate:
       type: string
       description: "PEM encoded certificate"
     chain:
-      type: string
-      description: "PEM encoded list of certificates, the first being the intermediate and the last the root"
+      type: array
+      items:
+        description: "PEM encoded list of certificates, the first being the intermediate and the last the root"
+        $ref: '#/components/schemas/certificate'
 
