@@ -4,12 +4,42 @@
 Nuts discovery Api
 ******************
 
-The *Nuts Discovery Service* consists of 2 api's: the network map and certificate api's. The certificate api is only used in the initial setup phase of a Corda node. To publish the node details with an electronic signature and retrieve the signed certificate from the *Nuts Discovery Service*. The network map api is used to retrieve details about all the nodes that are connected to the network. These api's are called by the Corda node and should not be called by any other logic.
+The *Nuts Discovery Service* consists of 3 api's: the network map and certificate api's. The certificate api's are only used in the initial setup phase of a node. To publish the node details with an electronic signature and retrieve the signed certificate from the *Nuts Discovery Service*. The network map api is used to retrieve details about all the nodes that are connected to the network. These api's are called by the Corda node and should not be called by any other logic.
 
-Certificate API
-===============
+Nuts certificate API
+====================
 
-The *Certificate API* is part of the Corda node but it's seems to be lacking documentation. After reverse engineering, 2 requests could be identified. The initation process for a Corda node can be started with:
+The *Nuts certificate API* is similar to the *Corda Certificate API* but is meant for the Nuts part of the CA tree. It's main goal is to support the Network authority in signing certificate signing requests and allowing the vendors to download them.
+
+.. raw:: html
+
+    <div id="swagger-ui"></div>
+
+    <script src='../../_static/js/swagger-ui-bundle-3.18.3.js' type='text/javascript'></script>
+    <script src='../../_static/js/swagger-ui-standalone-preset-3.18.3.js' type='text/javascript'></script>
+    <script>
+        window.onload = function() {
+            const ui = SwaggerUIBundle({
+                "dom_id": "#swagger-ui",
+                urls: [
+                    {url: "../../_static/nuts-discovery.yaml", name: "discovery"},
+                    ],
+                presets: [
+                    SwaggerUIBundle.presets.apis,
+                    SwaggerUIStandalonePreset
+                ],
+                layout: "StandaloneLayout"
+            });
+
+            window.ui = ui
+        }
+
+    </script>
+
+Corda Certificate API
+=====================
+
+The *Corda Certificate API* is part of the Corda node but it's seems to be lacking documentation. After reverse engineering, 2 requests could be identified. The initation process for a Corda node can be started with:
 ::
 
     java -jar corda.jar initial-registration -p <password>

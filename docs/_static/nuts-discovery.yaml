@@ -1,0 +1,112 @@
+openapi: "3.0.0"
+info:
+  title: Nuts discovery API spec
+  description: API specification for certificate related services hosted by the network authority
+  version: 0.1.0
+  license:
+    name: GPLv3
+paths:
+  /api/csr:
+    post:
+      operationId: submit
+      summary: "submit a PEM encoded CSR to the network authority"
+      tags:
+        - certificates
+      requestBody:
+        description: PEM encoded CSR
+        required: true
+        content:
+          text/plain:
+            schema:
+              type: string
+      responses:
+        '200':
+          description: "request was received. If autoAck is enabled on the discovery service, the CSR will be signed"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/certificateSigningRequest"
+        '400':
+          description: "the CSR is not up to standards"
+          content:
+            text/plain:
+              example: "missing oid in subjectAltName.otherName"
+    get:
+      operationId: listRequests
+      summary: "list certificate signing requests given a subjectAltName.otherName identifier"
+      tags:
+        - certificates
+      parameters:
+        - name: otherName
+          in: query
+          description: "some identifier that matches the subjectAltName.otherName field in the certificate"
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: "list of certificateSigningRequest, might be empty"
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/certificateSigningRequest"
+  /api/x509:
+    get:
+      operationId: listCertificates
+      summary: "get signed certificate(s) based on subjectAltName.otherName"
+      tags:
+        - certificates
+      parameters:
+        - name: otherName
+          in: query
+          description: "some identifier that matches the subjectAltName.otherName field in the certificate"
+          required: true
+          schema:
+            type: string
+      responses:
+        200:
+          description: "List of signed certificates for given identifier. The certificates might be for different keys and/or different validity. The client should select the current valid certificates (or for another time period) as needed. Might be empty list"
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/certificateWithChain"
+components:
+  schemas:
+    certificateSigningRequest:
+      required:
+        - subject
+        - pem
+        - submittedAt
+      properties:
+        subject:
+          type: string
+          description: "DN of request"
+        pem:
+          type: string
+          description: "the pem-encoded CSR"
+        submittedAt:
+          type: string
+          description: "Date at which the request was submitted"
+    certificateWithChain:
+      required:
+        - certificate
+        - chain
+      properties:
+        certificate:
+          $ref: '#/components/schemas/certificate'
+        chain:
+          type: array
+          $ref: '#/components/schemas/chain'
+    certificate:
+      type: string
+      description: "PEM encoded certificate"
+    chain:
+      type: array
+      items:
+        description: "PEM encoded list of certificates, the first being the intermediate and the last the root"
+        $ref: '#/components/schemas/certificate'
+
