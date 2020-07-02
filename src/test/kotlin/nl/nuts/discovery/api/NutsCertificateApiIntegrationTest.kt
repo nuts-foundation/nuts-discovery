@@ -19,11 +19,11 @@
 
 package nl.nuts.discovery.api
 
-import net.corda.core.serialization.serialize
 import nl.nuts.discovery.TestUtils
 import nl.nuts.discovery.model.CertificateRequest
 import nl.nuts.discovery.model.CertificateWithChain
 import nl.nuts.discovery.service.NutsDiscoveryProperties
+import nl.nuts.discovery.store.CertificateRepository
 import nl.nuts.discovery.store.NutsCertificateRequestRepository
 import nl.nuts.discovery.store.entity.NutsCertificateRequest
 import org.junit.Before
@@ -55,6 +55,9 @@ class NutsCertificateApiIntegrationTest {
     lateinit var nutsCertificateRequestRepository: NutsCertificateRequestRepository
 
     @Autowired
+    lateinit var certificateRepository: CertificateRepository
+
+    @Autowired
     lateinit var certificatesApiService: CertificatesApiService
 
     @Autowired
@@ -63,6 +66,7 @@ class NutsCertificateApiIntegrationTest {
     @Before
     fun clearNodes(){
         nutsCertificateRequestRepository.deleteAll()
+        certificateRepository.deleteAll()
         nutsDiscoveryProperties.autoAck = true
     }
 

@@ -129,50 +129,45 @@ class CertificateAndKeyService {
         val x509Jca = x509.toJca()
 
         // delete request and store certificate
-        certificateRepository.save(Certificate.fromX509Certificate(x509Jca, chainAsPEM()))
+        certificateRepository.save(Certificate.fromX509Certificate(x509Jca, chain()))
         certificateRequestRepository.delete(request)
 
         return x509Jca
     }
 
-    private fun chainAsPEM() : String {
-        val rootPath = loadResourceWithNullCheck(nutsDiscoveryProperties.cordaRootCertPath)
-        val caPath = loadResourceWithNullCheck(nutsDiscoveryProperties.intermediateCertPath)
+    private fun chain() : String {
+        val rootPath = CertificatesApiServiceImpl.loadResourceWithNullCheck(nutsDiscoveryProperties.cordaRootCertPath)
+        val caPath = CertificatesApiServiceImpl.loadResourceWithNullCheck(nutsDiscoveryProperties.intermediateCertPath)
 
-        val out = ByteArrayOutputStream()
-        caPath.copyTo(out)
-        out.write("\n".toByteArray())
-        rootPath.copyTo(out)
-
-        return out.toString(Charsets.UTF_8.name())
+        return CertificatesApiServiceImpl.chainAsPEM(arrayOf(caPath, rootPath))
     }
 
     /**
      * returns the Corda network rootcertificate
      */
     fun cordaRootCertificate(): X509Certificate {
-        return X509Utilities.loadCertificateFromPEMFile(loadResourceWithNullCheck(nutsDiscoveryProperties.cordaRootCertPath))
+        return X509Utilities.loadCertificateFromPEMFile(CertificatesApiServiceImpl.loadResourceWithNullCheck(nutsDiscoveryProperties.cordaRootCertPath))
     }
 
     /**
      * returns the Corda network-map certificate
      */
     fun networkMapCertificate(): X509Certificate {
-        return X509Utilities.loadCertificateFromPEMFile(loadResourceWithNullCheck(nutsDiscoveryProperties.networkMapCertPath))
+        return X509Utilities.loadCertificateFromPEMFile(CertificatesApiServiceImpl.loadResourceWithNullCheck(nutsDiscoveryProperties.networkMapCertPath))
     }
 
     /**
      * returns the Corda intermediate certificate
      */
     fun intermediateCertificate(): X509Certificate {
-        return X509Utilities.loadCertificateFromPEMFile(loadResourceWithNullCheck(nutsDiscoveryProperties.intermediateCertPath))
+        return X509Utilities.loadCertificateFromPEMFile(CertificatesApiServiceImpl.loadResourceWithNullCheck(nutsDiscoveryProperties.intermediateCertPath))
     }
 
     /**
      * Reads the key from disk and returns a PrivateKey instance
      */
     fun networkMapKey(): PrivateKey {
-        val reader = PemReader(Files.newBufferedReader(loadResourceWithNullCheck(nutsDiscoveryProperties.networkMapKeyPath)) as Reader?)
+        val reader = PemReader(Files.newBufferedReader(CertificatesApiServiceImpl.loadResourceWithNullCheck(nutsDiscoveryProperties.networkMapKeyPath)) as Reader?)
         val key = reader.readPemObject()
 
         reader.close()
@@ -181,24 +176,8 @@ class CertificateAndKeyService {
         return kf.generatePrivate(PKCS8EncodedKeySpec(key.content))
     }
 
-    /**
-     * Check both file path on disk and in resources (test)
-     */
-    private fun loadResourceWithNullCheck(location: String): Path {
-
-        if (File(location).exists()) {
-            return Paths.get(File(location).toURI())
-        }
-
-        val resource = javaClass.classLoader.getResource(location)
-            ?: throw IllegalArgumentException("resource not found at $location")
-
-        val uri = resource.toURI()
-        return Paths.get(uri)
-    }
-
     fun intermediateKeyPair(): KeyPair {
-        val keyReader = PemReader(Files.newBufferedReader(loadResourceWithNullCheck(nutsDiscoveryProperties.intermediateKeyPath)))
+        val keyReader = PemReader(Files.newBufferedReader(CertificatesApiServiceImpl.loadResourceWithNullCheck(nutsDiscoveryProperties.intermediateKeyPath)))
         val key = keyReader.readPemObject()
 
         keyReader.close()

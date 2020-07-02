@@ -29,7 +29,6 @@ import nl.nuts.discovery.store.NutsCertificateRequestRepository
 import nl.nuts.discovery.store.entity.Certificate
 import nl.nuts.discovery.store.entity.NutsCertificateRequest
 import org.bouncycastle.asn1.ASN1String
-import org.bouncycastle.asn1.DERGeneralString
 import org.bouncycastle.asn1.DERUTF8String
 import org.bouncycastle.asn1.DLSequence
 import org.bouncycastle.asn1.x500.X500Name
@@ -68,6 +67,43 @@ import javax.security.auth.x500.X500Principal
 
 @Service
 class CertificatesApiServiceImpl : CertificatesApiService, CertificateSigningService {
+
+    companion object {
+        /**
+         * Check both file path on disk and in resources (test)
+         */
+        fun loadResourceWithNullCheck(location: String): Path {
+
+            if (File(location).exists()) {
+                return Paths.get(File(location).toURI())
+            }
+
+            val resource = javaClass.classLoader.getResource(location)
+                ?: throw IllegalArgumentException("resource not found at $location")
+
+            val uri = resource.toURI()
+            return Paths.get(uri)
+        }
+
+        /**
+         * create a single PEM string from given paths
+         *
+         * @param paths locations of PEM files, starting with lowest CA and ending with the root
+         */
+        fun chainAsPEM(paths: Array<Path>) : String {
+            val out = ByteArrayOutputStream()
+
+            for ((index, it) in paths.withIndex()) {
+                it.copyTo(out)
+                if (index < paths.size - 1) {
+                    out.write("\n".toByteArray())
+                }
+            }
+
+            return out.toString(Charsets.UTF_8.name())
+        }
+    }
+
     val logger: Logger = LoggerFactory.getLogger(this.javaClass)
 
     @Autowired
@@ -170,7 +206,7 @@ class CertificatesApiServiceImpl : CertificatesApiService, CertificateSigningSer
         val theCert = cf.generateCertificate(is1) as X509Certificate
         is1.close()
 
-        certificateRepository.save(Certificate.fromX509Certificate(theCert, chainAsPEM()))
+        certificateRepository.save(Certificate.fromX509Certificate(theCert, chain()))
         nutsCertificateRequestRepository.delete(request)
 
         return theCert
@@ -178,23 +214,11 @@ class CertificatesApiServiceImpl : CertificatesApiService, CertificateSigningSer
         // todo validation?
     }
 
-    private fun chainAsPEM() : String {
+    private fun chain() : String {
         val rootPath = loadResourceWithNullCheck(nutsDiscoveryProperties.nutsRootCertPath)
         val caPath = loadResourceWithNullCheck(nutsDiscoveryProperties.nutsCACertPath)
 
-        val out = ByteArrayOutputStream()
-        caPath.copyTo(out)
-        out.write("\n".toByteArray())
-        rootPath.copyTo(out)
-
-        return out.toString(Charsets.UTF_8.name())
-    }
-
-    /**
-     * returns the Nuts root certificate
-     */
-    fun rootCertificate(): X509Certificate {
-        return X509Utilities.loadCertificateFromPEMFile(loadResourceWithNullCheck(nutsDiscoveryProperties.nutsRootCertPath))
+        return chainAsPEM(arrayOf(caPath, rootPath))
     }
 
     /**
@@ -219,21 +243,5 @@ class CertificatesApiServiceImpl : CertificatesApiService, CertificateSigningSer
 
     fun caKeyPair(): KeyPair {
         return KeyPair(caCertificate().publicKey, caKey())
-    }
-
-    /**
-     * Check both file path on disk and in resources (test)
-     */
-    private fun loadResourceWithNullCheck(location: String): Path {
-
-        if (File(location).exists()) {
-            return Paths.get(File(location).toURI())
-        }
-
-        val resource = javaClass.classLoader.getResource(location)
-            ?: throw IllegalArgumentException("resource not found at $location")
-
-        val uri = resource.toURI()
-        return Paths.get(uri)
     }
 }
