@@ -20,7 +20,7 @@
 package nl.nuts.discovery.api
 
 import nl.nuts.discovery.TestUtils
-import nl.nuts.discovery.model.CertificateRequest
+import nl.nuts.discovery.model.CertificateSigningRequest
 import nl.nuts.discovery.model.CertificateWithChain
 import nl.nuts.discovery.service.NutsDiscoveryProperties
 import nl.nuts.discovery.store.CertificateRepository
@@ -75,11 +75,11 @@ class NutsCertificateApiIntegrationTest {
         val req = TestUtils.loadTestCSR("test.csr")
         val entity = HttpEntity(req)
 
-        val response = testRestTemplate.exchange("/api/csr", HttpMethod.POST, entity, CertificateRequest::class.java)
+        val response = testRestTemplate.exchange("/api/csr", HttpMethod.POST, entity, CertificateSigningRequest::class.java)
 
         assertEquals(HttpStatus.OK, response.statusCode)
         assertNotNull(response.body)
-        assertEquals("urn:oid:kvk", response.body?.oid)
+        assertEquals("CN=test, O=test, L=town, C=NL", response.body?.subject)
 
         val ldt = response.body?.submittedAt
         // no explosions
@@ -103,7 +103,7 @@ class NutsCertificateApiIntegrationTest {
         val pem = TestUtils.loadTestCSR("test.csr")
         nutsCertificateRequestRepository.save(NutsCertificateRequest.fromPEM(pem))
 
-        val response = testRestTemplate.exchange("/api/csr/urn:oid:kvk", HttpMethod.GET, null, typeReference<List<CertificateRequest>>())
+        val response = testRestTemplate.exchange("/api/csr?otherName=urn:oid:kvk", HttpMethod.GET, null, typeReference<List<CertificateSigningRequest>>())
 
         assertEquals(HttpStatus.OK, response.statusCode)
         assertEquals(1, response.body?.size)
@@ -115,10 +115,11 @@ class NutsCertificateApiIntegrationTest {
         certificatesApiService.submit(pem)
 
         val entity = HttpEntity(null, headers())
-        val response = testRestTemplate.exchange("/api/x509/urn:oid:kvk", HttpMethod.GET, entity, typeReference<List<CertificateWithChain>>())
+        val response = testRestTemplate.exchange("/api/x509?otherName=urn:oid:kvk", HttpMethod.GET, entity, typeReference<List<CertificateWithChain>>())
 
         assertEquals(HttpStatus.OK, response.statusCode)
         assertEquals(1, response.body?.size)
+        assertEquals(2, response.body!!.first().chain.size)
     }
 
     private fun headers() : HttpHeaders {

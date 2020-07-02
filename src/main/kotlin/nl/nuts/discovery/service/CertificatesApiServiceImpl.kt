@@ -47,6 +47,7 @@ import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Service
+import sun.security.provider.X509Factory
 import java.io.ByteArrayInputStream
 import java.io.ByteArrayOutputStream
 import java.io.File
@@ -63,6 +64,7 @@ import java.security.cert.CertificateFactory
 import java.security.cert.X509Certificate
 import java.security.spec.PKCS8EncodedKeySpec
 import java.util.*
+import java.util.regex.Pattern
 import javax.security.auth.x500.X500Principal
 
 @Service
@@ -117,7 +119,7 @@ class CertificatesApiServiceImpl : CertificatesApiService, CertificateSigningSer
 
     override fun listCertificates(otherName: String): List<CertificateWithChain> {
         return certificateRepository.findByOid(otherName).map {
-            CertificateWithChain(it.toPem(), it.chain!!)
+            CertificateWithChain(it.toPem(), splitChain(it.chain))
         }
     }
 
@@ -212,6 +214,23 @@ class CertificatesApiServiceImpl : CertificatesApiService, CertificateSigningSer
         return theCert
 
         // todo validation?
+    }
+
+    private fun splitChain(cChain: String?) : List<String> {
+        val cList = mutableListOf<String>()
+
+        if (cChain != null) {
+            val pBegin = Pattern.compile(X509Factory.BEGIN_CERT)
+            val pEnd = Pattern.compile(X509Factory.END_CERT)
+            val mStart = pBegin.matcher(cChain)
+            val mEnd = pEnd.matcher(cChain)
+
+            while(mEnd.find() && mStart.find()) {
+                cList.add(cChain.substring(mStart.start(), mEnd.end()))
+            }
+        }
+
+        return cList
     }
 
     private fun chain() : String {
