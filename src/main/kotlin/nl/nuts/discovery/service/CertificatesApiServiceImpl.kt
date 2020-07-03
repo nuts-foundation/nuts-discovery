@@ -161,7 +161,7 @@ class CertificatesApiServiceImpl : CertificatesApiService, CertificateSigningSer
         }
 
         // todo validity periods
-        // todo serial number generation
+        // todo serial number generation: configure a salt, use an internal seq number (count on certs), append them then sha2
         val certificateBuilder = JcaX509v3CertificateBuilder(
             X500Name(issuer.subjectX500Principal.getName(X500Principal.RFC1779)),
             BigInteger("1"),

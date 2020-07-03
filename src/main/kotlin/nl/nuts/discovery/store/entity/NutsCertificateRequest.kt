@@ -24,6 +24,7 @@ import org.bouncycastle.asn1.ASN1ObjectIdentifier
 import org.bouncycastle.asn1.DERTaggedObject
 import org.bouncycastle.asn1.DERUTF8String
 import org.bouncycastle.asn1.DLSequence
+import org.bouncycastle.asn1.pkcs.Attribute
 import org.bouncycastle.asn1.pkcs.PKCSObjectIdentifiers
 import org.bouncycastle.asn1.x509.Extension
 import org.bouncycastle.asn1.x509.Extensions
@@ -50,13 +51,13 @@ import javax.persistence.Id
 class NutsCertificateRequest {
 
     companion object {
-        val NUTS_VENDOR_EXTENSION = ASN1ObjectIdentifier("1.3.6.1.4.1.54851.4").intern()
+        val NUTS_VENDOR_EXTENSION: ASN1ObjectIdentifier = ASN1ObjectIdentifier("1.3.6.1.4.1.54851.4").intern()
 
         /**
          * Create entity from PKCS10CertificationRequest, stores .encoded as bytes
          */
         fun fromPEM(pem: String): NutsCertificateRequest {
-            return NutsCertificateRequest().apply {
+            val req = NutsCertificateRequest().apply {
                 val csr = parsePEM(pem)
 
                 name = CordaX500Name.parse(csr.subject.toString()).toString() // this puts stuff in right order
@@ -64,6 +65,12 @@ class NutsCertificateRequest {
                 submittedAt = LocalDateTime.now()
                 oid = extractOID(csr)
             }
+
+            if (req.oid == null) {
+                throw IllegalArgumentException("Given CSR does not have a correctly formatted oid in extensions")
+            }
+
+            return req
         }
 
         fun parsePEM(pem: String): PKCS10CertificationRequest {
@@ -78,33 +85,42 @@ class NutsCertificateRequest {
             }
         }
 
-        fun extractOID(csr: PKCS10CertificationRequest): String {
+        fun extractOID(csr: PKCS10CertificationRequest): String? {
+            var vendor: String? = null
             val certAttributes = csr.attributes
             for (attribute in certAttributes) {
-                if (attribute.attrType == NUTS_VENDOR_EXTENSION) {
-                    return attribute.attrValues.getObjectAt(0).toString()
-                }
-
                 if (attribute.attrType.equals(PKCSObjectIdentifiers.pkcs_9_at_extensionRequest)) {
-                    val extensions = Extensions.getInstance(attribute.attrValues.getObjectAt(0))
-                    val gns = GeneralNames.fromExtensions(extensions, Extension.subjectAlternativeName)
-                    val names = gns.names
-                    for (san in names) {
-                        if (san.tagNo == GeneralName.otherName) {
-                            if (san.name is DLSequence) {
-                                val oid = (san.name as DLSequence).getObjectAt(0)
-                                if (oid == NUTS_VENDOR_EXTENSION) {
-                                    val taggedObject = (san.name as DLSequence).getObjectAt(1) as DERTaggedObject
-                                    val value = taggedObject.`object` as DERUTF8String
-                                    return value.toString()
-                                }
-                            }
+                    vendor = nutsVendorFromExtReq(attribute)
+                    if (vendor != null) {
+                        break
+                    }
+                }
+            }
+
+            return vendor
+        }
+
+        private fun nutsVendorFromExtReq(attribute: Attribute) : String? {
+            var vendor: String? = null
+
+            val extensions = Extensions.getInstance(attribute.attrValues.getObjectAt(0))
+            val gns = GeneralNames.fromExtensions(extensions, Extension.subjectAlternativeName)
+            val names = gns.names
+            for (san in names) {
+                if (san.tagNo == GeneralName.otherName) {
+                    if (san.name is DLSequence) {
+                        val oid = (san.name as DLSequence).getObjectAt(0)
+                        if (oid == NUTS_VENDOR_EXTENSION) {
+                            val taggedObject = (san.name as DLSequence).getObjectAt(1) as DERTaggedObject
+                            val value = taggedObject.`object` as DERUTF8String
+                            vendor = value.toString()
+                            break
                         }
                     }
                 }
             }
 
-            throw IllegalArgumentException("Given CSR does not have a correctly formatted oid in extensions")
+            return vendor
         }
     }
 
