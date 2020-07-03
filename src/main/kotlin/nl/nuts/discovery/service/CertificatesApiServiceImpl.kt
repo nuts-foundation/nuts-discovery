@@ -25,6 +25,7 @@ import nl.nuts.discovery.api.CertificatesApiService
 import nl.nuts.discovery.model.CertificateSigningRequest
 import nl.nuts.discovery.model.CertificateWithChain
 import nl.nuts.discovery.store.CertificateRepository
+import nl.nuts.discovery.store.CustomCASerialRepository
 import nl.nuts.discovery.store.NutsCertificateRequestRepository
 import nl.nuts.discovery.store.entity.Certificate
 import nl.nuts.discovery.store.entity.NutsCertificateRequest
@@ -55,11 +56,13 @@ import java.io.File
 import java.io.InputStream
 import java.io.Reader
 import java.math.BigInteger
+import java.nio.charset.StandardCharsets
 import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.Paths
 import java.security.KeyFactory
 import java.security.KeyPair
+import java.security.MessageDigest
 import java.security.PrivateKey
 import java.security.cert.CertificateFactory
 import java.security.cert.X509Certificate
@@ -117,6 +120,9 @@ class CertificatesApiServiceImpl : CertificatesApiService, CertificateSigningSer
 
     @Autowired
     lateinit var certificateRepository: CertificateRepository
+
+    @Autowired
+    lateinit var cASerialRepository: CustomCASerialRepository
 
     override fun listCertificates(otherName: String): List<CertificateWithChain> {
         return certificateRepository.findByOid(otherName).map {
@@ -177,7 +183,7 @@ class CertificatesApiServiceImpl : CertificatesApiService, CertificateSigningSer
         val theCert = cf.generateCertificate(is1) as X509Certificate
         is1.close()
 
-        certificateRepository.save(Certificate.fromX509Certificate(theCert, chain()))
+        certificateRepository.save(Certificate.fromX509Certificate(theCert, caCertificate().subjectDN.name, chain()))
         nutsCertificateRequestRepository.delete(request)
 
         return theCert
@@ -199,14 +205,28 @@ class CertificatesApiServiceImpl : CertificatesApiService, CertificateSigningSer
         builder.addExtension(Extension.subjectAlternativeName, false, subjectAltNames)
     }
 
+    private fun generateSerial(subject: String): BigInteger {
+        val caSerial = cASerialRepository.findOrCreateCASerial(subject)
+        val certCount = certificateRepository.countByCa(subject)
+
+        val md: MessageDigest = MessageDigest.getInstance("SHA-256")
+        val text = "${caSerial.salt}${certCount}"
+
+        md.update(text.toByteArray(Charsets.UTF_8))
+        val digest: ByteArray = md.digest()
+
+        return BigInteger(digest)
+    }
+
     // todo validity periods
     // todo serial number generation: configure a salt, use an internal seq number (count on certs), append them then sha2
     private fun certificateBuilderWithDefaults(pkcs10: JcaPKCS10CertificationRequest): X509v3CertificateBuilder {
         val issuer = caCertificate()
 
+        val issuerSubject = issuer.subjectX500Principal.getName(X500Principal.RFC1779)
         val builder = JcaX509v3CertificateBuilder(
-            X500Name(issuer.subjectX500Principal.getName(X500Principal.RFC1779)),
-            BigInteger("1"),
+            X500Name(issuerSubject),
+            generateSerial(issuerSubject),
             Date(System.currentTimeMillis()),
             Date(System.currentTimeMillis() + (3L * 365 * 24 * 60 * 60 * 1000)),
             pkcs10.subject,

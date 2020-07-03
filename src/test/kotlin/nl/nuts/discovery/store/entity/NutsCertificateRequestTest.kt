@@ -17,7 +17,7 @@
  *
  */
 
-package nl.nuts.discovery.entity
+package nl.nuts.discovery.store.entity
 
 import nl.nuts.discovery.TestUtils.Companion.loadTestCSR
 import nl.nuts.discovery.store.entity.NutsCertificateRequest

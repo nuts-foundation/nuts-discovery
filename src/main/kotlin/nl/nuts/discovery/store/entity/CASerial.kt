@@ -17,4 +17,24 @@
  *
  */
 
-ALTER TABLE certificate ADD COLUMN chain TEXT;
+package nl.nuts.discovery.store.entity
+
+import javax.persistence.Entity
+import javax.persistence.Id
+import javax.persistence.Table
+
+/**
+ * Entity to store salt for serial generation.
+ * Serials for signed x509 certificates will be generated using SHA256(salt + number_of_signed_certs)
+ * The salt is stored in the DB so it's linked to the signed certificates.
+ */
+@Entity
+@Table(name = "ca_serial")
+class CASerial {
+    /** DN of CA */
+    @Id
+    var subject: String? = null
+
+    /** salt used in serial generation */
+    var salt: String? = null
+}

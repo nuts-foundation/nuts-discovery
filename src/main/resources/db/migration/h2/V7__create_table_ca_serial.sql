@@ -17,9 +17,8 @@
  *
  */
 
-ALTER TABLE certificate ADD COLUMN oid VARCHAR(255);
-ALTER TABLE certificate ADD COLUMN chain TEXT;
-ALTER TABLE certificate ADD COLUMN ca VARCHAR(255);
-
-CREATE INDEX c_oid_idx on certificate(oid);
-CREATE INDEX c_ca_idx on certificate(ca);
+CREATE TABLE ca_serial
+(
+    subject      VARCHAR(255) PRIMARY KEY,
+    salt         CHAR(64) NOT NULL
+);

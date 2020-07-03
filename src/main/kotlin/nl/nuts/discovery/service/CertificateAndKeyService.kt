@@ -57,6 +57,7 @@ import java.security.PrivateKey
 import java.security.cert.X509Certificate
 import java.security.spec.PKCS8EncodedKeySpec
 import java.util.*
+import javax.security.auth.x500.X500Principal
 import javax.transaction.Transactional
 
 
@@ -129,7 +130,7 @@ class CertificateAndKeyService {
         val x509Jca = x509.toJca()
 
         // delete request and store certificate
-        certificateRepository.save(Certificate.fromX509Certificate(x509Jca, chain()))
+        certificateRepository.save(Certificate.fromX509Certificate(x509Jca, issuer.getName(X500Principal.RFC1779), chain()))
         certificateRequestRepository.delete(request)
 
         return x509Jca
