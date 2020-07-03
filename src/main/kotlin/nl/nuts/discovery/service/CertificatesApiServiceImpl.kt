@@ -38,6 +38,7 @@ import org.bouncycastle.asn1.x509.Extension
 import org.bouncycastle.asn1.x509.GeneralName
 import org.bouncycastle.asn1.x509.GeneralNames
 import org.bouncycastle.cert.X509CertificateHolder
+import org.bouncycastle.cert.X509v3CertificateBuilder
 import org.bouncycastle.cert.jcajce.JcaX509v3CertificateBuilder
 import org.bouncycastle.jce.X509KeyUsage
 import org.bouncycastle.operator.jcajce.JcaContentSignerBuilder
@@ -151,39 +152,39 @@ class CertificatesApiServiceImpl : CertificatesApiService, CertificateSigningSer
     }
 
     override fun sign(request: NutsCertificateRequest) : X509Certificate {
-        val pkcs10 = JcaPKCS10CertificationRequest(request.toPKCS10())
-
-        val pair = caKeyPair()
-        val issuer = caCertificate()
-
+        // some checks
+        // todo additional checks?
         if (request.oid == null) {
             throw java.lang.IllegalArgumentException("missing oid")
         }
 
-        // todo validity periods
-        // todo serial number generation: configure a salt, use an internal seq number (count on certs), append them then sha2
-        val certificateBuilder = JcaX509v3CertificateBuilder(
-            X500Name(issuer.subjectX500Principal.getName(X500Principal.RFC1779)),
-            BigInteger("1"),
-            Date(System.currentTimeMillis()),
-            Date(System.currentTimeMillis() + (3L * 365 * 24 * 60 * 60 * 1000)),
-            pkcs10.subject,
-            pair.public
-        ).addExtension(
-            Extension.basicConstraints,
-            false, // non-critical
-            BasicConstraints(true) // isCa
-        ).addExtension(
-            Extension.keyUsage,
-            true,
-            X509KeyUsage(
-                X509KeyUsage.digitalSignature or
-                X509KeyUsage.keyCertSign   or
-                X509KeyUsage.cRLSign
-            )
-        )
+        // convert
+        val pkcs10 = JcaPKCS10CertificationRequest(request.toPKCS10())
 
-        val oidSeq = DLSequence(arrayOf(NutsCertificateRequest.NUTS_VENDOR_EXTENSION, DERUTF8String(request.oid)))
+        // x509 builder
+        val certificateBuilder = certificateBuilderWithDefaults(pkcs10)
+        addCustomExtensions(certificateBuilder, request.oid!!, pkcs10)
+
+        // signature
+        val pKey = caKey()
+        val sigGen = JcaContentSignerBuilder("SHA384WITHECDSA").build(pKey)
+        val holder: X509CertificateHolder = certificateBuilder.build(sigGen)
+        val x509CertificateStructure = holder.toASN1Structure()
+
+        // Read Certificate into x509 structure
+        val cf = CertificateFactory.getInstance("X.509", "BC")
+        val is1: InputStream = ByteArrayInputStream(x509CertificateStructure.encoded)
+        val theCert = cf.generateCertificate(is1) as X509Certificate
+        is1.close()
+
+        certificateRepository.save(Certificate.fromX509Certificate(theCert, chain()))
+        nutsCertificateRequestRepository.delete(request)
+
+        return theCert
+    }
+
+    private fun addCustomExtensions(builder: X509v3CertificateBuilder, oid: String, pkcs10: JcaPKCS10CertificationRequest) {
+        val oidSeq = DLSequence(arrayOf(NutsCertificateRequest.NUTS_VENDOR_EXTENSION, DERUTF8String(oid)))
         val names = mutableListOf(GeneralName(GeneralName.otherName, oidSeq))
 
         val emailAttr = pkcs10.getAttributes(BCStyle.EmailAddress)
@@ -195,25 +196,36 @@ class CertificatesApiServiceImpl : CertificatesApiService, CertificateSigningSer
         }
 
         val subjectAltNames = GeneralNames(names.toTypedArray())
-        certificateBuilder.addExtension(Extension.subjectAlternativeName, false, subjectAltNames)
+        builder.addExtension(Extension.subjectAlternativeName, false, subjectAltNames)
+    }
 
-        val sigGen = JcaContentSignerBuilder("SHA384WITHECDSA").build(pair.private)
+    // todo validity periods
+    // todo serial number generation: configure a salt, use an internal seq number (count on certs), append them then sha2
+    private fun certificateBuilderWithDefaults(pkcs10: JcaPKCS10CertificationRequest): X509v3CertificateBuilder {
+        val issuer = caCertificate()
 
-        val holder: X509CertificateHolder = certificateBuilder.build(sigGen)
-        val x509CertificateStructure = holder.toASN1Structure()
+        val builder = JcaX509v3CertificateBuilder(
+            X500Name(issuer.subjectX500Principal.getName(X500Principal.RFC1779)),
+            BigInteger("1"),
+            Date(System.currentTimeMillis()),
+            Date(System.currentTimeMillis() + (3L * 365 * 24 * 60 * 60 * 1000)),
+            pkcs10.subject,
+            caKeyPair().public
+        ).addExtension(
+            Extension.basicConstraints,
+            false, // non-critical
+            BasicConstraints(true) // isCa
+        ).addExtension(
+            Extension.keyUsage,
+            true,
+            X509KeyUsage(
+                X509KeyUsage.digitalSignature or
+                    X509KeyUsage.keyCertSign   or
+                    X509KeyUsage.cRLSign
+            )
+        )
 
-        // Read Certificate
-        val cf = CertificateFactory.getInstance("X.509", "BC")
-        val is1: InputStream = ByteArrayInputStream(x509CertificateStructure.encoded)
-        val theCert = cf.generateCertificate(is1) as X509Certificate
-        is1.close()
-
-        certificateRepository.save(Certificate.fromX509Certificate(theCert, chain()))
-        nutsCertificateRequestRepository.delete(request)
-
-        return theCert
-
-        // todo validation?
+        return builder
     }
 
     private fun splitChain(cChain: String?) : List<String> {
