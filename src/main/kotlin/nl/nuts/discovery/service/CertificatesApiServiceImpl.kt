@@ -56,7 +56,6 @@ import java.io.File
 import java.io.InputStream
 import java.io.Reader
 import java.math.BigInteger
-import java.nio.charset.StandardCharsets
 import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.Paths
@@ -218,17 +217,17 @@ class CertificatesApiServiceImpl : CertificatesApiService, CertificateSigningSer
         return BigInteger(digest)
     }
 
-    // todo validity periods
-    // todo serial number generation: configure a salt, use an internal seq number (count on certs), append them then sha2
     private fun certificateBuilderWithDefaults(pkcs10: JcaPKCS10CertificationRequest): X509v3CertificateBuilder {
         val issuer = caCertificate()
 
+        val validity: Long = nutsDiscoveryProperties.certificateValidityInDays.toLong() * 24 * 60 * 60 * 1000
         val issuerSubject = issuer.subjectX500Principal.getName(X500Principal.RFC1779)
-        val builder = JcaX509v3CertificateBuilder(
+
+        return JcaX509v3CertificateBuilder(
             X500Name(issuerSubject),
             generateSerial(issuerSubject),
             Date(System.currentTimeMillis()),
-            Date(System.currentTimeMillis() + (3L * 365 * 24 * 60 * 60 * 1000)),
+            Date(System.currentTimeMillis() + validity),
             pkcs10.subject,
             caKeyPair().public
         ).addExtension(
@@ -240,12 +239,10 @@ class CertificatesApiServiceImpl : CertificatesApiService, CertificateSigningSer
             true,
             X509KeyUsage(
                 X509KeyUsage.digitalSignature or
-                    X509KeyUsage.keyCertSign   or
+                    X509KeyUsage.keyCertSign or
                     X509KeyUsage.cRLSign
             )
         )
-
-        return builder
     }
 
     private fun splitChain(cChain: String?) : List<String> {
