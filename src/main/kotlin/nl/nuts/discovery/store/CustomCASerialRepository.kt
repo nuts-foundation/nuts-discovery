@@ -24,9 +24,17 @@ import org.springframework.stereotype.Repository
 import java.security.SecureRandom
 import javax.transaction.Transactional
 
+/**
+ * Repository for CASerial entity with custom findOrCreate extension
+ */
 @Transactional
 @Repository("customCASerialRepository")
 class CustomCASerialRepository(private val delegate: CASerialRepository): CASerialRepository by delegate {
+
+    /**
+     * Combined access method for finding and creating a CASerial entity.
+     * A CASerial needs to be set for each CA.
+     */
     fun findOrCreateCASerial(subject: String): CASerial {
         var existing = delegate.findBySubject(subject)
         if (existing == null) {
@@ -43,4 +51,7 @@ class CustomCASerialRepository(private val delegate: CASerialRepository): CASeri
     }
 }
 
+/**
+ * Helper method to format a byte array to hex string
+ */
 fun ByteArray.toHexString() = joinToString("") { "%02x".format(it) }

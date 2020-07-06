@@ -24,8 +24,15 @@ import org.springframework.web.bind.annotation.ControllerAdvice
 import org.springframework.web.bind.annotation.ExceptionHandler
 import javax.servlet.http.HttpServletResponse
 
+/**
+ * Custom mappings for Exception => http status codes
+ */
 @ControllerAdvice
 class ExceptionMappings {
+
+    /**
+     * Map IllegalArgument to http 400
+     */
     @ExceptionHandler(value = [IllegalArgumentException::class])
     fun onIllegalArgument(ex: IllegalArgumentException, response: HttpServletResponse): Unit =
         response.sendError(HttpStatus.BAD_REQUEST.value(), ex.message)

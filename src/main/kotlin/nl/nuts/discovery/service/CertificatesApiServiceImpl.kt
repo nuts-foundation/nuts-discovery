@@ -289,6 +289,9 @@ class CertificatesApiServiceImpl : CertificatesApiService, CertificateSigningSer
         return kf.generatePrivate(PKCS8EncodedKeySpec(key.content))
     }
 
+    /**
+     * Returns the priv + pub key as KeyPair
+     */
     fun caKeyPair(): KeyPair {
         return KeyPair(caCertificate().publicKey, caKey())
     }

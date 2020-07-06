@@ -26,5 +26,9 @@ import java.security.cert.X509Certificate
  * Interface containing signing services for the Nuts CA tree
  */
 interface CertificateSigningService {
+
+    /**
+     * Sign the given certificate signing request
+     */
     fun sign(request: NutsCertificateRequest) : X509Certificate
 }

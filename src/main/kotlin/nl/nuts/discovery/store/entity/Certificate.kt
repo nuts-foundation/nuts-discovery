@@ -115,6 +115,9 @@ class Certificate {
         return certFactory.generateCertificate(ByteArrayInputStream(x509)) as X509Certificate
     }
 
+    /**
+     * Return this certificate in PEM format
+     */
     fun toPem(): String {
         val s = ByteArrayOutputStream()
         val pw = PrintWriter(s, true)

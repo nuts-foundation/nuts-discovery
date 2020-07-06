@@ -73,6 +73,9 @@ class NutsCertificateRequest {
             return req
         }
 
+        /**
+         * Parse a pem-encoded CSR
+         */
         fun parsePEM(pem: String): PKCS10CertificationRequest {
             ByteArrayInputStream(pem.toByteArray(Charsets.UTF_8)).use {
                 val pemParser = PEMParser(BufferedReader(InputStreamReader(it)))
@@ -85,6 +88,9 @@ class NutsCertificateRequest {
             }
         }
 
+        /**
+         * Find the OID in the subjectAltName.otherName extension
+         */
         fun extractOID(csr: PKCS10CertificationRequest): String? {
             var vendor: String? = null
             val certAttributes = csr.attributes
@@ -107,15 +113,13 @@ class NutsCertificateRequest {
             val gns = GeneralNames.fromExtensions(extensions, Extension.subjectAlternativeName)
             val names = gns.names
             for (san in names) {
-                if (san.tagNo == GeneralName.otherName) {
-                    if (san.name is DLSequence) {
-                        val oid = (san.name as DLSequence).getObjectAt(0)
-                        if (oid == NUTS_VENDOR_EXTENSION) {
-                            val taggedObject = (san.name as DLSequence).getObjectAt(1) as DERTaggedObject
-                            val value = taggedObject.`object` as DERUTF8String
-                            vendor = value.toString()
-                            break
-                        }
+                if (san.tagNo == GeneralName.otherName && san.name is DLSequence) {
+                    val oid = (san.name as DLSequence).getObjectAt(0)
+                    if (oid == NUTS_VENDOR_EXTENSION) {
+                        val taggedObject = (san.name as DLSequence).getObjectAt(1) as DERTaggedObject
+                        val value = taggedObject.`object` as DERUTF8String
+                        vendor = value.toString()
+                        break
                     }
                 }
             }
