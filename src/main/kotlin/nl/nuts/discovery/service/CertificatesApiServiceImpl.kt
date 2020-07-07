@@ -19,6 +19,7 @@
 
 package nl.nuts.discovery.service
 
+import net.corda.core.internal.toX500Name
 import net.corda.nodeapi.internal.crypto.X509Utilities
 import nl.nuts.discovery.DiscoveryException
 import nl.nuts.discovery.api.CertificatesApiService
@@ -29,16 +30,20 @@ import nl.nuts.discovery.store.CustomCASerialRepository
 import nl.nuts.discovery.store.NutsCertificateRequestRepository
 import nl.nuts.discovery.store.entity.Certificate
 import nl.nuts.discovery.store.entity.NutsCertificateRequest
+import org.bouncycastle.asn1.ASN1ObjectIdentifier
 import org.bouncycastle.asn1.ASN1String
 import org.bouncycastle.asn1.DERUTF8String
 import org.bouncycastle.asn1.DLSequence
 import org.bouncycastle.asn1.x500.X500Name
 import org.bouncycastle.asn1.x500.style.BCStyle
+import org.bouncycastle.asn1.x500.style.RFC4519Style
 import org.bouncycastle.asn1.x509.BasicConstraints
 import org.bouncycastle.asn1.x509.Extension
 import org.bouncycastle.asn1.x509.GeneralName
 import org.bouncycastle.asn1.x509.GeneralNames
+import org.bouncycastle.asn1.x509.GeneralSubtree
 import org.bouncycastle.asn1.x509.NameConstraints
+import org.bouncycastle.asn1.x509.X509Name
 import org.bouncycastle.cert.X509CertificateHolder
 import org.bouncycastle.cert.X509v3CertificateBuilder
 import org.bouncycastle.cert.jcajce.JcaX509v3CertificateBuilder
@@ -191,6 +196,11 @@ class CertificatesApiServiceImpl : AbstractCertificatesService(), CertificatesAp
         val validity = TimeUnit.DAYS.toMillis(nutsDiscoveryProperties.certificateValidityInDays.toLong())
         val issuerSubject = issuer.subjectX500Principal.getName(X500Principal.RFC1779)
 
+        val x500Name = issuer.subjectX500Principal.toX500Name()
+        val rdns = x500Name.rdNs.filter { it.first.type == RFC4519Style.c || it.first.type == RFC4519Style.o }.toTypedArray()
+        val nameConstraints = GeneralName(GeneralName.directoryName, X500Name(rdns))
+        val permittedSubtree = arrayOf(GeneralSubtree(nameConstraints))
+
         return JcaX509v3CertificateBuilder(
             X500Name(issuerSubject),
             generateSerial(issuerSubject),
@@ -200,8 +210,12 @@ class CertificatesApiServiceImpl : AbstractCertificatesService(), CertificatesAp
             issuer.publicKey
         ).addExtension(
             Extension.basicConstraints,
-            true, // critical for CA
+            true,
             BasicConstraints(true) // isCa
+        ).addExtension(
+            Extension.nameConstraints,
+            true,
+            NameConstraints(permittedSubtree, arrayOf())
         ).addExtension(
             Extension.keyUsage,
             true,

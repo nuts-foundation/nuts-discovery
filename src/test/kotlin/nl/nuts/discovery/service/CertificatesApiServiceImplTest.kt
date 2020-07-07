@@ -24,6 +24,16 @@ import nl.nuts.discovery.store.CertificateRepository
 import nl.nuts.discovery.store.NutsCertificateRequestRepository
 import nl.nuts.discovery.store.entity.NutsCertificateRequest
 import nl.nuts.discovery.store.entity.NutsCertificateRequest.Companion.NUTS_VENDOR_OID
+import org.bouncycastle.asn1.ASN1Object
+import org.bouncycastle.asn1.ASN1Primitive.fromByteArray
+import org.bouncycastle.asn1.ASN1Sequence
+import org.bouncycastle.asn1.DEROctetString
+import org.bouncycastle.asn1.DERSequence
+import org.bouncycastle.asn1.DERTaggedObject
+import org.bouncycastle.asn1.x500.X500Name
+import org.bouncycastle.asn1.x509.Extension
+import org.bouncycastle.asn1.x509.GeneralName
+import org.bouncycastle.asn1.x509.NameConstraints
 import org.junit.After
 import org.junit.Before
 import org.junit.Test
@@ -33,6 +43,7 @@ import org.springframework.boot.test.context.SpringBootTest
 import org.springframework.test.context.junit4.SpringRunner
 import kotlin.test.assertEquals
 import kotlin.test.assertNotNull
+
 
 @RunWith(SpringRunner::class)
 @SpringBootTest
@@ -88,6 +99,16 @@ class CertificatesApiServiceImplTest {
         val x509 = certificatesApiServiceImpl.sign(req)
 
         assertNotNull(x509)
+
+        val basicConstraints = x509.basicConstraints
+        val b = DEROctetString.getInstance(x509.getExtensionValue(Extension.nameConstraints.id))
+        val nc = NameConstraints.getInstance(b.octets)
+
+        assertEquals(Integer.MAX_VALUE, basicConstraints) // no path constraint for this cert
+
+        val tag = DERTaggedObject.getInstance(nc.permittedSubtrees[0].base.encoded)
+        val x500Name = X500Name.getInstance(tag.`object`)
+        assertEquals("O=Nuts,C=NL", x500Name.toString())
 
         certificateRepository.findAll().forEach {
             assertEquals("urn:oid:$NUTS_VENDOR_OID:1", it.oid)
