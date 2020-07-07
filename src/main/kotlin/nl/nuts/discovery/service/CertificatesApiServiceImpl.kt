@@ -19,8 +19,8 @@
 
 package nl.nuts.discovery.service
 
-import net.corda.core.internal.copyTo
 import net.corda.nodeapi.internal.crypto.X509Utilities
+import nl.nuts.discovery.DiscoveryException
 import nl.nuts.discovery.api.CertificatesApiService
 import nl.nuts.discovery.model.CertificateSigningRequest
 import nl.nuts.discovery.model.CertificateWithChain
@@ -49,9 +49,7 @@ import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Service
-import sun.security.provider.X509Factory
 import java.io.ByteArrayInputStream
-import java.io.ByteArrayOutputStream
 import java.io.File
 import java.io.InputStream
 import java.io.Reader
@@ -67,47 +65,12 @@ import java.security.cert.CertificateFactory
 import java.security.cert.X509Certificate
 import java.security.spec.PKCS8EncodedKeySpec
 import java.util.*
-import java.util.regex.Pattern
 import javax.security.auth.x500.X500Principal
+import javax.validation.ConstraintViolation
+import javax.validation.ConstraintViolationException
 
 @Service
-class CertificatesApiServiceImpl : CertificatesApiService, CertificateSigningService {
-
-    companion object {
-        /**
-         * Check both file path on disk and in resources (test)
-         */
-        fun loadResourceWithNullCheck(location: String): Path {
-
-            if (File(location).exists()) {
-                return Paths.get(File(location).toURI())
-            }
-
-            val resource = javaClass.classLoader.getResource(location)
-                ?: throw IllegalArgumentException("resource not found at $location")
-
-            val uri = resource.toURI()
-            return Paths.get(uri)
-        }
-
-        /**
-         * create a single PEM string from given paths
-         *
-         * @param paths locations of PEM files, starting with lowest CA and ending with the root
-         */
-        fun chainAsPEM(paths: Array<Path>) : String {
-            val out = ByteArrayOutputStream()
-
-            for ((index, it) in paths.withIndex()) {
-                it.copyTo(out)
-                if (index < paths.size - 1) {
-                    out.write("\n".toByteArray())
-                }
-            }
-
-            return out.toString(Charsets.UTF_8.name())
-        }
-    }
+class CertificatesApiServiceImpl : AbstractCertificatesService(), CertificatesApiService, CertificateSigningService {
 
     val logger: Logger = LoggerFactory.getLogger(this.javaClass)
 
@@ -125,7 +88,7 @@ class CertificatesApiServiceImpl : CertificatesApiService, CertificateSigningSer
 
     override fun listCertificates(otherName: String): List<CertificateWithChain> {
         return certificateRepository.findByOid(otherName).map {
-            CertificateWithChain(it.toPem(), splitChain(it.chain))
+            CertificateWithChain(it.toPem(), CertificateChain.fromSinglePEM(it.chain).pemEncodedCertificates)
         }
     }
 
@@ -160,7 +123,7 @@ class CertificatesApiServiceImpl : CertificatesApiService, CertificateSigningSer
         // some checks
         // todo additional checks?
         if (request.oid == null) {
-            throw java.lang.IllegalArgumentException("missing oid")
+            throw DiscoveryException("missing oid")
         }
 
         // convert
@@ -245,28 +208,11 @@ class CertificatesApiServiceImpl : CertificatesApiService, CertificateSigningSer
         )
     }
 
-    private fun splitChain(cChain: String?) : List<String> {
-        val cList = mutableListOf<String>()
-
-        if (cChain != null) {
-            val pBegin = Pattern.compile(X509Factory.BEGIN_CERT)
-            val pEnd = Pattern.compile(X509Factory.END_CERT)
-            val mStart = pBegin.matcher(cChain)
-            val mEnd = pEnd.matcher(cChain)
-
-            while(mEnd.find() && mStart.find()) {
-                cList.add(cChain.substring(mStart.start(), mEnd.end()))
-            }
-        }
-
-        return cList
-    }
-
     private fun chain() : String {
         val rootPath = loadResourceWithNullCheck(nutsDiscoveryProperties.nutsRootCertPath)
         val caPath = loadResourceWithNullCheck(nutsDiscoveryProperties.nutsCACertPath)
 
-        return chainAsPEM(arrayOf(caPath, rootPath))
+        return CertificateChain.fromPaths(arrayOf(caPath, rootPath)).asSinglePEM()
     }
 
     /**

@@ -20,6 +20,7 @@
 package nl.nuts.discovery.store.entity
 
 import net.corda.core.identity.CordaX500Name
+import nl.nuts.discovery.DiscoveryException
 import org.bouncycastle.asn1.ASN1ObjectIdentifier
 import org.bouncycastle.asn1.DERTaggedObject
 import org.bouncycastle.asn1.DERUTF8String
@@ -58,7 +59,7 @@ class NutsCertificateRequest {
          */
         fun fromPEM(pem: String): NutsCertificateRequest {
             val req = NutsCertificateRequest().apply {
-                val csr = parsePEM(pem)
+                val csr = pemToPKCS10(pem)
 
                 name = CordaX500Name.parse(csr.subject.toString()).toString() // this puts stuff in right order
                 this.pem = pem
@@ -67,7 +68,7 @@ class NutsCertificateRequest {
             }
 
             if (req.oid == null) {
-                throw IllegalArgumentException("Given CSR does not have a correctly formatted oid in extensions")
+                throw DiscoveryException("Given CSR does not have a correctly formatted oid in extensions")
             }
 
             return req
@@ -76,7 +77,7 @@ class NutsCertificateRequest {
         /**
          * Parse a pem-encoded CSR
          */
-        fun parsePEM(pem: String): PKCS10CertificationRequest {
+        fun pemToPKCS10(pem: String): PKCS10CertificationRequest {
             ByteArrayInputStream(pem.toByteArray(Charsets.UTF_8)).use {
                 val pemParser = PEMParser(BufferedReader(InputStreamReader(it)))
                 val parsedObj = pemParser.readObject()
@@ -84,7 +85,7 @@ class NutsCertificateRequest {
                     return parsedObj
                 }
 
-                throw IllegalArgumentException("Couldn't parse PEM as CERTIFICATE REQUEST")
+                throw DiscoveryException("Couldn't parse PEM as CERTIFICATE REQUEST")
             }
         }
 

@@ -19,6 +19,8 @@
 
 package nl.nuts.discovery.api
 
+import nl.nuts.discovery.DiscoveryException
+import org.slf4j.LoggerFactory
 import org.springframework.http.HttpStatus
 import org.springframework.web.bind.annotation.ControllerAdvice
 import org.springframework.web.bind.annotation.ExceptionHandler
@@ -30,10 +32,23 @@ import javax.servlet.http.HttpServletResponse
 @ControllerAdvice
 class ExceptionMappings {
 
+    val logger = LoggerFactory.getLogger(this::class.java)
+
     /**
-     * Map IllegalArgument to http 400
+     * Map IllegalArgument to http 500
      */
     @ExceptionHandler(value = [IllegalArgumentException::class])
-    fun onIllegalArgument(ex: IllegalArgumentException, response: HttpServletResponse): Unit =
+    fun onIllegalArgument(ex: IllegalArgumentException, response: HttpServletResponse) {
+        logger.warn(ex.message)
+        response.sendError(HttpStatus.INTERNAL_SERVER_ERROR.value())
+    }
+
+    /**
+     * Map DiscoveryException to http 400
+     */
+    @ExceptionHandler(value = [DiscoveryException::class])
+    fun onIllegalArgument(ex: DiscoveryException, response: HttpServletResponse) {
+        logger.error(ex.message, ex)
         response.sendError(HttpStatus.BAD_REQUEST.value(), ex.message)
+    }
 }

@@ -19,6 +19,7 @@
 
 package nl.nuts.discovery.store.entity
 
+import nl.nuts.discovery.DiscoveryException
 import nl.nuts.discovery.TestUtils.Companion.loadTestCSR
 import nl.nuts.discovery.store.entity.NutsCertificateRequest
 import org.junit.Test
@@ -32,7 +33,7 @@ class NutsCertificateRequestTest {
     @Test
     fun `parsing correct csr`() {
         val pem = loadTestCSR("test.csr")
-        val req = NutsCertificateRequest.parsePEM(pem)
+        val req = NutsCertificateRequest.pemToPKCS10(pem)
 
         assertNotNull(req)
     }
@@ -40,7 +41,7 @@ class NutsCertificateRequestTest {
     @Test
     fun `extracting oid from correct csr`() {
         val pem = loadTestCSR("test.csr")
-        val req = NutsCertificateRequest.parsePEM(pem)
+        val req = NutsCertificateRequest.pemToPKCS10(pem)
         val oid = NutsCertificateRequest.extractOID(req)
 
         assertNotNull(oid)
@@ -63,7 +64,7 @@ class NutsCertificateRequestTest {
     fun `converting csr with missing oid`() {
         val pem = loadTestCSR("missing_oid.csr")
 
-        assertFailsWith(IllegalArgumentException::class) {
+        assertFailsWith(DiscoveryException::class) {
             NutsCertificateRequest.fromPEM(pem)
         }
     }

@@ -19,6 +19,7 @@
 
 package nl.nuts.discovery.store
 
+import nl.nuts.discovery.DiscoveryException
 import nl.nuts.discovery.store.entity.Node
 import org.springframework.stereotype.Repository
 import javax.transaction.Transactional
@@ -34,7 +35,7 @@ class CustomNodeRepository(private val delegate: NodeRepository): NodeRepository
      */
     override fun <S : Node?> save(entity: S): S {
         if (entity?.name == null) {
-            throw IllegalArgumentException("name can't be null")
+            throw DiscoveryException("name can't be null")
         }
         val node = delegate.findByName(entity.name!!) ?: return delegate.save(entity)
 
