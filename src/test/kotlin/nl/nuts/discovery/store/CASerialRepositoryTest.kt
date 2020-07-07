@@ -43,14 +43,14 @@ class CASerialRepositoryTest {
 
     @Test
     fun `findOrCreate creates a new CASerial with salt`() {
-        val caSerial = caSerialRepository.findOrCreateCASerial("test")
+        val caSerial = caSerialRepository.findOrCreate("test")
 
         assertNotNull(caSerial.salt)
     }
 
     @Test
     fun `findOrCreate creates a new CASerial and stores it`() {
-        caSerialRepository.findOrCreateCASerial("test")
+        caSerialRepository.findOrCreate("test")
         val caSerial = caSerialRepository.findBySubject("test")
 
         assertNotNull(caSerial)

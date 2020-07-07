@@ -22,6 +22,7 @@ package nl.nuts.discovery.store.entity
 import nl.nuts.discovery.DiscoveryException
 import nl.nuts.discovery.TestUtils.Companion.loadTestCSR
 import nl.nuts.discovery.store.entity.NutsCertificateRequest
+import nl.nuts.discovery.store.entity.NutsCertificateRequest.Companion.NUTS_VENDOR_OID
 import org.junit.Test
 import java.lang.IllegalArgumentException
 import kotlin.test.assertEquals
@@ -45,7 +46,7 @@ class NutsCertificateRequestTest {
         val oid = NutsCertificateRequest.extractOID(req)
 
         assertNotNull(oid)
-        assertEquals("urn:oid:kvk", oid)
+        assertEquals("$NUTS_VENDOR_OID:1", oid)
     }
 
     @Test
@@ -56,7 +57,7 @@ class NutsCertificateRequestTest {
         assertNotNull(req)
 
         assertEquals("CN=test, O=test, L=town, C=NL", req.name)
-        assertEquals("urn:oid:kvk", req.oid)
+        assertEquals("urn:oid:$NUTS_VENDOR_OID:1", req.oid)
         assertEquals(pem, req.pem)
     }
 

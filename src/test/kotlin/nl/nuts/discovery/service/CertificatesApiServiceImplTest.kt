@@ -23,6 +23,7 @@ import nl.nuts.discovery.TestUtils.Companion.loadTestCSR
 import nl.nuts.discovery.store.CertificateRepository
 import nl.nuts.discovery.store.NutsCertificateRequestRepository
 import nl.nuts.discovery.store.entity.NutsCertificateRequest
+import nl.nuts.discovery.store.entity.NutsCertificateRequest.Companion.NUTS_VENDOR_OID
 import org.junit.After
 import org.junit.Before
 import org.junit.Test
@@ -73,7 +74,7 @@ class CertificatesApiServiceImplTest {
         val pem = loadTestCSR("test.csr")
 
         nutsCertificateRequestRepository.save(NutsCertificateRequest.fromPEM(pem))
-        val csrs = certificatesApiServiceImpl.listRequests("urn:oid:kvk")
+        val csrs = certificatesApiServiceImpl.listRequests("urn:oid:$NUTS_VENDOR_OID:1")
 
         assertEquals(1, csrs.count())
     }
@@ -89,7 +90,7 @@ class CertificatesApiServiceImplTest {
         assertNotNull(x509)
 
         certificateRepository.findAll().forEach {
-            assertEquals("urn:oid:kvk", it.oid)
+            assertEquals("urn:oid:$NUTS_VENDOR_OID:1", it.oid)
         }
     }
 }

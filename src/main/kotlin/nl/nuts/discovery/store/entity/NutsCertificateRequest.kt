@@ -52,7 +52,8 @@ import javax.persistence.Id
 class NutsCertificateRequest {
 
     companion object {
-        val NUTS_VENDOR_EXTENSION: ASN1ObjectIdentifier = ASN1ObjectIdentifier("1.3.6.1.4.1.54851.4").intern()
+        val NUTS_VENDOR_OID = "1.3.6.1.4.1.54851.4"
+        val NUTS_VENDOR_EXTENSION: ASN1ObjectIdentifier = ASN1ObjectIdentifier(NUTS_VENDOR_OID).intern()
 
         /**
          * Create entity from PKCS10CertificationRequest, stores .encoded as bytes
@@ -64,11 +65,7 @@ class NutsCertificateRequest {
                 name = CordaX500Name.parse(csr.subject.toString()).toString() // this puts stuff in right order
                 this.pem = pem
                 submittedAt = LocalDateTime.now()
-                oid = extractOID(csr)
-            }
-
-            if (req.oid == null) {
-                throw DiscoveryException("Given CSR does not have a correctly formatted oid in extensions")
+                oid = "urn:oid:${extractOID(csr)}"
             }
 
             return req
@@ -91,8 +88,10 @@ class NutsCertificateRequest {
 
         /**
          * Find the OID in the subjectAltName.otherName extension
+         *
+         * throws DiscoveryException on missing oid
          */
-        fun extractOID(csr: PKCS10CertificationRequest): String? {
+        fun extractOID(csr: PKCS10CertificationRequest): String {
             var vendor: String? = null
             val certAttributes = csr.attributes
             for (attribute in certAttributes) {
@@ -104,7 +103,11 @@ class NutsCertificateRequest {
                 }
             }
 
-            return vendor
+            if (vendor == null) {
+                throw DiscoveryException("Given CSR does not have a correctly formatted oid in extensions")
+            }
+
+            return "$NUTS_VENDOR_OID:$vendor"
         }
 
         private fun nutsVendorFromExtReq(attribute: Attribute) : String? {

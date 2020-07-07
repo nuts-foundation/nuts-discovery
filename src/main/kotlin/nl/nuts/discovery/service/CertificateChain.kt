@@ -19,9 +19,16 @@
 
 package nl.nuts.discovery.service
 
+import io.netty.handler.ssl.PemX509Certificate
 import net.corda.core.internal.readText
+import org.bouncycastle.openssl.PEMParser
+import org.bouncycastle.openssl.jcajce.JcaPEMWriter
+import org.bouncycastle.util.io.pem.PemObject
+import org.bouncycastle.util.io.pem.PemWriter
 import sun.security.provider.X509Factory
 import java.io.ByteArrayOutputStream
+import java.io.StringReader
+import java.io.StringWriter
 import java.nio.file.Path
 import java.util.regex.Pattern
 
@@ -49,14 +56,18 @@ class CertificateChain(var pemEncodedCertificates: List<String> = mutableListOf(
         fun fromSinglePEM(cChain: String?) : CertificateChain {
             val cList = mutableListOf<String>()
 
-            if (cChain != null) {
-                val pBegin = Pattern.compile(X509Factory.BEGIN_CERT)
-                val pEnd = Pattern.compile(X509Factory.END_CERT)
-                val mStart = pBegin.matcher(cChain)
-                val mEnd = pEnd.matcher(cChain)
 
-                while(mEnd.find() && mStart.find()) {
-                    cList.add(cChain.substring(mStart.start(), mEnd.end()))
+
+            if (cChain != null) {
+                val parser = PEMParser(StringReader(cChain))
+
+                var nextObject = parser.readPemObject()
+                while (nextObject != null) {
+                    val sw = StringWriter()
+                    val writer = JcaPEMWriter(sw)
+                    writer.writeObject(PemObject("CERTIFICATE", nextObject.content))
+                    cList.add(sw.toString())
+                    nextObject = parser.readPemObject()
                 }
             }
 

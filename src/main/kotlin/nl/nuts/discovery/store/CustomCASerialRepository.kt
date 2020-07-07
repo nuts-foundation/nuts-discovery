@@ -35,7 +35,7 @@ class CustomCASerialRepository(private val delegate: CASerialRepository): CASeri
      * Combined access method for finding and creating a CASerial entity.
      * A CASerial needs to be set for each CA.
      */
-    fun findOrCreateCASerial(subject: String): CASerial {
+    fun findOrCreate(subject: String): CASerial {
         var existing = delegate.findBySubject(subject)
         if (existing == null) {
             // generate salt
@@ -47,7 +47,7 @@ class CustomCASerialRepository(private val delegate: CASerialRepository): CASeri
             delegate.save(existing)
         }
 
-        return existing!!
+        return existing
     }
 }
 

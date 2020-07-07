@@ -38,25 +38,25 @@ import org.bouncycastle.asn1.x509.BasicConstraints
 import org.bouncycastle.asn1.x509.Extension
 import org.bouncycastle.asn1.x509.GeneralName
 import org.bouncycastle.asn1.x509.GeneralNames
+import org.bouncycastle.asn1.x509.NameConstraints
 import org.bouncycastle.cert.X509CertificateHolder
 import org.bouncycastle.cert.X509v3CertificateBuilder
 import org.bouncycastle.cert.jcajce.JcaX509v3CertificateBuilder
 import org.bouncycastle.jce.X509KeyUsage
+import org.bouncycastle.jce.provider.BouncyCastleProvider
 import org.bouncycastle.operator.jcajce.JcaContentSignerBuilder
 import org.bouncycastle.pkcs.jcajce.JcaPKCS10CertificationRequest
+import org.bouncycastle.util.io.pem.PemObject
 import org.bouncycastle.util.io.pem.PemReader
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Service
 import java.io.ByteArrayInputStream
-import java.io.File
 import java.io.InputStream
 import java.io.Reader
 import java.math.BigInteger
 import java.nio.file.Files
-import java.nio.file.Path
-import java.nio.file.Paths
 import java.security.KeyFactory
 import java.security.KeyPair
 import java.security.MessageDigest
@@ -65,14 +65,18 @@ import java.security.cert.CertificateFactory
 import java.security.cert.X509Certificate
 import java.security.spec.PKCS8EncodedKeySpec
 import java.util.*
+import java.util.concurrent.TimeUnit
 import javax.security.auth.x500.X500Principal
-import javax.validation.ConstraintViolation
-import javax.validation.ConstraintViolationException
+
+
 
 @Service
 class CertificatesApiServiceImpl : AbstractCertificatesService(), CertificatesApiService, CertificateSigningService {
 
     val logger: Logger = LoggerFactory.getLogger(this.javaClass)
+
+    private val contentSignerBuilder = JcaContentSignerBuilder("SHA384WITHECDSA")
+    private val certificateFactory = CertificateFactory.getInstance("X.509", BouncyCastleProvider.PROVIDER_NAME)
 
     @Autowired
     lateinit var nutsDiscoveryProperties: NutsDiscoveryProperties
@@ -105,7 +109,8 @@ class CertificatesApiServiceImpl : AbstractCertificatesService(), CertificatesAp
 
         nutsCertificateRequestRepository.save(nutsCertificateRequest)
         if (nutsDiscoveryProperties.autoAck) {
-             sign(nutsCertificateRequest)
+            logger.warn("Signing CSR for: ${nutsCertificateRequest.name}, oid: ${nutsCertificateRequest.oid} automatically")
+            sign(nutsCertificateRequest)
         }
 
         return entityToApiModel(nutsCertificateRequest)
@@ -126,29 +131,31 @@ class CertificatesApiServiceImpl : AbstractCertificatesService(), CertificatesAp
             throw DiscoveryException("missing oid")
         }
 
+        logger.info("Signing CSR for: ${request.name}, oid: ${request.oid}")
+
         // convert
         val pkcs10 = JcaPKCS10CertificationRequest(request.toPKCS10())
 
         // x509 builder
-        val certificateBuilder = certificateBuilderWithDefaults(pkcs10)
+        val issuer = caCertificate()
+        val certificateBuilder = certificateBuilderWithDefaults(pkcs10, issuer)
         addCustomExtensions(certificateBuilder, request.oid!!, pkcs10)
 
         // signature
         val pKey = caKey()
-        val sigGen = JcaContentSignerBuilder("SHA384WITHECDSA").build(pKey)
+        val sigGen = contentSignerBuilder.build(pKey)
         val holder: X509CertificateHolder = certificateBuilder.build(sigGen)
         val x509CertificateStructure = holder.toASN1Structure()
 
         // Read Certificate into x509 structure
-        val cf = CertificateFactory.getInstance("X.509", "BC")
-        val is1: InputStream = ByteArrayInputStream(x509CertificateStructure.encoded)
-        val theCert = cf.generateCertificate(is1) as X509Certificate
-        is1.close()
+        var theCert: X509Certificate? = null
+        ByteArrayInputStream(x509CertificateStructure.encoded).use {
+            theCert = certificateFactory.generateCertificate(it) as X509Certificate
 
-        certificateRepository.save(Certificate.fromX509Certificate(theCert, caCertificate().subjectDN.name, chain()))
-        nutsCertificateRequestRepository.delete(request)
-
-        return theCert
+            certificateRepository.save(Certificate.fromX509Certificate(theCert!!, issuer.subjectDN.name, chain()))
+            nutsCertificateRequestRepository.delete(request)
+        }
+        return theCert!!
     }
 
     private fun addCustomExtensions(builder: X509v3CertificateBuilder, oid: String, pkcs10: JcaPKCS10CertificationRequest) {
@@ -168,10 +175,10 @@ class CertificatesApiServiceImpl : AbstractCertificatesService(), CertificatesAp
     }
 
     private fun generateSerial(subject: String): BigInteger {
-        val caSerial = cASerialRepository.findOrCreateCASerial(subject)
+        val caSerial = cASerialRepository.findOrCreate(subject)
         val certCount = certificateRepository.countByCa(subject)
 
-        val md: MessageDigest = MessageDigest.getInstance("SHA-256")
+        val md: MessageDigest = MessageDigest.getInstance("SHA-1")
         val text = "${caSerial.salt}${certCount}"
 
         md.update(text.toByteArray(Charsets.UTF_8))
@@ -180,10 +187,8 @@ class CertificatesApiServiceImpl : AbstractCertificatesService(), CertificatesAp
         return BigInteger(digest)
     }
 
-    private fun certificateBuilderWithDefaults(pkcs10: JcaPKCS10CertificationRequest): X509v3CertificateBuilder {
-        val issuer = caCertificate()
-
-        val validity: Long = nutsDiscoveryProperties.certificateValidityInDays.toLong() * 24 * 60 * 60 * 1000
+    private fun certificateBuilderWithDefaults(pkcs10: JcaPKCS10CertificationRequest, issuer: X509Certificate): X509v3CertificateBuilder {
+        val validity = TimeUnit.DAYS.toMillis(nutsDiscoveryProperties.certificateValidityInDays.toLong())
         val issuerSubject = issuer.subjectX500Principal.getName(X500Principal.RFC1779)
 
         return JcaX509v3CertificateBuilder(
@@ -192,10 +197,10 @@ class CertificatesApiServiceImpl : AbstractCertificatesService(), CertificatesAp
             Date(System.currentTimeMillis()),
             Date(System.currentTimeMillis() + validity),
             pkcs10.subject,
-            caKeyPair().public
+            issuer.publicKey
         ).addExtension(
             Extension.basicConstraints,
-            false, // non-critical
+            true, // critical for CA
             BasicConstraints(true) // isCa
         ).addExtension(
             Extension.keyUsage,
@@ -226,19 +231,12 @@ class CertificatesApiServiceImpl : AbstractCertificatesService(), CertificatesAp
      * Reads the key from disk and returns a PrivateKey instance, expects PKCS8 encoded EC key
      */
     fun caKey(): PrivateKey {
-        val reader = PemReader(Files.newBufferedReader(loadResourceWithNullCheck(nutsDiscoveryProperties.nutsCAKeyPath)) as Reader?)
-        val key = reader.readPemObject()
-
-        reader.close()
+        var key: PemObject? = null
+        PemReader(Files.newBufferedReader(loadResourceWithNullCheck(nutsDiscoveryProperties.nutsCAKeyPath)) as Reader?).use {
+            key = it.readPemObject()
+        }
 
         val kf = KeyFactory.getInstance("EC")
-        return kf.generatePrivate(PKCS8EncodedKeySpec(key.content))
-    }
-
-    /**
-     * Returns the priv + pub key as KeyPair
-     */
-    fun caKeyPair(): KeyPair {
-        return KeyPair(caCertificate().publicKey, caKey())
+        return kf.generatePrivate(PKCS8EncodedKeySpec(key!!.content))
     }
 }

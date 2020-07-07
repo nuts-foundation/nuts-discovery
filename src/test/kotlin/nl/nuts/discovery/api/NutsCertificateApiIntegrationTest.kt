@@ -103,7 +103,7 @@ class NutsCertificateApiIntegrationTest {
         val pem = TestUtils.loadTestCSR("test.csr")
         nutsCertificateRequestRepository.save(NutsCertificateRequest.fromPEM(pem))
 
-        val response = testRestTemplate.exchange("/api/csr?otherName=urn:oid:kvk", HttpMethod.GET, null, typeReference<List<CertificateSigningRequest>>())
+        val response = testRestTemplate.exchange("/api/csr?otherName=urn:oid:1.3.6.1.4.1.54851.4:1", HttpMethod.GET, null, typeReference<List<CertificateSigningRequest>>())
 
         assertEquals(HttpStatus.OK, response.statusCode)
         assertEquals(1, response.body?.size)
@@ -115,7 +115,7 @@ class NutsCertificateApiIntegrationTest {
         certificatesApiService.submit(pem)
 
         val entity = HttpEntity(null, headers())
-        val response = testRestTemplate.exchange("/api/x509?otherName=urn:oid:kvk", HttpMethod.GET, entity, typeReference<List<CertificateWithChain>>())
+        val response = testRestTemplate.exchange("/api/x509?otherName=urn:oid:1.3.6.1.4.1.54851.4:1", HttpMethod.GET, entity, typeReference<List<CertificateWithChain>>())
 
         assertEquals(HttpStatus.OK, response.statusCode)
         assertEquals(1, response.body?.size)

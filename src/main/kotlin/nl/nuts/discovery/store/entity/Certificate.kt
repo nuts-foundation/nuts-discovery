@@ -23,6 +23,8 @@ import org.bouncycastle.asn1.DERUTF8String
 import org.bouncycastle.asn1.DLSequence
 import org.bouncycastle.asn1.x509.GeneralName
 import org.bouncycastle.cert.jcajce.JcaX509ExtensionUtils
+import org.bouncycastle.util.io.pem.PemObject
+import org.bouncycastle.util.io.pem.PemWriter
 import sun.misc.BASE64Encoder
 import sun.security.provider.X509Factory
 import java.io.BufferedOutputStream
@@ -119,13 +121,12 @@ class Certificate {
      * Return this certificate in PEM format
      */
     fun toPem(): String {
-        val s = ByteArrayOutputStream()
-        val pw = PrintWriter(s, true)
-        val encoder = BASE64Encoder()
-        pw.println(X509Factory.BEGIN_CERT.toByteArray())
-        encoder.encodeBuffer(x509, s)
-        pw.println(X509Factory.END_CERT.toByteArray())
-
-        return s.toString()
+        val str = StringWriter()
+        val pemWriter = PemWriter(str)
+        val pemObject = PemObject("CERTIFICATE", x509)
+        pemWriter.writeObject(pemObject)
+        pemWriter.close()
+        str.close()
+        return str.toString()
     }
 }
