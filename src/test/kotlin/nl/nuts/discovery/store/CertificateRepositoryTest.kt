@@ -64,12 +64,26 @@ class CertificateRepositoryTest {
     }
 
     @Test
+    fun `countByName gives the correct count`() {
+        val request = Certificate().apply {
+            name = "name"
+            x509 = "bytes".toByteArray()
+            ca = "ca"
+        }
+        certificateRepository.save(request)
+
+        val count = certificateRepository.countByCa("ca")
+
+        assertEquals(1, count)
+    }
+
+    @Test
     fun `a certificate can be converted to X509`() {
         val x500 = CordaX500Name.parse("C=NL,L=Gr,O=Org")
         val pkcs10 = TestUtils.createCertificateRequest(x500)
         val x509 = certificateAndKeyService.signCertificate(CertificateRequest.fromPKCS10(pkcs10))
 
-        val cert = Certificate.fromX509Certificate(x509)
+        val cert = Certificate.fromX509Certificate(x509, "", "")
         val x509v2 = cert.toX509()
 
         assertEquals(x509, x509v2)

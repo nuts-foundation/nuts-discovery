@@ -7,11 +7,11 @@ out
 _build
 
 # generated keys
-setup/corda/*.srl
-setup/corda/*.crt
-setup/corda/*.csr
-setup/corda/*.key
-setup/corda/*.jks
+setup/**/*.srl
+setup/**/*.crt
+setup/**/*.csr
+setup/**/*.key
+setup/**/*.jks
 
 # gradle
 build

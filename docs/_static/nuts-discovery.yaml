@@ -109,4 +109,3 @@ components:
       items:
         description: "PEM encoded list of certificates, the first being the intermediate and the last the root"
         $ref: '#/components/schemas/certificate'
-

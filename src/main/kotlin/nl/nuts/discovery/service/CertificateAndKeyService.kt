@@ -21,6 +21,7 @@ package nl.nuts.discovery.service
 
 import net.corda.core.crypto.Crypto
 import net.corda.core.identity.CordaX500Name
+import net.corda.core.internal.copyTo
 import net.corda.core.internal.signWithCert
 import net.corda.core.node.NetworkParameters
 import net.corda.nodeapi.internal.crypto.CertificateType
@@ -44,6 +45,7 @@ import org.bouncycastle.pkcs.jcajce.JcaPKCS10CertificationRequest
 import org.bouncycastle.util.io.pem.PemReader
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Service
+import java.io.ByteArrayOutputStream
 import java.io.File
 import java.io.Reader
 import java.nio.file.Files
@@ -55,6 +57,7 @@ import java.security.PrivateKey
 import java.security.cert.X509Certificate
 import java.security.spec.PKCS8EncodedKeySpec
 import java.util.*
+import javax.security.auth.x500.X500Principal
 import javax.transaction.Transactional
 
 
@@ -63,7 +66,7 @@ import javax.transaction.Transactional
  */
 //@Profile(value = arrayOf("dev", "test", "default"))
 @Service
-class CertificateAndKeyService {
+class CertificateAndKeyService : AbstractCertificatesService() {
 
     @Autowired
     lateinit var nutsDiscoveryProperties: NutsDiscoveryProperties
@@ -127,10 +130,17 @@ class CertificateAndKeyService {
         val x509Jca = x509.toJca()
 
         // delete request and store certificate
-        certificateRepository.save(Certificate.fromX509Certificate(x509Jca))
+        certificateRepository.save(Certificate.fromX509Certificate(x509Jca, issuer.getName(X500Principal.RFC1779), chain()))
         certificateRequestRepository.delete(request)
 
         return x509Jca
+    }
+
+    private fun chain() : String {
+        val rootPath = loadResourceWithNullCheck(nutsDiscoveryProperties.cordaRootCertPath)
+        val caPath = loadResourceWithNullCheck(nutsDiscoveryProperties.intermediateCertPath)
+
+        return CertificateChain.fromPaths(arrayOf(caPath, rootPath)).asSinglePEM()
     }
 
     /**
@@ -165,22 +175,6 @@ class CertificateAndKeyService {
 
         val kf = KeyFactory.getInstance("RSA") // or "EC" or whatever
         return kf.generatePrivate(PKCS8EncodedKeySpec(key.content))
-    }
-
-    /**
-     * Check both file path on disk and in resources (test)
-     */
-    private fun loadResourceWithNullCheck(location: String): Path {
-
-        if (File(location).exists()) {
-            return Paths.get(File(location).toURI())
-        }
-
-        val resource = javaClass.classLoader.getResource(location)
-            ?: throw IllegalArgumentException("resource not found at $location")
-
-        val uri = resource.toURI()
-        return Paths.get(uri)
     }
 
     fun intermediateKeyPair(): KeyPair {

@@ -19,29 +19,20 @@
 
 package nl.nuts.discovery.store
 
-import nl.nuts.discovery.store.entity.Certificate
+import nl.nuts.discovery.store.entity.CASerial
+import nl.nuts.discovery.store.entity.Node
 import org.springframework.data.repository.CrudRepository
 import org.springframework.stereotype.Repository
 
 /**
- * DB access to certificate
+ * DB access to node
  */
 @Repository
-interface CertificateRepository: CrudRepository<Certificate, Long> {
+interface CASerialRepository: CrudRepository<CASerial, String> {
     /**
-     * Find the certificate with the specified name as CN
+     * @param subject The DN of the CA
      *
-     * @return certificate
+     * @return the CASerial if found, null otherwise.
      */
-    fun findByName(name: String) : Certificate?
-
-    /**
-     * Find certificates with the specified oid in the SAN
-     */
-    fun findByOid(oid: String) : List<Certificate>
-
-    /**
-     * Find the number of certificates signed by a specific CA
-     */
-    fun countByCa(caSubject: String): Int
+    fun findBySubject(subject:String) : CASerial?
 }

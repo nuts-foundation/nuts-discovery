@@ -19,5 +19,6 @@ class NutsDiscoveryProperties {
     lateinit var nutsCAKeyPath: String
     lateinit var contractHashes: String
     lateinit var flowHashes: String
+    lateinit var certificateValidityInDays: Integer
     var autoAck: Boolean = false
 }
