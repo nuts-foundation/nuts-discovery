@@ -32,6 +32,7 @@ import org.bouncycastle.asn1.x509.Extensions
 import org.bouncycastle.asn1.x509.GeneralName
 import org.bouncycastle.asn1.x509.GeneralNames
 import org.bouncycastle.openssl.PEMParser
+import org.bouncycastle.operator.jcajce.JcaContentVerifierProviderBuilder
 import org.bouncycastle.pkcs.PKCS10CertificationRequest
 import java.io.BufferedReader
 import java.io.ByteArrayInputStream
@@ -57,15 +58,21 @@ class NutsCertificateRequest {
 
         /**
          * Create entity from PKCS10CertificationRequest, stores .encoded as bytes
+         * Raises on missing oid or invalid CSR signature
          */
         fun fromPEM(pem: String): NutsCertificateRequest {
+            val csr = pemToPKCS10(pem)
             val req = NutsCertificateRequest().apply {
-                val csr = pemToPKCS10(pem)
-
                 name = CordaX500Name.parse(csr.subject.toString()).toString() // this puts stuff in right order
                 this.pem = pem
                 submittedAt = LocalDateTime.now()
                 oid = "urn:oid:${extractOID(csr)}"
+            }
+
+            // check for CSR validity
+            val prov = JcaContentVerifierProviderBuilder().build(csr.subjectPublicKeyInfo)
+            if(!csr.isSignatureValid(prov)) {
+                throw DiscoveryException("Invalid signature")
             }
 
             return req

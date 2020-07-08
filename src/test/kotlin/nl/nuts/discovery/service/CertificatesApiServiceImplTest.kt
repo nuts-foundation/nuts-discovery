@@ -19,6 +19,7 @@
 
 package nl.nuts.discovery.service
 
+import nl.nuts.discovery.DiscoveryException
 import nl.nuts.discovery.TestUtils.Companion.loadTestCSR
 import nl.nuts.discovery.store.CertificateRepository
 import nl.nuts.discovery.store.NutsCertificateRequestRepository
@@ -42,6 +43,7 @@ import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.context.SpringBootTest
 import org.springframework.test.context.junit4.SpringRunner
 import kotlin.test.assertEquals
+import kotlin.test.assertFailsWith
 import kotlin.test.assertNotNull
 
 
@@ -71,7 +73,7 @@ class CertificatesApiServiceImplTest {
     }
 
     @Test
-    fun `submitted csr is stored`() {
+    fun `submitted CSR is stored`() {
         val pem = loadTestCSR("test.csr")
 
         certificatesApiServiceImpl.submit(pem)
@@ -81,7 +83,16 @@ class CertificatesApiServiceImplTest {
     }
 
     @Test
-    fun `submitted csr can be listed`() {
+    fun `submitting invalid CSR raises`() {
+        val pem = loadTestCSR("invalid.csr")
+
+        assertFailsWith<DiscoveryException>("Invalid signature") {
+            certificatesApiServiceImpl.submit(pem)
+        }
+    }
+
+    @Test
+    fun `submitted CSR can be listed`() {
         val pem = loadTestCSR("test.csr")
 
         nutsCertificateRequestRepository.save(NutsCertificateRequest.fromPEM(pem))
@@ -91,7 +102,7 @@ class CertificatesApiServiceImplTest {
     }
 
     @Test
-    fun `csr can be signed`() {
+    fun `CSR can be signed`() {
         val pem = loadTestCSR("test.csr")
         val req = NutsCertificateRequest.fromPEM(pem)
 
