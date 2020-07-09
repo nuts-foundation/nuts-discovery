@@ -19,18 +19,14 @@
 
 package nl.nuts.discovery.service
 
-import io.netty.handler.ssl.PemX509Certificate
 import net.corda.core.internal.readText
 import org.bouncycastle.openssl.PEMParser
 import org.bouncycastle.openssl.jcajce.JcaPEMWriter
 import org.bouncycastle.util.io.pem.PemObject
-import org.bouncycastle.util.io.pem.PemWriter
-import sun.security.provider.X509Factory
 import java.io.ByteArrayOutputStream
 import java.io.StringReader
 import java.io.StringWriter
 import java.nio.file.Path
-import java.util.regex.Pattern
 
 /**
  * Helper class to load x509 certificates and combine them as needed.

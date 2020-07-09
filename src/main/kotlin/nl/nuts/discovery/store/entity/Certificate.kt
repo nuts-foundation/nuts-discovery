@@ -25,13 +25,7 @@ import org.bouncycastle.asn1.x509.GeneralName
 import org.bouncycastle.cert.jcajce.JcaX509ExtensionUtils
 import org.bouncycastle.util.io.pem.PemObject
 import org.bouncycastle.util.io.pem.PemWriter
-import sun.misc.BASE64Encoder
-import sun.security.provider.X509Factory
-import java.io.BufferedOutputStream
-import java.io.BufferedWriter
 import java.io.ByteArrayInputStream
-import java.io.ByteArrayOutputStream
-import java.io.PrintWriter
 import java.io.StringWriter
 import java.security.cert.CertificateFactory
 import java.security.cert.X509Certificate

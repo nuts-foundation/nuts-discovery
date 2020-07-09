@@ -119,7 +119,7 @@ class CertificatesApiServiceImplTest {
 
         val tag = DERTaggedObject.getInstance(nc.permittedSubtrees[0].base.encoded)
         val x500Name = X500Name.getInstance(tag.`object`)
-        assertEquals("O=Nuts,C=NL", x500Name.toString())
+        assertEquals("O=test,C=NL", x500Name.toString())
 
         certificateRepository.findAll().forEach {
             assertEquals("urn:oid:$NUTS_VENDOR_OID:1", it.oid)

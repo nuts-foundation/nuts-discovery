@@ -27,6 +27,7 @@ import org.bouncycastle.asn1.DERUTF8String
 import org.bouncycastle.asn1.DLSequence
 import org.bouncycastle.asn1.pkcs.Attribute
 import org.bouncycastle.asn1.pkcs.PKCSObjectIdentifiers
+import org.bouncycastle.asn1.x500.X500NameBuilder
 import org.bouncycastle.asn1.x509.Extension
 import org.bouncycastle.asn1.x509.Extensions
 import org.bouncycastle.asn1.x509.GeneralName
@@ -63,7 +64,7 @@ class NutsCertificateRequest {
         fun fromPEM(pem: String): NutsCertificateRequest {
             val csr = pemToPKCS10(pem)
             val req = NutsCertificateRequest().apply {
-                name = CordaX500Name.parse(csr.subject.toString()).toString() // this puts stuff in right order
+                name = csr.subject.toString()
                 this.pem = pem
                 submittedAt = LocalDateTime.now()
                 oid = "urn:oid:${extractOID(csr)}"

@@ -196,7 +196,7 @@ class CertificatesApiServiceImpl : AbstractCertificatesService(), CertificatesAp
         val validity = TimeUnit.DAYS.toMillis(nutsDiscoveryProperties.certificateValidityInDays.toLong())
         val issuerSubject = issuer.subjectX500Principal.getName(X500Principal.RFC1779)
 
-        val x500Name = issuer.subjectX500Principal.toX500Name()
+        val x500Name = pkcs10.subject
         val rdns = x500Name.rdNs.filter { it.first.type == RFC4519Style.c || it.first.type == RFC4519Style.o }.toTypedArray()
         val nameConstraints = GeneralName(GeneralName.directoryName, X500Name(rdns))
         val permittedSubtree = arrayOf(GeneralSubtree(nameConstraints))
