@@ -58,7 +58,7 @@ class NutsCertificateRequestTest {
 
         assertNotNull(req)
 
-        assertEquals("CN=test,O=test,L=town,C=NL", req.name)
+        assertEquals("CN=test,O=test,C=NL,L=town", req.name)
         assertEquals("urn:oid:$NUTS_VENDOR_OID:1", req.oid)
         assertEquals(pem, req.pem)
     }
