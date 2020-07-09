@@ -79,7 +79,7 @@ class NutsCertificateApiIntegrationTest {
 
         assertEquals(HttpStatus.OK, response.statusCode)
         assertNotNull(response.body)
-        assertEquals("CN=test, O=test, L=town, C=NL", response.body?.subject)
+        assertEquals("CN=test,O=test,L=town,C=NL", response.body?.subject)
 
         val ldt = response.body?.submittedAt
         // no explosions

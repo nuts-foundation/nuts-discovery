@@ -23,8 +23,10 @@ import nl.nuts.discovery.DiscoveryException
 import nl.nuts.discovery.TestUtils.Companion.loadTestCSR
 import nl.nuts.discovery.store.entity.NutsCertificateRequest
 import nl.nuts.discovery.store.entity.NutsCertificateRequest.Companion.NUTS_VENDOR_OID
+import org.bouncycastle.jce.provider.BouncyCastleProvider
 import org.junit.Test
 import java.lang.IllegalArgumentException
+import java.security.Security
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
 import kotlin.test.assertNotNull
@@ -56,7 +58,7 @@ class NutsCertificateRequestTest {
 
         assertNotNull(req)
 
-        assertEquals("CN=test, O=test, L=town, C=NL", req.name)
+        assertEquals("CN=test,O=test,L=town,C=NL", req.name)
         assertEquals("urn:oid:$NUTS_VENDOR_OID:1", req.oid)
         assertEquals(pem, req.pem)
     }
