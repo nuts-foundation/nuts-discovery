@@ -25,15 +25,10 @@ import nl.nuts.discovery.store.CertificateRepository
 import nl.nuts.discovery.store.NutsCertificateRequestRepository
 import nl.nuts.discovery.store.entity.NutsCertificateRequest
 import nl.nuts.discovery.store.entity.NutsCertificateRequest.Companion.NUTS_VENDOR_OID
-import org.bouncycastle.asn1.ASN1Object
-import org.bouncycastle.asn1.ASN1Primitive.fromByteArray
-import org.bouncycastle.asn1.ASN1Sequence
 import org.bouncycastle.asn1.DEROctetString
-import org.bouncycastle.asn1.DERSequence
 import org.bouncycastle.asn1.DERTaggedObject
 import org.bouncycastle.asn1.x500.X500Name
 import org.bouncycastle.asn1.x509.Extension
-import org.bouncycastle.asn1.x509.GeneralName
 import org.bouncycastle.asn1.x509.NameConstraints
 import org.junit.After
 import org.junit.Before
@@ -42,9 +37,13 @@ import org.junit.runner.RunWith
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.context.SpringBootTest
 import org.springframework.test.context.junit4.SpringRunner
+import java.security.KeyFactory
+import java.security.PublicKey
+import java.security.spec.X509EncodedKeySpec
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
 import kotlin.test.assertNotNull
+import kotlin.test.assertTrue
 
 
 @RunWith(SpringRunner::class)
@@ -120,6 +119,9 @@ class CertificatesApiServiceImplTest {
         val tag = DERTaggedObject.getInstance(nc.permittedSubtrees[0].base.encoded)
         val x500Name = X500Name.getInstance(tag.`object`)
         assertEquals("O=test,C=NL", x500Name.toString())
+        // Assert that the PublicKey in the CSR ends up in the certificate
+        val actualPublicKey = KeyFactory.getInstance("RSA").generatePublic(X509EncodedKeySpec(req.toPKCS10().subjectPublicKeyInfo.encoded))
+        assertEquals(x509.publicKey, actualPublicKey)
 
         certificateRepository.findAll().forEach {
             assertEquals("urn:oid:$NUTS_VENDOR_OID:1", it.oid)
