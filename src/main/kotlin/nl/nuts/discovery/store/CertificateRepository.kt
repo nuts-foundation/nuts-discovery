@@ -20,6 +20,7 @@
 package nl.nuts.discovery.store
 
 import nl.nuts.discovery.store.entity.Certificate
+import nl.nuts.discovery.store.entity.PartyId
 import org.springframework.data.repository.CrudRepository
 import org.springframework.stereotype.Repository
 
@@ -38,7 +39,7 @@ interface CertificateRepository: CrudRepository<Certificate, Long> {
     /**
      * Find certificates with the specified oid in the SAN
      */
-    fun findByOid(oid: String) : List<Certificate>
+    fun findByOid(oid: PartyId) : List<Certificate>
 
     /**
      * Find the number of certificates signed by a specific CA

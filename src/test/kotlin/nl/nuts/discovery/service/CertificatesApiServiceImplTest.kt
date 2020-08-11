@@ -23,6 +23,7 @@ import nl.nuts.discovery.DiscoveryException
 import nl.nuts.discovery.TestUtils.Companion.loadTestCSR
 import nl.nuts.discovery.store.CertificateRepository
 import nl.nuts.discovery.store.NutsCertificateRequestRepository
+import nl.nuts.discovery.store.entity.Certificate
 import nl.nuts.discovery.store.entity.NutsCertificateRequest
 import nl.nuts.discovery.store.entity.NutsCertificateRequest.Companion.NUTS_VENDOR_OID
 import org.bouncycastle.asn1.DEROctetString
@@ -38,12 +39,10 @@ import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.context.SpringBootTest
 import org.springframework.test.context.junit4.SpringRunner
 import java.security.KeyFactory
-import java.security.PublicKey
 import java.security.spec.X509EncodedKeySpec
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
 import kotlin.test.assertNotNull
-import kotlin.test.assertTrue
 
 
 @RunWith(SpringRunner::class)
@@ -107,6 +106,7 @@ class CertificatesApiServiceImplTest {
 
         nutsCertificateRequestRepository.save(req)
         val x509 = certificatesApiServiceImpl.sign(req)
+        println( Certificate.fromX509Certificate(x509, "", "").toPem())
 
         assertNotNull(x509)
 
@@ -124,7 +124,7 @@ class CertificatesApiServiceImplTest {
         assertEquals(x509.publicKey, actualPublicKey)
 
         certificateRepository.findAll().forEach {
-            assertEquals("urn:oid:$NUTS_VENDOR_OID:1", it.oid)
+            assertEquals("urn:oid:$NUTS_VENDOR_OID:1", it.oid.toString())
         }
     }
 }

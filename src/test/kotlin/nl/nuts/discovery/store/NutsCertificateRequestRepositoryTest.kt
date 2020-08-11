@@ -20,6 +20,7 @@
 package nl.nuts.discovery.store
 
 import nl.nuts.discovery.store.entity.NutsCertificateRequest
+import nl.nuts.discovery.store.entity.PartyId
 import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -48,13 +49,13 @@ class NutsCertificateRequestRepositoryTest {
         val request = NutsCertificateRequest().apply {
             name = "name"
             submittedAt = dt
-            oid = "kvk"
+            oid = PartyId.parse("urn:oid:1.2.3:kvk")
             pem = "pem encoded bytes"
 
         }
         nutsCertificateRequestRepository.save(request)
 
-        val sr = nutsCertificateRequestRepository.findByOid("kvk")
+        val sr = nutsCertificateRequestRepository.findByOid(PartyId("1.2.3", "kvk"))
 
         assertNotNull(sr)
         assertEquals(1, sr.size)

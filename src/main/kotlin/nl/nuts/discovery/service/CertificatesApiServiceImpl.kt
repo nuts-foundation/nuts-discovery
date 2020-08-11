@@ -19,7 +19,6 @@
 
 package nl.nuts.discovery.service
 
-import net.corda.core.internal.toX500Name
 import net.corda.nodeapi.internal.crypto.X509Utilities
 import nl.nuts.discovery.DiscoveryException
 import nl.nuts.discovery.api.CertificatesApiService
@@ -30,20 +29,14 @@ import nl.nuts.discovery.store.CustomCASerialRepository
 import nl.nuts.discovery.store.NutsCertificateRequestRepository
 import nl.nuts.discovery.store.entity.Certificate
 import nl.nuts.discovery.store.entity.NutsCertificateRequest
+import nl.nuts.discovery.store.entity.PartyId
 import org.bouncycastle.asn1.ASN1ObjectIdentifier
 import org.bouncycastle.asn1.ASN1String
 import org.bouncycastle.asn1.DERUTF8String
-import org.bouncycastle.asn1.DLSequence
 import org.bouncycastle.asn1.x500.X500Name
 import org.bouncycastle.asn1.x500.style.BCStyle
 import org.bouncycastle.asn1.x500.style.RFC4519Style
-import org.bouncycastle.asn1.x509.BasicConstraints
-import org.bouncycastle.asn1.x509.Extension
-import org.bouncycastle.asn1.x509.GeneralName
-import org.bouncycastle.asn1.x509.GeneralNames
-import org.bouncycastle.asn1.x509.GeneralSubtree
-import org.bouncycastle.asn1.x509.NameConstraints
-import org.bouncycastle.asn1.x509.X509Name
+import org.bouncycastle.asn1.x509.*
 import org.bouncycastle.cert.X509CertificateHolder
 import org.bouncycastle.cert.X509v3CertificateBuilder
 import org.bouncycastle.cert.jcajce.JcaX509v3CertificateBuilder
@@ -58,12 +51,10 @@ import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Service
 import java.io.ByteArrayInputStream
-import java.io.InputStream
 import java.io.Reader
 import java.math.BigInteger
 import java.nio.file.Files
 import java.security.KeyFactory
-import java.security.KeyPair
 import java.security.MessageDigest
 import java.security.PrivateKey
 import java.security.cert.CertificateFactory
@@ -72,7 +63,6 @@ import java.security.spec.PKCS8EncodedKeySpec
 import java.util.*
 import java.util.concurrent.TimeUnit
 import javax.security.auth.x500.X500Principal
-
 
 
 @Service
@@ -96,13 +86,13 @@ class CertificatesApiServiceImpl : AbstractCertificatesService(), CertificatesAp
     lateinit var cASerialRepository: CustomCASerialRepository
 
     override fun listCertificates(otherName: String): List<CertificateWithChain> {
-        return certificateRepository.findByOid(otherName).map {
+        return certificateRepository.findByOid(PartyId.parse(otherName)).map {
             CertificateWithChain(it.toPem(), CertificateChain.fromSinglePEM(it.chain).pemEncodedCertificates)
         }
     }
 
     override fun listRequests(otherName: String): List<CertificateSigningRequest> {
-        return nutsCertificateRequestRepository.findByOid(otherName).map {
+        return nutsCertificateRequestRepository.findByOid(PartyId.parse(otherName)).map {
             entityToApiModel(it)
         }
     }
@@ -121,15 +111,15 @@ class CertificatesApiServiceImpl : AbstractCertificatesService(), CertificatesAp
         return entityToApiModel(nutsCertificateRequest)
     }
 
-    private fun entityToApiModel(nutsCertificateRequest: NutsCertificateRequest) : CertificateSigningRequest {
+    private fun entityToApiModel(nutsCertificateRequest: NutsCertificateRequest): CertificateSigningRequest {
         return CertificateSigningRequest(
-            subject = nutsCertificateRequest.name!!,
-            pem = nutsCertificateRequest.pem!!,
-            submittedAt = nutsCertificateRequest.submittedAt.toString()
+                subject = nutsCertificateRequest.name!!,
+                pem = nutsCertificateRequest.pem!!,
+                submittedAt = nutsCertificateRequest.submittedAt.toString()
         )
     }
 
-    override fun sign(request: NutsCertificateRequest) : X509Certificate {
+    override fun sign(request: NutsCertificateRequest): X509Certificate {
         // some checks
         // todo additional checks?
         if (request.oid == null) {
@@ -144,7 +134,7 @@ class CertificatesApiServiceImpl : AbstractCertificatesService(), CertificatesAp
         // x509 builder
         val issuer = caCertificate()
         val certificateBuilder = certificateBuilderWithDefaults(pkcs10, issuer)
-        addCustomExtensions(certificateBuilder, request.oid!!, pkcs10)
+        addSubjectAltNames(certificateBuilder, request.oid!!, pkcs10)
 
         // signature
         val pKey = caKey()
@@ -163,9 +153,8 @@ class CertificatesApiServiceImpl : AbstractCertificatesService(), CertificatesAp
         return theCert!!
     }
 
-    private fun addCustomExtensions(builder: X509v3CertificateBuilder, oid: String, pkcs10: JcaPKCS10CertificationRequest) {
-        val oidSeq = DLSequence(arrayOf(NutsCertificateRequest.NUTS_VENDOR_EXTENSION, DERUTF8String(oid)))
-        val names = mutableListOf(GeneralName(GeneralName.otherName, oidSeq))
+    private fun addSubjectAltNames(builder: X509v3CertificateBuilder, party: PartyId, pkcs10: JcaPKCS10CertificationRequest) {
+        val names = mutableListOf(GeneralName(GeneralName.otherName, OtherName(ASN1ObjectIdentifier(party.oid), DERUTF8String(party.value))))
 
         val emailAttr = pkcs10.getAttributes(BCStyle.EmailAddress)
         if (emailAttr != null && emailAttr.isNotEmpty()) {
@@ -202,32 +191,32 @@ class CertificatesApiServiceImpl : AbstractCertificatesService(), CertificatesAp
         val permittedSubtree = arrayOf(GeneralSubtree(nameConstraints))
 
         return JcaX509v3CertificateBuilder(
-            X500Name(issuerSubject),
-            generateSerial(issuerSubject),
-            Date(System.currentTimeMillis()),
-            Date(System.currentTimeMillis() + validity),
-            pkcs10.subject,
-            pkcs10.publicKey
+                X500Name(issuerSubject),
+                generateSerial(issuerSubject),
+                Date(System.currentTimeMillis()),
+                Date(System.currentTimeMillis() + validity),
+                pkcs10.subject,
+                pkcs10.publicKey
         ).addExtension(
-            Extension.basicConstraints,
-            true,
-            BasicConstraints(true) // isCa
+                Extension.basicConstraints,
+                true,
+                BasicConstraints(true) // isCa
         ).addExtension(
-            Extension.nameConstraints,
-            true,
-            NameConstraints(permittedSubtree, arrayOf())
+                Extension.nameConstraints,
+                true,
+                NameConstraints(permittedSubtree, arrayOf())
         ).addExtension(
-            Extension.keyUsage,
-            true,
-            X509KeyUsage(
-                X509KeyUsage.digitalSignature or
-                    X509KeyUsage.keyCertSign or
-                    X509KeyUsage.cRLSign
-            )
+                Extension.keyUsage,
+                true,
+                X509KeyUsage(
+                        X509KeyUsage.digitalSignature or
+                                X509KeyUsage.keyCertSign or
+                                X509KeyUsage.cRLSign
+                )
         )
     }
 
-    private fun chain() : String {
+    private fun chain(): String {
         val rootPath = loadResourceWithNullCheck(nutsDiscoveryProperties.nutsRootCertPath)
         val caPath = loadResourceWithNullCheck(nutsDiscoveryProperties.nutsCACertPath)
 

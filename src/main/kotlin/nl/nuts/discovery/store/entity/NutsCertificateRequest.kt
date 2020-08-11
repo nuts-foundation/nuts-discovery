@@ -19,19 +19,11 @@
 
 package nl.nuts.discovery.store.entity
 
-import net.corda.core.identity.CordaX500Name
 import nl.nuts.discovery.DiscoveryException
 import org.bouncycastle.asn1.ASN1ObjectIdentifier
 import org.bouncycastle.asn1.DERTaggedObject
-import org.bouncycastle.asn1.DERUTF8String
-import org.bouncycastle.asn1.DLSequence
-import org.bouncycastle.asn1.pkcs.Attribute
 import org.bouncycastle.asn1.pkcs.PKCSObjectIdentifiers
-import org.bouncycastle.asn1.x500.X500NameBuilder
-import org.bouncycastle.asn1.x509.Extension
-import org.bouncycastle.asn1.x509.Extensions
-import org.bouncycastle.asn1.x509.GeneralName
-import org.bouncycastle.asn1.x509.GeneralNames
+import org.bouncycastle.asn1.x509.*
 import org.bouncycastle.openssl.PEMParser
 import org.bouncycastle.operator.jcajce.JcaContentVerifierProviderBuilder
 import org.bouncycastle.pkcs.PKCS10CertificationRequest
@@ -39,12 +31,9 @@ import java.io.BufferedReader
 import java.io.ByteArrayInputStream
 import java.io.InputStreamReader
 import java.io.StringReader
+import java.lang.IllegalArgumentException
 import java.time.LocalDateTime
-import javax.persistence.Column
-import javax.persistence.Entity
-import javax.persistence.GeneratedValue
-import javax.persistence.GenerationType
-import javax.persistence.Id
+import javax.persistence.*
 
 
 /**
@@ -54,8 +43,8 @@ import javax.persistence.Id
 class NutsCertificateRequest {
 
     companion object {
-        val NUTS_VENDOR_OID = "1.3.6.1.4.1.54851.4"
-        val NUTS_VENDOR_EXTENSION: ASN1ObjectIdentifier = ASN1ObjectIdentifier(NUTS_VENDOR_OID).intern()
+        const val NUTS_VENDOR_OID = "1.3.6.1.4.1.54851.4"
+        private val SUPPORTED_OTHER_NAMES = listOf(ASN1ObjectIdentifier(NUTS_VENDOR_OID))
 
         /**
          * Create entity from PKCS10CertificationRequest, stores .encoded as bytes
@@ -67,12 +56,16 @@ class NutsCertificateRequest {
                 name = csr.subject.toString()
                 this.pem = pem
                 submittedAt = LocalDateTime.now()
-                oid = "urn:oid:${extractOID(csr)}"
+                oid = getSupportedOtherNames(csr)
+                        .filter { it.typeID.id == NUTS_VENDOR_OID }
+                        .map { PartyId.fromOtherName(it) }
+                        .firstOrNull()
+                        ?: throw DiscoveryException("Missing Vendor ID SAN in CSR")
             }
 
             // check for CSR validity
             val prov = JcaContentVerifierProviderBuilder().build(csr.subjectPublicKeyInfo)
-            if(!csr.isSignatureValid(prov)) {
+            if (!csr.isSignatureValid(prov)) {
                 throw DiscoveryException("Invalid signature")
             }
 
@@ -95,48 +88,20 @@ class NutsCertificateRequest {
         }
 
         /**
-         * Find the OID in the subjectAltName.otherName extension
+         * Find the Party ID in the subjectAltName.otherName extension. Exactly one is expected.
          *
          * throws DiscoveryException on missing oid
          */
-        fun extractOID(csr: PKCS10CertificationRequest): String {
-            var vendor: String? = null
-            val certAttributes = csr.attributes
-            for (attribute in certAttributes) {
-                if (attribute.attrType.equals(PKCSObjectIdentifiers.pkcs_9_at_extensionRequest)) {
-                    vendor = nutsVendorFromExtReq(attribute)
-                    if (vendor != null) {
-                        break
+        fun getSupportedOtherNames(csr: PKCS10CertificationRequest): List<OtherName> {
+            return csr.attributes
+                    .filter { it.attrType == PKCSObjectIdentifiers.pkcs_9_at_extensionRequest }
+                    .mapNotNull {
+                        val extensions = Extensions.getInstance(it.attrValues.getObjectAt(0))
+                        val gns = GeneralNames.fromExtensions(extensions, Extension.subjectAlternativeName)
+                        getOtherNamesFromSAN(gns)
                     }
-                }
-            }
-
-            if (vendor == null) {
-                throw DiscoveryException("Given CSR does not have a correctly formatted oid in extensions")
-            }
-
-            return "$NUTS_VENDOR_OID:$vendor"
-        }
-
-        private fun nutsVendorFromExtReq(attribute: Attribute) : String? {
-            var vendor: String? = null
-
-            val extensions = Extensions.getInstance(attribute.attrValues.getObjectAt(0))
-            val gns = GeneralNames.fromExtensions(extensions, Extension.subjectAlternativeName)
-            val names = gns.names
-            for (san in names) {
-                if (san.tagNo == GeneralName.otherName && san.name is DLSequence) {
-                    val oid = (san.name as DLSequence).getObjectAt(0)
-                    if (oid == NUTS_VENDOR_EXTENSION) {
-                        val taggedObject = (san.name as DLSequence).getObjectAt(1) as DERTaggedObject
-                        val value = taggedObject.`object` as DERUTF8String
-                        vendor = value.toString()
-                        break
-                    }
-                }
-            }
-
-            return vendor
+                    .flatten()
+                    .filter { SUPPORTED_OTHER_NAMES.contains(it.typeID) }
         }
     }
 
@@ -150,7 +115,8 @@ class NutsCertificateRequest {
     var name: String? = null
 
     /** vendor oid from attributes */
-    var oid: String? = null
+    @Convert(converter = PartyIdConverter::class)
+    var oid: PartyId? = null
 
     /** PEM encoded CSR */
     @Column(name = "pem")
@@ -168,4 +134,10 @@ class NutsCertificateRequest {
 
         return pemReader.readObject() as PKCS10CertificationRequest
     }
+}
+
+fun getOtherNamesFromSAN(gns: GeneralNames): List<OtherName> {
+    return gns.names
+            .filter { it.tagNo == GeneralName.otherName }
+            .map { OtherName.getInstance(DERTaggedObject.getInstance(it.toASN1Primitive()).`object`) }
 }
