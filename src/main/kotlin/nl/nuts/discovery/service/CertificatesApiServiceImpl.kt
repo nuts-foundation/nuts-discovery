@@ -207,7 +207,7 @@ class CertificatesApiServiceImpl : AbstractCertificatesService(), CertificatesAp
             Date(System.currentTimeMillis()),
             Date(System.currentTimeMillis() + validity),
             pkcs10.subject,
-            issuer.publicKey
+            pkcs10.publicKey
         ).addExtension(
             Extension.basicConstraints,
             true,
