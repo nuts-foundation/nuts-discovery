@@ -23,14 +23,8 @@ import nl.nuts.discovery.DiscoveryException
 import nl.nuts.discovery.TestUtils.Companion.loadTestCSR
 import nl.nuts.discovery.store.CertificateRepository
 import nl.nuts.discovery.store.NutsCertificateRequestRepository
-import nl.nuts.discovery.store.entity.Certificate
 import nl.nuts.discovery.store.entity.NutsCertificateRequest
 import nl.nuts.discovery.store.entity.NutsCertificateRequest.Companion.NUTS_VENDOR_OID
-import org.bouncycastle.asn1.DEROctetString
-import org.bouncycastle.asn1.DERTaggedObject
-import org.bouncycastle.asn1.x500.X500Name
-import org.bouncycastle.asn1.x509.Extension
-import org.bouncycastle.asn1.x509.NameConstraints
 import org.junit.After
 import org.junit.Before
 import org.junit.Test
@@ -106,19 +100,13 @@ class CertificatesApiServiceImplTest {
 
         nutsCertificateRequestRepository.save(req)
         val x509 = certificatesApiServiceImpl.sign(req)
-        println( Certificate.fromX509Certificate(x509, "", "").toPem())
 
         assertNotNull(x509)
 
         val basicConstraints = x509.basicConstraints
-        val b = DEROctetString.getInstance(x509.getExtensionValue(Extension.nameConstraints.id))
-        val nc = NameConstraints.getInstance(b.octets)
 
         assertEquals(Integer.MAX_VALUE, basicConstraints) // no path constraint for this cert
 
-        val tag = DERTaggedObject.getInstance(nc.permittedSubtrees[0].base.encoded)
-        val x500Name = X500Name.getInstance(tag.`object`)
-        assertEquals("O=test,C=NL", x500Name.toString())
         // Assert that the PublicKey in the CSR ends up in the certificate
         val actualPublicKey = KeyFactory.getInstance("RSA").generatePublic(X509EncodedKeySpec(req.toPKCS10().subjectPublicKeyInfo.encoded))
         assertEquals(x509.publicKey, actualPublicKey)

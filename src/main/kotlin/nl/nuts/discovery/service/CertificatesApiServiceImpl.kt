@@ -35,7 +35,6 @@ import org.bouncycastle.asn1.ASN1String
 import org.bouncycastle.asn1.DERUTF8String
 import org.bouncycastle.asn1.x500.X500Name
 import org.bouncycastle.asn1.x500.style.BCStyle
-import org.bouncycastle.asn1.x500.style.RFC4519Style
 import org.bouncycastle.asn1.x509.*
 import org.bouncycastle.cert.X509CertificateHolder
 import org.bouncycastle.cert.X509v3CertificateBuilder
@@ -185,11 +184,6 @@ class CertificatesApiServiceImpl : AbstractCertificatesService(), CertificatesAp
         val validity = TimeUnit.DAYS.toMillis(nutsDiscoveryProperties.certificateValidityInDays.toLong())
         val issuerSubject = issuer.subjectX500Principal.getName(X500Principal.RFC1779)
 
-        val x500Name = pkcs10.subject
-        val rdns = x500Name.rdNs.filter { it.first.type == RFC4519Style.c || it.first.type == RFC4519Style.o }.toTypedArray()
-        val nameConstraints = GeneralName(GeneralName.directoryName, X500Name(rdns))
-        val permittedSubtree = arrayOf(GeneralSubtree(nameConstraints))
-
         return JcaX509v3CertificateBuilder(
                 X500Name(issuerSubject),
                 generateSerial(issuerSubject),
@@ -201,10 +195,6 @@ class CertificatesApiServiceImpl : AbstractCertificatesService(), CertificatesAp
                 Extension.basicConstraints,
                 true,
                 BasicConstraints(true) // isCa
-        ).addExtension(
-                Extension.nameConstraints,
-                true,
-                NameConstraints(permittedSubtree, arrayOf())
         ).addExtension(
                 Extension.keyUsage,
                 true,

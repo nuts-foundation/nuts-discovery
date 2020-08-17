@@ -20,6 +20,7 @@
 package nl.nuts.discovery.store.entity
 
 import org.bouncycastle.asn1.DERTaggedObject
+import org.bouncycastle.asn1.x509.GeneralName
 import org.bouncycastle.asn1.x509.OtherName
 import org.bouncycastle.util.io.pem.PemObject
 import org.bouncycastle.util.io.pem.PemWriter
@@ -53,7 +54,7 @@ class Certificate {
         private fun getSinglePartyID(certificate: X509Certificate): PartyId? {
             return certificate.subjectAlternativeNames
                     // Take SANs of type OtherName
-                    .filter { it[0] == 0 }
+                    .filter { it[0] == GeneralName.otherName }
                     .map { it[1] }
                     .map { OtherName.getInstance(DERTaggedObject.getInstance(it).`object`) }
                     // We expect exactly 1 OtherName SAN
