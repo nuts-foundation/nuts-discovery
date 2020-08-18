@@ -20,6 +20,7 @@
 package nl.nuts.discovery.store
 
 import nl.nuts.discovery.store.entity.NutsCertificateRequest
+import nl.nuts.discovery.store.entity.PartyId
 import org.springframework.data.repository.CrudRepository
 import org.springframework.stereotype.Repository
 
@@ -33,5 +34,5 @@ interface NutsCertificateRequestRepository: CrudRepository<NutsCertificateReques
      *
      * @return CSR
      */
-    fun findByOid(oid: String) : List<NutsCertificateRequest>
+    fun findByOid(oid: PartyId) : List<NutsCertificateRequest>
 }

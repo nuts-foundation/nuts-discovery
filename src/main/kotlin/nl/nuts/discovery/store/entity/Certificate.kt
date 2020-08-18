@@ -19,20 +19,16 @@
 
 package nl.nuts.discovery.store.entity
 
-import org.bouncycastle.asn1.DERUTF8String
-import org.bouncycastle.asn1.DLSequence
+import org.bouncycastle.asn1.DERTaggedObject
 import org.bouncycastle.asn1.x509.GeneralName
-import org.bouncycastle.cert.jcajce.JcaX509ExtensionUtils
+import org.bouncycastle.asn1.x509.OtherName
 import org.bouncycastle.util.io.pem.PemObject
 import org.bouncycastle.util.io.pem.PemWriter
 import java.io.ByteArrayInputStream
 import java.io.StringWriter
 import java.security.cert.CertificateFactory
 import java.security.cert.X509Certificate
-import javax.persistence.Entity
-import javax.persistence.GeneratedValue
-import javax.persistence.GenerationType
-import javax.persistence.Id
+import javax.persistence.*
 
 
 /**
@@ -49,28 +45,26 @@ class Certificate {
             return Certificate().apply {
                 name = certificate.subjectDN.name
                 x509 = certificate.encoded
-                oid = extractOID(certificate)
+                oid = getSinglePartyID(certificate)
                 ca = caSubject
                 this.chain = chain
             }
         }
 
-        /**
-         * Find Nuts identifier in extensions
-         */
-        fun extractOID(certificate: X509Certificate): String? {
-            val sans = JcaX509ExtensionUtils.getSubjectAlternativeNames(certificate)
-            sans.forEach {// GeneralNames
-                val generalName = it as List<*> // GeneralName
-                if (generalName[0] == GeneralName.otherName) {
-                    // then this should be a DLSequence
-                    val seq = generalName[1] as DLSequence
-                    if (seq.getObjectAt(0) == NutsCertificateRequest.NUTS_VENDOR_EXTENSION) {
-                        return (seq.getObjectAt(1) as DERUTF8String).toString()
+        private fun getSinglePartyID(certificate: X509Certificate): PartyId? {
+            return certificate.subjectAlternativeNames
+                    // Take SANs of type OtherName
+                    .filter { it[0] == GeneralName.otherName }
+                    .map { it[1] }
+                    .map { OtherName.getInstance(DERTaggedObject.getInstance(it).`object`) }
+                    // We expect exactly 1 OtherName SAN
+                    .let {
+                        when {
+                            it.isEmpty() -> null
+                            it.size == 1 -> PartyId.fromOtherName(it[0])
+                            else -> throw IllegalArgumentException("Multiple OtherName SANs in certificate")
+                        }
                     }
-                }
-            }
-            return null
         }
     }
 
@@ -86,7 +80,8 @@ class Certificate {
     /**
      * Nuts org/vendor identifier
      */
-    var oid: String? = null
+    @Convert(converter = PartyIdConverter::class)
+    var oid: PartyId? = null
 
     /**
      * encoded bytes of X509 (confirms to DER)

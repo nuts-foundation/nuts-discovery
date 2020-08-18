@@ -21,7 +21,6 @@ package nl.nuts.discovery.service
 
 import net.corda.core.crypto.Crypto
 import net.corda.core.identity.CordaX500Name
-import net.corda.core.internal.copyTo
 import net.corda.core.internal.signWithCert
 import net.corda.core.node.NetworkParameters
 import net.corda.nodeapi.internal.crypto.CertificateType
@@ -45,12 +44,8 @@ import org.bouncycastle.pkcs.jcajce.JcaPKCS10CertificationRequest
 import org.bouncycastle.util.io.pem.PemReader
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Service
-import java.io.ByteArrayOutputStream
-import java.io.File
 import java.io.Reader
 import java.nio.file.Files
-import java.nio.file.Path
-import java.nio.file.Paths
 import java.security.KeyFactory
 import java.security.KeyPair
 import java.security.PrivateKey

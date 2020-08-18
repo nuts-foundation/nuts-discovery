@@ -25,11 +25,12 @@ import net.corda.node.serialization.amqp.AMQPServerSerializationScheme
 import net.corda.serialization.internal.AMQP_P2P_CONTEXT
 import net.corda.serialization.internal.SerializationFactoryImpl
 import nl.nuts.discovery.service.CertificateAndKeyService
+import org.bouncycastle.jce.provider.BouncyCastleProvider
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.autoconfigure.SpringBootApplication
 import org.springframework.boot.context.properties.EnableConfigurationProperties
 import org.springframework.boot.runApplication
-import org.springframework.context.annotation.ComponentScan
+import java.security.Security
 import javax.annotation.PostConstruct
 
 /**
@@ -38,6 +39,11 @@ import javax.annotation.PostConstruct
 @EnableConfigurationProperties
 @SpringBootApplication
 class NutsDiscovery {
+    companion object {
+        init {
+            Security.addProvider(BouncyCastleProvider())
+        }
+    }
 
     @Autowired
     lateinit var certificateAndKeyService: CertificateAndKeyService
@@ -53,7 +59,7 @@ class NutsDiscovery {
 
             println("Nuts Discovery failed to start, found ${problems.size} problems:")
 
-            problems.forEach{ p ->
+            problems.forEach { p ->
                 println(p)
             }
 
@@ -74,7 +80,7 @@ class NutsDiscovery {
 fun main(args: Array<String>) {
     try {
         runApplication<NutsDiscovery>(*args)
-    } catch(e: Exception) {
+    } catch (e: Exception) {
         e.printStackTrace()
     }
 }

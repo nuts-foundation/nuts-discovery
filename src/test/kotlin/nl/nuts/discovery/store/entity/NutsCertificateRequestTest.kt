@@ -21,11 +21,9 @@ package nl.nuts.discovery.store.entity
 
 import nl.nuts.discovery.DiscoveryException
 import nl.nuts.discovery.TestUtils.Companion.loadTestCSR
-import nl.nuts.discovery.store.entity.NutsCertificateRequest
 import nl.nuts.discovery.store.entity.NutsCertificateRequest.Companion.NUTS_VENDOR_OID
 import org.bouncycastle.jce.provider.BouncyCastleProvider
 import org.junit.Test
-import java.lang.IllegalArgumentException
 import java.security.Security
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
@@ -33,10 +31,16 @@ import kotlin.test.assertNotNull
 
 class NutsCertificateRequestTest {
 
+    companion object {
+        init {
+            Security.addProvider(BouncyCastleProvider())
+        }
+    }
+
     @Test
     fun `parsing correct csr`() {
         val pem = loadTestCSR("test.csr")
-        val req = NutsCertificateRequest.pemToPKCS10(pem)
+        val req = NutsCertificateRequest.fromPEM(pem)
 
         assertNotNull(req)
     }
@@ -44,11 +48,10 @@ class NutsCertificateRequestTest {
     @Test
     fun `extracting oid from correct csr`() {
         val pem = loadTestCSR("test.csr")
-        val req = NutsCertificateRequest.pemToPKCS10(pem)
-        val oid = NutsCertificateRequest.extractOID(req)
+        val req = NutsCertificateRequest.fromPEM(pem)
 
-        assertNotNull(oid)
-        assertEquals("$NUTS_VENDOR_OID:1", oid)
+        assertNotNull(req)
+        assertEquals("urn:oid:$NUTS_VENDOR_OID:1", req.oid.toString())
     }
 
     @Test
@@ -59,7 +62,7 @@ class NutsCertificateRequestTest {
         assertNotNull(req)
 
         assertEquals("CN=test,O=test,C=NL,L=town", req.name)
-        assertEquals("urn:oid:$NUTS_VENDOR_OID:1", req.oid)
+        assertEquals("urn:oid:$NUTS_VENDOR_OID:1", req.oid.toString())
         assertEquals(pem, req.pem)
     }
 
